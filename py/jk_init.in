@@ -77,8 +77,9 @@ def init_files(config,chroot,files):
 def init_directory(config,chroot,dirs):
 	for tree in dirs:
 		sb = os.stat(tree)
-		if (sb != None and not os.path.isdir(chroot+tree)):
-			os.mkdir(chroot+tree, sb.st_mode)
+		if (sb != None):
+			if (os.path.isdir(chroot+tree)):
+				os.mkdir(chroot+tree, sb.st_mode)
 			ldir = os.listdir(tree)
 			for entry in ldir:
 				if (os.path.isdir(tree+entry)):
