@@ -10,25 +10,26 @@ prefix = @prefix@
 SRCS = jk_socketd.c iniparser.c jk_lsh.o jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c
 OBJS = $(SRCS:.c=.o)
 BINARIES = @BINARIES@
+HAVEPROCMAIL = @HAVEPROCMAIL@
 
 .c.o: $(SRCS)
 	$(CC) $(DEFS) $(CFLAGS) -c -o $@ $<
 
 all: ${BINARIES}
 
-jk_chrootlaunch: $(SRCS) $(OBJS)
-	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.c $(LDFLAGS) $(LIBS)
+jk_chrootlaunch: jk_chrootlaunch.o
+	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.o $(LDFLAGS) $(LIBS)
 
-jk_socketd: $(SRCS) $(OBJS)
+jk_socketd: jk_socketd.o jk_lib.o iniparser.o
 	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o iniparser.o $(LDFLAGS) $(LIBS) -lpthread
 
-jk_lsh: $(SRCS) $(OBJS)
+jk_lsh: jk_lsh.o iniparser.o jk_lib.o
 	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
 
-jk_chrootsh: $(SRCS) $(OBJS)
+jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o
 	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
 
-jk_procmailwrapper: $(SRCS) $(OBJS)
+jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o
 	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o $(LDFLAGS) $(LIBS)
 
 clean:
@@ -47,7 +48,9 @@ install:
 	${INSTALL} -g root -o root -s -m 0755 jk_chrootlaunch ${prefix}/sbin/
 	${INSTALL} -g root -o root -s -m 0755 jk_lsh  ${prefix}/bin/
 	${INSTALL} -g root -o root -s -m 4755 jk_chrootsh  ${prefix}/bin/
-	${INSTALL} -g root -o root -s -m 4755 jk_procmailwrapper  ${prefix}/bin/
+	if [ ${HAVEPROCMAIL} -eq "1" ]; then \
+		${INSTALL} -g root -o root -s -m 4755 jk_procmailwrapper  ${prefix}/bin/ ;\
+	fi
 	# test if the jk_chrootsh is already in /etc/shells
 	if ! grep ${prefix}/bin/jk_chrootsh /etc/shells ; then \
 		echo "appending ${prefix}/bin/jk_chroots to /etc/shells";\

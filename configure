@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP EGREP HAVE_PYTHON PROCMAILPATH BINARIES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP EGREP HAVE_PYTHON PROCMAILPATH BINARIES HAVEPROCMAIL LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3357,13 +3357,17 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+HAVEPROCMAIL="1"
 if test "x$PROCMAILPATH" != "xno" ; then
 	cat >>confdefs.h <<_ACEOF
 #define PROCMAILPATH "$PROCMAILPATH"
 _ACEOF
 
 	BINARIES="${BINARIES} jk_procmailwrapper"
+	HAVEPROCMAIL="0"
 fi
+
+
 
                                         ac_config_files="$ac_config_files Makefile src/Makefile py/Makefile man/Makefile"
 
@@ -3998,6 +4002,7 @@ s,@EGREP@,$EGREP,;t t
 s,@HAVE_PYTHON@,$HAVE_PYTHON,;t t
 s,@PROCMAILPATH@,$PROCMAILPATH,;t t
 s,@BINARIES@,$BINARIES,;t t
+s,@HAVEPROCMAIL@,$HAVEPROCMAIL,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -4491,5 +4496,4 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
-
 
