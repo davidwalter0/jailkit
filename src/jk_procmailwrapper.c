@@ -7,6 +7,8 @@
  *
  * this will probably extended in the near future
  */
+/* #define DEBUG */
+
 #define _GNU_SOURCE
 
 #include <string.h>
@@ -222,7 +224,7 @@ int main (int argc, char **argv, char **envp) {
 		execv(PROCMAILPATH, newargv);
 	}
 	DEBUG_MSG(strerror(errno));
-	syslog(LOG_ERR, "WARNING: could not execute shell %s for user %d:%d",pw->pw_shell,getuid(),getgid());
+	syslog(LOG_ERR, "WARNING: could not execute %s for user %d:%d",PROCMAILPATH,getuid(),getgid());
 	
 	exit(111);
 }
