@@ -1,6 +1,9 @@
 /*
  * config.h.in
  */
+#ifndef __CONFIG_H
+#define __CONFIG_H
+
 #undef VERSION 
 #undef PACKAGE
 #undef PROCMAILPATH
@@ -13,3 +16,5 @@
 #undef HAVE_STPCPY
 #undef HAVE_CLEARENV
 #undef HAVE_GETCURRENTDIRNAME
+
+#endif /* __CONFIG_H */
