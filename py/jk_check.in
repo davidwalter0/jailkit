@@ -179,8 +179,8 @@ def testrealpasswd():
 			# test if the user actually exists in the chroot
 			if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
 				print 'ERROR: user '+rpw[0]+' does not exist in '+chroot+'/etc/passwd'
-			if (rpw[6] != '/usr/bin/jk_chrootsh\n'):
-				print 'ERROR: user '+rpw[0]+' has a /./ but does not have the jk_chrootsh shell'
+			if (rpw[6] != '/usr/sbin/jk_chrootsh\n'):
+				print 'ERROR: user '+rpw[0]+' has a /./ but does not have the /usr/sbin/jk_chrootsh shell'
 		rline = rep.readline()
 	return retval
 			

@@ -1,8 +1,8 @@
 #!/bin/sh
 #DEBHELPER#
 set -e
-if ! grep /usr/bin/jk_chrootsh /etc/shells >/dev/null; then \
-	echo "/usr/bin/jk_chrootsh" >> /etc/shells ;\
+if ! grep /usr/sbin/jk_chrootsh /etc/shells >/dev/null; then \
+	echo "/usr/sbin/jk_chrootsh" >> /etc/shells ;\
 fi
 
 if [ -x "/etc/init.d/jailkit" ]; then

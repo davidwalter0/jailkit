@@ -40,7 +40,7 @@ install:
 	@cd py/ && $(MAKE) install
 	@cd man/ && $(MAKE) install
 	# test if the jk_chrootsh is already in /etc/shells
-	if ! grep ${prefix}/bin/jk_chrootsh /etc/shells ; then \
+	if ! grep ${prefix}/sbin/jk_chrootsh /etc/shells ; then \
 		@echo "appending ${prefix}/sbin/jk_chroots to /etc/shells";\
 		echo ${prefix}/sbin/jk_chrootsh >> /etc/shells ;\
 	fi
