@@ -2,4 +2,4 @@ etc/init.d
 etc/jailkit
 usr/bin
 usr/sbin
-usr/man/man8
+usr/share/man/man8

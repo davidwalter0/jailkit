@@ -11,7 +11,9 @@ jk_addjailuser \- a to add a user to both /etc/passwd and JAIL/etc/passwd
 
 The jk_addjailuser utility creates a new user that will have a jailed shell. It will add the user to 
 .I /etc/passwd
-with homedir /chrootdir/./home/username and shell 
+using the
+.I useradd
+command with homedir /chrootdir/./home/username and shell 
 .I jk_chrootsh
 It will also add the user to
 .I /chrootdir/etc/passwd
@@ -40,3 +42,4 @@ Jailkit is written by Olivier Sessink
 .BR jk_lsh(8)
 .BR jk_procmailwrapper(8)
 .BR jk_socketd(8)
+.BR useradd(8)
