@@ -34,7 +34,7 @@ jk_init /home/sftproot sftp
 jk_init /home/sftproot scp
 # create the account
 jk_addjailuser /home/sftproot test
-# edit the jk_lsh configfile in the jail
+# edit the jk_lsh configfile in the jail (man jk_lsh)
 # you can use every editor you want, I chose 'joe'
 joe /home/sftproot/etc/jailkit/jk_lsh.ini
 # now restart jk_socketd
