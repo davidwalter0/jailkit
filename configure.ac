@@ -43,11 +43,17 @@ AC_CHECK_FUNC(strnlen,
 	AC_DEFINE(HAVE_STRNLEN, 1)
 	)
 
-
 AC_CHECK_FUNC(wordexp,
 	AC_DEFINE(HAVE_WORDEXP, 1)
 	)
 
+AC_CHECK_FUNC(mempcpy,
+	AC_DEFINE(HAVE_MEMPCPY, 1)
+	)
+
+AC_CHECK_FUNC(stpcpy,
+	AC_DEFINE(HAVE_STPCPY, 1)
+	)
 
 AC_CHECK_LIB(pthread, pthread_create,
 	PTHREAD_LIBS=-lpthread,

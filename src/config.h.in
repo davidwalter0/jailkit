@@ -9,3 +9,5 @@
 #undef HAVE_STRNLEN
 #undef HAVE_WORDEXP
 #undef HAVE_WORDEXP_H
+#undef HAVE_MEMPCPY
+#undef HAVE_STPCPY

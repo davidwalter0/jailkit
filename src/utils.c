@@ -32,3 +32,18 @@ size_t strnlen(const char *s, size_t n) {
 }
 #endif
 
+#ifndef HAVE_WORDEXP
+#ifndef HAVE_MEMPCPY
+void *mempcpy(void *dest, const void *src, size_t n) {
+	memcpy(dest,src,n);
+	return dest+n;
+}
+#endif
+
+#ifndef HAVE_STPCPY
+char *stpcpy(char *dest, const char *src) {
+	strcpy(dest, src);
+	return dest + strlen(src);
+}
+#endif
+#endif /* HAVE_WORDEXP */

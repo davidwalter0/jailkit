@@ -108,11 +108,6 @@ static inline char *w_addchar(char *buffer, size_t * actlen, size_t * maxlen, ch
 	return buffer;
 }
 
-void *mempcpy(void *dest, const void *src, size_t n) {
-	memcpy(dest,src,n);
-	return dest+n;
-}
-
 static char *w_addmem(char *buffer, size_t * actlen, size_t * maxlen, const char *str, size_t len)
 {
 	/* Add a string to the buffer, allocating room for it if needed.
