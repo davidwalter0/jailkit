@@ -9,10 +9,11 @@ AC_CONFIG_SRCDIR(src/jk_socketd.c)
 AC_CONFIG_HEADER(src/config.h)
 
 PACKAGE=jailkit
-VERSION=0.4
+VERSION=pre0.4
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 
 AC_ARG_PROGRAM
 AC_PROG_CC
@@ -30,17 +31,17 @@ dnl ************************
 dnl Checks for header files.
 dnl ************************
 
-AC_CHECK_PROG(HAVE_PYTHON, python, no)
-if test "x$HAVE_PYTHON" = "xno" ; then
-	AC_MSG_ERROR(python not found please install python)
-fi
-
 AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h)
 
 AC_CHECK_LIB(pthread, pthread_create,
 	PTHREAD_LIBS=-lpthread,
 	AC_MSG_ERROR(libpthread not found)
 	)
+
+AC_CHECK_PROG(HAVE_PYTHON, python, yes)
+if test "x$HAVE_PYTHON" != "xyes" ; then
+	AC_MSG_ERROR(python not found please install python)
+fi
 
 AC_CONFIG_FILES(Makefile src/Makefile py/Makefile man/Makefile)
 AC_OUTPUT

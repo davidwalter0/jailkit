@@ -24,7 +24,7 @@
 #include <pwd.h>
 
 #include "jk_lib.h"
-
+#include "config.h"
 #define PROGRAMNAME "jk_chrootlaunch"
 
 static int parse_uid(char *tmpstr) {
@@ -156,7 +156,7 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 }
 
 static void print_usage() {
-	printf("\nUsage: "PROGRAMNAME" -j jaildir [-u user] [-g group] [-p pidfile] -x executable -- [executable options]\n");
+	printf(PACKAGE" "VERSION"\nUsage: "PROGRAMNAME" -j jaildir [-u user] [-g group] [-p pidfile] -x executable -- [executable options]\n");
 	printf("\t-p|--pidfile pidfile\n");
 	printf("\t-j|--jail jaildir\n");
 	printf("\t-x|--exec executable\n");
