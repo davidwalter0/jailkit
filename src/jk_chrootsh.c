@@ -101,9 +101,10 @@ typedef struct {
 } Tsavedenv;
 
 static Tsavedenv *savedenv_new(const char *key) {
+	Tsavedenv *savedenv;
 	char *val = getenv(key);
 	if (!val) return NULL;
-	Tsavedenv *savedenv = malloc(sizeof(Tsavedenv));
+	savedenv = malloc(sizeof(Tsavedenv));
 	savedenv->key = strdup(key);
 	savedenv->value = strdup(val);
 	return savedenv;
