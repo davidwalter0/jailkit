@@ -4,7 +4,7 @@ prefix = @prefix@
 
 PYLIBDIR=${prefix}/share/${PACKAGE}
 
-jk_lib.pyc:
+jk_lib.pyc: jk_lib.py
 	python -c "import py_compile;py_compile.compile('jk_lib.py')"
 
 jk_init:
