@@ -3357,14 +3357,14 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-HAVEPROCMAIL="1"
+HAVEPROCMAIL="0"
 if test "x$PROCMAILPATH" != "xno" ; then
 	cat >>confdefs.h <<_ACEOF
 #define PROCMAILPATH "$PROCMAILPATH"
 _ACEOF
 
 	BINARIES="${BINARIES} jk_procmailwrapper"
-	HAVEPROCMAIL="0"
+	HAVEPROCMAIL="1"
 fi
 
 

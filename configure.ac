@@ -53,11 +53,11 @@ fi
 BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch"
 
 AC_PATH_PROG(PROCMAILPATH, procmail, no, /usr/bin)
-HAVEPROCMAIL="1"
+HAVEPROCMAIL="0"
 if test "x$PROCMAILPATH" != "xno" ; then
 	AC_DEFINE_UNQUOTED(PROCMAILPATH, "$PROCMAILPATH")
 	BINARIES="${BINARIES} jk_procmailwrapper"
-	HAVEPROCMAIL="0"
+	HAVEPROCMAIL="1"
 fi
 AC_SUBST(BINARIES)
 AC_SUBST(HAVEPROCMAIL)
