@@ -150,7 +150,7 @@ int main (int argc, char **argv) {
 			int retval;
 			DEBUG_MSG("executing command '%s' for user %d\n", newargv[0], getuid());
 			syslog(LOG_DEBUG, "executing command '%s' for user %d", newargv[0], getuid());
-			retval = execve(newargv[0],newargv,NULL);
+			retval = execve(newargv[0],newargv,environ);
 			DEBUG_MSG("errno=%d, error=%s\n",errno,strerror(errno));
 			DEBUG_MSG("execve() command '%s' returned %d\n", newargv[0], retval);
 			syslog(LOG_ERR, "execve() command '%s' returned %d", newargv[0], retval);

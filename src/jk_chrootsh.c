@@ -111,7 +111,10 @@ static Tsavedenv *savedenv_new(const char *key) {
 }
 
 static void savedenv_restore(Tsavedenv *savedenv) {
-	if (savedenv) setenv(savedenv->key, savedenv->value, 1);
+	if (savedenv) {
+		setenv(savedenv->key, savedenv->value, 1);
+		DEBUG_MSG("restored %s=%s\n",savedenv->key, savedenv->value);
+	}
 }
 
 static void savedenv_free(Tsavedenv *savedenv) {
