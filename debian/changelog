@@ -1,3 +1,11 @@
+jailkit (1.0-1) unstable; urgency=low
+
+  * new upstream 1.0 release
+  * jk_adduser improvements
+  * documentation improvements
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Thu,  5 Aug 2004 19:22:41 +0200
+
 jailkit (0.9-1) unstable; urgency=low
 
   * new upstream 0.9 release
