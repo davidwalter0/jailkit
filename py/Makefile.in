@@ -7,16 +7,16 @@ PYLIBDIR=${prefix}/share/${PACKAGE}
 jk_lib.pyc: jk_lib.py
 	python -c "import py_compile;py_compile.compile('jk_lib.py')"
 
-jk_init:
+jk_init: jk_init.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_init.in > jk_init
 
-jk_check:
+jk_check: jk_check.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_check.in > jk_check
 
-jk_cp:
+jk_cp: jk_cp.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_cp.in > jk_cp
 
-jk_addjailuser:
+jk_addjailuser: jk_addjailuser.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_addjailuser.in > jk_addjailuser
 
 jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser
