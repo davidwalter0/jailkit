@@ -1,3 +1,9 @@
+jailkit (1.1-2) unstable; urgency=low
+
+  * adding lintian override file, package now is lintian clean
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Sun, 15 Aug 2004 11:47:44 +0200
+
 jailkit (1.1-1) unstable; urgency=low
 
   * new upstream 1.1 release
