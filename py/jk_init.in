@@ -82,8 +82,8 @@ def init_directory(config,chroot,tree):
 		for entry in ldir:
 			if (os.path.isdir(tree+entry)):
 				init_directory(config,chroot,tree+entry)
-			else if (os.path.isfile(tree+entry)):
-				init_files(config,chroot,[tree+entry]):
+			elif (os.path.isfile(tree+entry)):
+				init_files(config,chroot,[tree+entry])
 
 def handle_cfg_section(config,chroot,cfg,section):
 	if(chroot[-1] == '/'):
