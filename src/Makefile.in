@@ -29,7 +29,7 @@ jk_chrootsh: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
 
 jk_procmailwrapper: $(SRCS) $(OBJS)
-	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.c $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f ${BINARIES}

@@ -16,8 +16,8 @@
  
 
 #define malloc0(size) memset(malloc(size),0,size)
-
-
+void testsafepath(const char *path, int owner, int group);
+int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir);
 char *strip_string(char * string);
 int count_char(const char *string, char lookfor);
 char **explode_string(const char *string, char delimiter);

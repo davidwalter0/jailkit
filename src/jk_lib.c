@@ -10,8 +10,68 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "jk_lib.h"
+
+/*
+ * the path should be owned owner:group
+ * if it is a file it should not have any setuid or setgid bits set
+ * it should not be writable for group or others
+ * it should not be a symlink
+ */
+void testsafepath(const char *path, int owner, int group) {
+	struct stat sbuf;
+	if (lstat(path, &sbuf) == 0) {
+		if (S_ISLNK(sbuf.st_mode)) {
+			syslog(LOG_ERR, "abort, path %s is a symlink", path);
+			exit(53);
+		}
+		if (S_ISREG(sbuf.st_mode) && (sbuf.st_mode & (S_ISUID | S_ISGID))) {
+			syslog(LOG_ERR, "abort, path %s is setuid/setgid file", path);
+			exit(55);
+		}
+		if (sbuf.st_mode & (S_IWGRP | S_IWOTH)) {
+			syslog(LOG_ERR, "abort, path %s is writable for group or others", path);
+			exit(57);
+		}
+		if (sbuf.st_uid != owner || sbuf.st_gid != group) {
+			syslog(LOG_ERR, "abort, path %s is not owned %d:%d",path,owner,group);
+			exit(59);
+		}
+	} else {
+		syslog(LOG_ERR, "abort, path %s does not exist", path);
+		exit(51);
+	}
+}
+
+
+/* if it returns 1 it will allocate new memory for jaildir and newhomedir
+ * else it will return 0
+ */
+int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir) {
+	int i=strlen(oldhomedir);
+	/* we will not accept /./ as jail, so we continue looking while i > 4 (minimum then is /a/./ )
+	 * we start at the end so if there are multiple /path/./path2/./path3 the user will be jailed in the most minimized path 
+	 */
+	while (i > 4) {
+/*		DEBUG_MSG("oldhomedir[%d]=%c\n",i,oldhomedir[i]);*/
+		if (oldhomedir[i] == '/') {
+			if (oldhomedir[i-1] == '.') {
+				if (oldhomedir[i-2] == '/') {
+					DEBUG_MSG("&oldhomedir[%d]=%s\n",i,&oldhomedir[i]);
+					*jaildir = strndup(oldhomedir, i-2);
+					*newhomedir = strdup(&oldhomedir[i]);
+					return 1;
+				}
+			}
+		}
+		i--;
+	}
+	return 1;
+}
 
 char *strip_string(char * string) {
 	int numstartspaces=0, endofcontent=strlen(string)-1;
