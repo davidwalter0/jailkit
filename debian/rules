@@ -118,7 +118,7 @@ binary-common:
 	dh_link
 	dh_strip
 	dh_compress 
-	dh_fixperms
+	dh_fixperms --exclude jk_chrootsh --exclude jk_procmailwrapper
 #	dh_perl
 #	dh_python
 	dh_makeshlibs
