@@ -47,3 +47,22 @@ char *stpcpy(char *dest, const char *src) {
 }
 #endif
 #endif /* HAVE_WORDEXP */
+
+#ifndef HAVE_CLEARENV
+/* from Linux Programmer's Manual man clearenv() 
+	Used  in  security-conscious  applications.  If  it  is unavailable the
+	assignment
+		environ = NULL;
+	will probably do. */
+int clearenv(void) {
+	environ = NULL;
+}
+#endif /* HAVE_CLEARENV */
+
+#ifndef HAVE_GETCURRENTDIRNAME
+char *get_current_dir_name(void) {
+	char *string;
+	string = malloc0(512);
+	return getcwd(string, 512);
+}
+#endif /* HAVE_GETCURRENTDIRNAME */

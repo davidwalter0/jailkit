@@ -22,7 +22,7 @@
 #include "config.h"
 #ifndef HAVE_WORDEXP
 
-#include "wordexp2.h"
+#include "wordexp.h"
 
 #include <signal.h>
 #include <stdlib.h>

@@ -55,6 +55,14 @@ AC_CHECK_FUNC(stpcpy,
 	AC_DEFINE(HAVE_STPCPY, 1)
 	)
 
+AC_CHECK_FUNC(clearenv,
+	AC_DEFINE(HAVE_CLEARENV, 1)
+	)
+
+AC_CHECK_FUNC(get_current_dir_name,
+	AC_DEFINE(HAVE_GETCURRENTDIRNAME, 1)
+	)
+
 AC_CHECK_LIB(pthread, pthread_create,
 	PTHREAD_LIBS=-lpthread,
 	AC_CHECK_LIB(c_r, pthread_create,
