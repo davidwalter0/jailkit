@@ -22,8 +22,13 @@ def lddlist_libraries(executable):
 		if (len(subl)>0):
 			if (subl[0] == 'statically' and subl[1] == 'linked'):
 				return retval
+			if (subl[0] == 'linux-gate.so.1'):
+				pass
 			if (len(subl)>=3):
-				retval += [subl[2]]
+				if (os.path.exists(subl[2])):
+					retval += [subl[2]]
+				else:
+					print 'ldd returns not existing library '+subl[2]
 		line = pd[1].readline()
 	return retval
 
