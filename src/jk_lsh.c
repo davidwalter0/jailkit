@@ -23,6 +23,10 @@
 #include <wordexp.h>
 #else
 #include "wordexp.h"
+/* needed to link wordexp.o with the executable */
+int libc_argc;
+char **libc_argv;
+
 #endif
 
 #define PROGRAMNAME "jk_lsh"
@@ -110,6 +114,10 @@ int main (int argc, char **argv) {
 	const char *section;
 	
 	DEBUG_MSG(PROGRAMNAME", started\n");
+#ifndef HAVE_WORDEXP_H
+	libc_argc = argc;
+	libc_argv = argv;
+#endif
 	/* open the log facility */
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
 	syslog(LOG_NOTICE, PROGRAMNAME", started");

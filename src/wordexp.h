@@ -1,75 +1,69 @@
-/*-
- * Copyright (c) 2002 Tim J. Robbins.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * $FreeBSD: src/include/wordexp.h,v 1.5 2004/06/30 13:55:08 tjr Exp $
- */
+/* Copyright (C) 1991, 1992, 1996, 1997, 1998 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
 
-#ifndef _WORDEXP_H_
-#define	_WORDEXP_H_
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
 
-#if __XSI_VISIBLE && !defined(_SIZE_T_DECLARED)
-typedef	__size_t	size_t;
-#define	_SIZE_T_DECLARED
+   You should have received a copy of the GNU Library General Public
+   License along with the GNU C Library; see the file COPYING.LIB.  If not,
+   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
+
+#ifndef	_WORDEXP_H
+#define	_WORDEXP_H	1
+
+/* #include <features.h> */
+
+/* __BEGIN_DECLS */
+
+/* Bits set in the FLAGS argument to `wordexp'.  */
+enum
+  {
+    WRDE_DOOFFS = (1 << 0),	/* Insert PWORDEXP->we_offs NULLs.  */
+    WRDE_APPEND = (1 << 1),	/* Append to results of a previous call.  */
+    WRDE_NOCMD = (1 << 2),	/* Don't do command substitution.  */
+    WRDE_REUSE = (1 << 3),	/* Reuse storage in PWORDEXP.  */
+    WRDE_SHOWERR = (1 << 4),	/* Don't redirect stderr to /dev/null.  */
+    WRDE_UNDEF = (1 << 5),	/* Error for expanding undefined variables.  */
+    __WRDE_FLAGS = (WRDE_DOOFFS | WRDE_APPEND | WRDE_NOCMD |
+		    WRDE_REUSE | WRDE_SHOWERR | WRDE_UNDEF)
+  };
+
+/* Structure describing a word-expansion run.  */
+typedef struct
+  {
+    int we_wordc;		/* Count of words matched.  */
+    char **we_wordv;		/* List of expanded words.  */
+    int we_offs;		/* Slots to reserve in `we_wordv'.  */
+  } wordexp_t;
+
+/* Possible nonzero return values from `wordexp'.  */
+enum
+  {
+#ifdef __USE_XOPEN
+    WRDE_NOSYS = -1,		/* Never used since we support `wordexp'.  */
 #endif
+    WRDE_NOSPACE = 1,		/* Ran out of memory.  */
+    WRDE_BADCHAR,		/* A metachar appears in the wrong place.  */
+    WRDE_BADVAL,		/* Undefined var reference with WRDE_UNDEF.  */
+    WRDE_CMDSUB,		/* Command substitution with WRDE_NOCMD.  */
+    WRDE_SYNTAX			/* Shell syntax error.  */
+  };
 
-typedef struct {
-	size_t	we_wordc;	/* count of words matched */
-	char		**we_wordv;	/* pointer to list of words */
-	size_t	we_offs;	/* slots to reserve in we_wordv */
-	char		*we_strings;	/* storage for wordv strings */
-	size_t	we_nbytes;	/* size of we_strings */
-} wordexp_t;
+/* Do word expansion of WORDS into PWORDEXP.  */
+extern int wordexp (__const char *__restrict __words,
+			 wordexp_t *__restrict __pwordexp, int __flags);
 
-/*
- * Flags for wordexp().
- */
-#define	WRDE_APPEND	0x1		/* append to previously generated */
-#define	WRDE_DOOFFS	0x2		/* we_offs member is valid */
-#define	WRDE_NOCMD	0x4		/* disallow command substitution */
-#define	WRDE_REUSE	0x8		/* reuse wordexp_t */
-#define	WRDE_SHOWERR	0x10		/* don't redirect stderr to /dev/null */
-#define	WRDE_UNDEF	0x20		/* disallow undefined shell vars */
+/* Free the storage allocated by a `wordexp' call.  */
+extern void wordfree (wordexp_t *__wordexp);
 
-/*
- * Return values from wordexp().
- */
-#define	WRDE_BADCHAR	1		/* unquoted special character */
-#define	WRDE_BADVAL	2		/* undefined variable */
-#define	WRDE_CMDSUB	3		/* command substitution not allowed */
-#define	WRDE_NOSPACE	4		/* no memory for result */
-#if __XSI_VISIBLE
-#define	WRDE_NOSYS	5		/* obsolete, reserved */
-#endif
-#define	WRDE_SYNTAX	6		/* shell syntax error */
+/* __END_DECLS */
 
-__BEGIN_DECLS
-int	wordexp(const char * __restrict, wordexp_t * __restrict, int);
-void	wordfree(wordexp_t *);
-__END_DECLS
-
-#endif /* !_WORDEXP_H_ */
+#endif /* wordexp.h  */
