@@ -9,11 +9,27 @@ Jailkit is a set of utilities to limit user accounts to a specific directory and
 .BR chroot(2)
 system call is used to put the user inside the jail.
 
-Only the super user (root) can break out of a jail created with 
+If you want the user to be able to do one thing, that one thing should be possible inside the jail. For example if you want the user to be able to run scp, you need to have a copy of scp installed in the jail, and also means to execute it (a shell). As you understand, the fewer executables you have in a jail, and the harder they are to start them, the more work a hacker needs to break out of it.
+
+.SH SECURITY CONSIDERATIONS
+
+DO NOT RELY ON THE JAIL. If you don't trust a process on a regular system, don't trust it in a jail. A bad configured jail might even make the situation worse!
+
+The super user (root), or any process running with root privileges, can break out of a jail created with 
 .BR chroot(2)
 It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
 
-If you want the user to be able to do one thing, that one thing should be possible inside the jail. For example if you want the user to be able to run scp, you need to have a copy of scp installed in the jail, and also means to execute it (a shell). As you understand, the fewer executables you have in a jail, and the harder they are to start them, the more work a hacker needs to break out of it.
+Normal users can create files that are setuid (set user id) root, creating a hardlink to an existing setuid root binary. For example 'ln /bin/su /jail/my_su' will create a setuid root binary in /jail/. If the user now modifies /jail/lib/libc... or /jail/etc/passwd the user might gain root privileges! 
+.B No directory
+inside the jail 
+.B except
+for the homedirectory should, therefore, be writable by the user. Especially the jail directory itself should 
+.B not be writable
+by the user. If the jail is on a separate filesystem, furthermore, this jail filesystem can mounted with the 
+.I nosuid
+flag.
+
+.SH CONTENTS
 
 .BR jk_init
 can be used to quickly create a jail with several files or directories needed for a specific task. There are many tasks in
