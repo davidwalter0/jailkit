@@ -119,8 +119,22 @@ def usage():
 	print ''
 	print "-h --help              : this help screen"
 	print "-c, --configfile=FILE  : specify configfile location"
+	print '-l, --list             : list all available sections in the configfile'
 	print "-v, --verbose          : show what is being done"
 	print "-f, --force            : force overwriting of existing files"
+	print ''
+
+def listsections(file):
+	cfg = ConfigParser.ConfigParser()
+	cfg.read(file)
+	sections = cfg.sections()
+	sections.sort()
+	print '\n** Available sections in '+file+' **\n'
+	for sec in sections:
+		if cfg.has_option(sec, 'comment'):
+			print sec+' - '+cfg.get(sec, 'comment')
+		else:
+			print sec
 	print ''
 
 def testargs(args,config):
@@ -133,7 +147,7 @@ def testargs(args,config):
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "vhfc:", ["help", "configfile=", "verbose", "force"])
+		opts, args = getopt.getopt(sys.argv[1:], "vhflc:", ["help", "configfile=", "verbose", "force", 'list'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
@@ -141,16 +155,22 @@ def main():
 	config['file'] = '/etc/jailkit/jk_init.ini'
 	config['verbose'] = 0
 	config['force'] = 0
+	list = 0
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
 			sys.exit()
 		if o in ("-c", "--configfile"):
 			config['file'] = a
+		if  o in ("-l", "--list"):
+			list = 1
 		if o in ("-v", "--verbose"):
 			config['verbose'] = 1
 		if o in ("-f", "--force"):
 			config['force'] = 1
+	if (list ==1):
+		listsections(config['file'])
+		sys.exit()
 	testargs(args, config)
 	activateConfig(config, args)
  
