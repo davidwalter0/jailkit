@@ -1,13 +1,17 @@
 .TH jailkit 8 07-12-2003 JAILKIT jailkit
 
 .SH NAME
-jailkit \- utilities for jailing a user
+jailkit \- utilities for jailing a user or process
 
 .SH DESCRIPTION
 
-Jailkit is a set of utilities to limit user accounts to a specific directory and to specific commands. Setting up a jail is a lot easier using these utilities. A jail is a directory in your system, and the user cannot see/do anything outside that directory. The user is jailed in the directory. The chroot() system call is used to put the user inside the jail.
+Jailkit is a set of utilities to limit user accounts to a specific directory and to specific commands. Setting up a jail is a lot easier using these utilities. A jail is a directory in your system, and the user cannot see/do anything outside that directory. The user is jailed in the directory. The 
+.BR chroot(2)
+system call is used to put the user inside the jail.
 
-Only the super user (root) can break out of a jail created with chroot(). It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
+Only the super user (root) can break out of a jail created with 
+.BR chroot(2)
+It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
 
 If you want the user to be able to do one thing, that one thing should be possible inside the jail. For example if you want the user to be able to run scp, you need to have a copy of scp installed in the jail, and also means to execute it (a shell). As you understand, the fewer executables you have in a jail, and the harder they are to start them, the more work a hacker needs to break out of it.
 
@@ -43,6 +47,11 @@ or started by jk_chrootsh inside a jail from
 .BR jk_socketd
 is a daemon that will allow logging to syslog from a jail, in a safe way. It will limit the logging rate based on 
 .I /etc/jailkit/jk_socketd.ini
+
+.BR jk_chrootlaunch
+is a utility to start a daemon that cannot do a 
+.BR chroot(2) 
+call itself in a jail. It can change the user and group id after jailing the process, and before executing the daemon.
 
 .BR jk_addjailuser
 is a script to add a user both in the real /etc/passwd as in the JAIL/etc/passwd
@@ -91,4 +100,5 @@ Jailkit is written by Olivier Sessink
 .BR jk_lsh(8)
 .BR jk_chrootsh(8)
 .BR jk_cp(8)
-
+.BR jk_chrootlaunch(8)
+.BR chroot(2)
