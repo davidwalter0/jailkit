@@ -11,6 +11,11 @@
 
 #include "utils.h"
 
+#ifndef HAVE_CLEARENV
+/* doesn't compile on FreeBSD without this */
+extern char **environ;
+#endif
+
 #ifndef HAVE_STRNDUP
 char *strndup(const char *s, size_t n) {
 	char *ret;
