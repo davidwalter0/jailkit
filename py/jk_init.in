@@ -77,7 +77,7 @@ def init_files(config,chroot,files):
 def init_directory(config,chroot,dirs):
 	for dir in dirs:
 		sb = os.stat(dir)
-		if (sb != None and not os.path.isdir(chroot+dir):
+		if (sb != None and not os.path.isdir(chroot+dir)):
 			os.mkdir(chroot+dir, sb.st_mode)
 
 def handle_cfg_section(config,chroot,cfg,section):
