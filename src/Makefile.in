@@ -7,13 +7,16 @@ prefix = @prefix@
 
 #CFLAGS = ${CFLAGS} -g -O2 -Wall -pipe
 
-SRCS = jk_socketd.c iniparser.c jk_lsh.o jk_chrootsh.c jk_lib.c
+SRCS = jk_socketd.c iniparser.c jk_lsh.o jk_chrootsh.c jk_lib.c jk_chrootlaunch.c
 OBJS = $(SRCS:.c=.o)
 
 .c.o: $(SRCS)
 	$(CC) $(DEFS) $(CFLAGS) -c -o $@ $<
 
-all: jk_socketd jk_lsh jk_chrootsh
+all: jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch
+
+jk_chrootlaunch: $(SRCS) $(OBJS)
+	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.c $(LDFLAGS) $(LIBS)
 
 jk_socketd: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_socketd jk_socketd.o iniparser.o $(LDFLAGS) $(LIBS) -lpthread

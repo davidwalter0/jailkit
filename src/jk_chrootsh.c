@@ -3,7 +3,10 @@
  * this program does a safe chroot() and then executes the shell
  * that the user has within that new root (according to newroot/etc/passwd)
  *
- * the code is inspired by chrsh by Aaron D. Gifford and by suexec by the Apache group
+ * I tried to merge some of the ideas from chrsh by Aaron D. Gifford, 
+ * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache 
+ * group in this shell
+ *
  * Copyright (C) Olivier Sessink 2003
  *
  */

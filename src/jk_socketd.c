@@ -332,6 +332,7 @@ int main(int argc, char**argv) {
 	}
 	if (pidfile) {
 		if (pidfilefd) {
+			/* we should do this using fscanf(pidfilefd,"%d", getpid()) */
 			char buf[32];
 			int size;
 			size = snprintf(buf, 32, "%d", getpid());
