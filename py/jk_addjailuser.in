@@ -66,9 +66,9 @@ def checkuser(user, jail):
 def groupexists(group):
 	try:
 		gr = grp.getgrnam(group)
-		return True
+		return 1
 	except:
-		return False
+		return 0
 
 def askforuser(jail):
 	user = None
