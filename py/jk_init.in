@@ -64,6 +64,9 @@ def init_device(config, chroot, path):
 		jk_lib.copy_permissions(path, chroot+path, 0, 0)
 	except:
 		print 'failed to create device '+path+', this is a know problem with python 2.1'
+		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
+		print 'use "mknod '+path+' mode major minor" to create the device'
+		print 'use chmod and chown to correct the permissions as found by ls -l'
 
 def init_files(config,chroot,files):
 	if (chroot[-1] == '/'):
