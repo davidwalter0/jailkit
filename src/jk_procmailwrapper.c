@@ -9,7 +9,7 @@
  */
 /* #define DEBUG */
 
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -22,8 +22,6 @@
 #include <grp.h>
 
 #include "jk_lib.h"
-
-#include "config.h"
 
 #define PROGRAMNAME "jk_procmailwrapper"
 
