@@ -29,13 +29,15 @@ def path_is_safe(path, failquiet=0):
 		return -3
 	if (statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP):
 		print "ERROR: "+path+" is writable by group or others!"
-		return -4	
+		return -4
+	return 1
 
 def chroot_is_safe(path, failquiet=0):
 	"""tests if path is a safe jail, not writable, no writable /etc/ and /lib, return 1 if all is OK"""
 	retval = path_is_safe(path,failquiet)
 	if (retval < -1):
-			return retval
+		print 'DEBUG, retval='+str(retval)
+		return retval
 	for subd in 'lib','etc','usr','var','bin','dev','proc','sbin','sys':
 		retval = path_is_safe(path+'/'+subd,1)
 		if (retval < -1):

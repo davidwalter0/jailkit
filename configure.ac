@@ -50,11 +50,14 @@ else
 	AC_MSG_ERROR(your python version is too old, please install python 2 or newer)
 fi
 
+BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch"
+
 AC_PATH_PROG(PROCMAILPATH, procmail, no, /usr/bin)
 if test "x$PROCMAILPATH" != "xno" ; then
 	AC_DEFINE_UNQUOTED(PROCMAILPATH, "$PROCMAILPATH")
+	BINARIES="${BINARIES} jk_procmailwrapper"
 fi
-
+AC_SUBST(BINARIES)
 AC_CONFIG_FILES(Makefile src/Makefile py/Makefile man/Makefile)
 AC_OUTPUT
 

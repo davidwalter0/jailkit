@@ -9,7 +9,7 @@ prefix = @prefix@
 
 SRCS = jk_socketd.c iniparser.c jk_lsh.o jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c
 OBJS = $(SRCS:.c=.o)
-BINARIES = jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch jk_procmailwrapper
+BINARIES = @BINARIES@
 
 .c.o: $(SRCS)
 	$(CC) $(DEFS) $(CFLAGS) -c -o $@ $<

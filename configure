@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP EGREP HAVE_PYTHON PROCMAILPATH LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP EGREP HAVE_PYTHON PROCMAILPATH BINARIES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3315,6 +3315,8 @@ echo "$as_me: error: your python version is too old" >&2;}
    { (exit please install python 2 or newer); exit please install python 2 or newer; }; }
 fi
 
+BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch"
+
 # Extract the first word of "procmail", so it can be a program name with args.
 set dummy procmail; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3360,6 +3362,7 @@ if test "x$PROCMAILPATH" != "xno" ; then
 #define PROCMAILPATH "$PROCMAILPATH"
 _ACEOF
 
+	BINARIES="${BINARIES} jk_procmailwrapper"
 fi
 
                                         ac_config_files="$ac_config_files Makefile src/Makefile py/Makefile man/Makefile"
@@ -3994,6 +3997,7 @@ s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@HAVE_PYTHON@,$HAVE_PYTHON,;t t
 s,@PROCMAILPATH@,$PROCMAILPATH,;t t
+s,@BINARIES@,$BINARIES,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
