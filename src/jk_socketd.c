@@ -3,7 +3,7 @@
  */
 /* #define DEBUG */
 
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <pthread.h>
 #include <sys/types.h> /* socket() */
