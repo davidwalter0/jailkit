@@ -1,4 +1,5 @@
 #!/bin/sh
+#DEBHELPER#
 set -e
 if [ -x "/etc/init.d/jailkit" ]; then
         if [ -x /usr/sbin/invoke-rc.d ] ; then
