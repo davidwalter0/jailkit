@@ -190,7 +190,11 @@ int main (int argc, char **argv, char **envp) {
 		free(oldgr_name);
 	}
 	
-	/* test procmail in the jail, it is not allowed to be setuid() root */
+	/* test procmail in the jail, it is not allowed to be setuid() or setgid()
+	it is common to have procmail setuid() root and setgid() mail in the regular 
+	system, but it is for most situations not required, and therefore very much 
+	not recommended inside a jail. So we will simply exit because it is a 
+	security risk */
 	testsafepath(PROCMAILPATH,0,0);
 	
 	/* prepare the new environment */
