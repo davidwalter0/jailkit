@@ -8,6 +8,8 @@ import string
 from stat import *
 import md5
 import getopt
+import random
+import stat
 
 LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
@@ -18,17 +20,16 @@ def testchrootdir(config, path):
 		print "testing basedir "+path
 	jk_lib.chroot_is_safe(path)
 	
-def sizeAndDigest(filename):
-	"""Returns the size and digest of a sequence of strings."""
+def md5Digest(filename, startAt):
+	"""Returns md5 digest of a 1024 bytes blobk in filename, at position startAt."""
 	t = 0
 	m = md5.md5()
 	f=open(filename, 'rb')
-	buf = f.read(8192)
-	while len(buf)>0:
-		t = t + len(buf)
-		m.update(buf)
-		buf = f.read(8192)
-	return (t, m.digest())
+	f.seek(startAt)
+	buf = f.read(1024)
+	f.close()
+	m.update(buf)
+	return m.digest()
 
 def file_in_list(thelist, file):
 	for tmp in thelist:
@@ -85,31 +86,47 @@ def comparefiles(config,first, second):
 	if (config['verbose']):
 		print "comparing  "+first+" and "+second
 	try:
-		f1 = sizeAndDigest(first)
-		f2 = sizeAndDigest(second)
-		if (f1[0] != f2[0] or f1[1] != f1[1]):
-			print 'ERROR: '+first+' and '+second+' are not equal!'
+		sb1 = os.lstat(first)
+		sb2 = os.lstat(second)
+		if (sb1[stat.ST_SIZE] != sb2[stat.ST_SIZE]):
+			print 'ERROR: '+first+' and '+second+' have a different size!'
+			return
+		if (stat.S_ISLNK(sb1[stat.ST_MODE]) != stat.S_ISLNK(sb1[stat.ST_MODE])):
+			print 'ERROR: '+first+' and '+second+' are not both symlinks!'
+			return
+		if (not stat.S_ISLNK(sb1[stat.ST_MODE])):
+			if (sb1[stat.ST_SIZE] > 1024):
+				startAt = random.randint(0,sb1[stat.ST_SIZE]-1024)
+			else:
+				startAt = 0
+			if (md5Digest(first, startAt) != md5Digest(second, startAt)):
+				print 'ERROR: '+first+' and '+second+' are not the same!'
 	except IOError:
 		print 'ERROR: cannot read '+first+' or '+second+' !'
+	except OSError:
+		print 'ERROR: cannot stat() '+first+' or '+second+' !'
 
 def testchrootfiles(config, chroothome, path=''):
-	if (not os.path.exists(chroothome+path)):
-		print 'cannot check files in '+chroothome+path+', is does not exist'
-		return
-	testdirpermissions(config,chroothome+path)
-	for f in os.listdir(chroothome+path):
-		chrootpath = chroothome+path+f
-		if (filebasedir_in_list(config['ignorepatheverywhere'],chrootpath) == 0):
-			if os.path.isfile(chrootpath):
-				if (filebasedir_in_list(config['ignorepathoncompare'],chrootpath) == 0):
-					realpath = '/'+path+f
-					comparefiles(config,chrootpath, realpath)
-				testfilepermissions(config,chrootpath)
-			elif os.path.isdir(chrootpath) and not os.path.islink(chrootpath):
-				testchrootfiles(config, chroothome, path+f+'/')
-			else:
-				if (config['verbose']):
-					print "ignoring path "+chrootpath
+	try:
+		if (not os.path.exists(chroothome+path)):
+			print 'cannot check files in '+chroothome+path+', is does not exist'
+			return
+		testdirpermissions(config,chroothome+path)
+		for f in os.listdir(chroothome+path):
+			chrootpath = chroothome+path+f
+			if (filebasedir_in_list(config['ignorepatheverywhere'],chrootpath) == 0):
+				if os.path.isfile(chrootpath):
+					if (filebasedir_in_list(config['ignorepathoncompare'],chrootpath) == 0):
+						realpath = '/'+path+f
+						comparefiles(config,chrootpath, realpath)
+					testfilepermissions(config,chrootpath)
+				elif os.path.isdir(chrootpath) and not os.path.islink(chrootpath):
+					testchrootfiles(config, chroothome, path+f+'/')
+				else:
+					if (config['verbose']):
+						print "ignoring path "+chrootpath
+	except OSError:
+		print 'ERROR, failed to test any files in '+chroothome+path
 
 def testjailusers(config, chroothome):
 	if (os.path.exists(chroothome+'/etc/passwd')):
