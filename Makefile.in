@@ -1,6 +1,6 @@
 INSTALL = @INSTALL@
 prefix = @prefix@
-iniprefix = "/etc/jailkit"
+iniprefix =/etc/jailkit/
 PACKAGE = @PACKAGE@
 
 INIFILES = jk_check.ini jk_init.ini jk_lsh.ini jk_socketd.ini jk_chrootsh.ini
