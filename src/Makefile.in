@@ -25,7 +25,7 @@ jk_lsh: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
 
 jk_chrootsh: $(SRCS) $(OBJS)
-	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch

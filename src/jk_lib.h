@@ -21,4 +21,5 @@
 char *strip_string(char * string);
 int count_char(const char *string, char lookfor);
 char **explode_string(const char *string, char delimiter);
+int count_array(char **arr);
 void free_array(char **arr);

@@ -60,6 +60,13 @@ char **explode_string(const char *string, char delimiter) {
 	return arr;
 }
 
+int count_array(char **arr) {
+	int len=0;
+	char **tmp = arr;
+	while (*tmp) len++;
+	return len;
+}
+
 void free_array(char **arr) {
 	char **tmp = arr;
 	if (!arr) return;

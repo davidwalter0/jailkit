@@ -34,8 +34,10 @@
 #endif
 
 #define PROGRAMNAME "jk_chrootsh"
+#define CONFIGFILE "/etc/jailkit/jk_chrootsh.ini"
 
 #include "jk_lib.h"
+#include "iniparser.h"
 
 /* if it returns 1 it will allocate new memory for jaildir and newhomedir
  * else it will return 0
@@ -93,11 +95,34 @@ void testsafepath(const char *path, int owner, int group) {
 	}
 }
 
+typedef struct {
+	char *key;
+	char *value;
+} Tsavedenv;
+
+static Tsavedenv *savedenv_new(const char *key) {
+	Tsavedenv *savedenv = malloc(sizeof(Tsavedenv));
+	savedenv->key = strdup(key);
+	savedenv->value = strdup(getenv(key));
+	return savedenv;
+}
+
+static void savedenv_restore(Tsavedenv *savedenv) {
+	 setenv(savedenv->key, savedenv->value, 1);
+}
+
+static void savedenv_free(Tsavedenv *savedenv) {
+	free(savedenv->key);
+	free(savedenv->value);
+	free(savedenv);
+}
+
 int main (int argc, char **argv) {
 	int i;
-	struct passwd *pw;
-	struct group *gr;
+	struct passwd *pw=NULL;
+	struct group *gr=NULL;
 	char *jaildir=NULL, *newhome=NULL;
+	Tiniparser *parser=NULL;
 
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
@@ -122,10 +147,6 @@ int main (int argc, char **argv) {
 	for (i=getdtablesize();i>3;i--) {
 		while (close(i) != 0 && errno == EINTR);
 	}
-	
-	DEBUG_MSG("clear environment\n");
-	/* clear the environment */
-	clearenv();
 
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
 	if (geteuid() != 0 || getuid() == 0) {
@@ -139,6 +160,40 @@ int main (int argc, char **argv) {
 	if (!pw || !gr) {
 		syslog(LOG_ERR, "abort, failed to get user or group information for %d:%d", getuid(), getgid());
 		exit(13);
+	}
+
+	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
+	parser = new_iniparser(CONFIGFILE);
+	if (parser) {
+		char *groupsec, *section=NULL, buffer[1024];;
+		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+6), "group "), gr->gr_name);
+		if (iniparser_has_section(parser, pw->pw_name)) {
+			section = strdup(pw->pw_name);
+		} else if (iniparser_has_section(parser, groupsec)) {
+			section = groupsec;
+		}
+		if (section) {
+			if (iniparser_get_string(parser, section, "env", buffer, 1024) > 0) {
+				char **envs;
+				int num,i;
+				Tsavedenv **envstore;
+				/* there is a 'env' section for this user / this group */
+				envs = explode_string(buffer, ',');
+				num = count_array(envs);
+				envstore = malloc0(num * sizeof(Tsavedenv *));
+				for (i=0;i<num;i++) {
+					envstore[i] = savedenv_new(envs[i]);
+				}
+				/* clear the environment */
+				clearenv();
+				for (i=0;i<num;i++) {
+					savedenv_restore(envstore[i]);
+					savedenv_free(envstore[i]);
+				}
+				free(envstore);
+			}
+			free(section);
+		}
 	}
 	if (pw->pw_gid != getgid()) {
 		syslog(LOG_ERR, "abort, the group ID from /etc/passwd (%d) does not match the group ID we run with (%d)", pw->pw_gid, getgid());
