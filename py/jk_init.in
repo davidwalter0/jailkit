@@ -82,7 +82,7 @@ def init_directory(config,chroot,dirs):
 			if (not os.path.isdir(chroot+tree)):
 				if (config['verbose']):
 					print 'creating dir '+chroot+tree
-				os.mkdir(chroot+tree, sb.st_mode)
+				os.mkdir(chroot+tree, sb[stat.ST_MODE])
 			ldir = os.listdir(tree)
 			for entry in ldir:
 				if (os.path.isdir(tree+'/'+entry)):

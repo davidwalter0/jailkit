@@ -49,7 +49,9 @@ def copy_with_permissions(src, dst, be_verbose=0):
 	"""copies the file and the permissions, except any setuid or setgid bits"""
 	shutil.copyfile(src,dst)
 	sbuf = os.stat(src)
-	mode = stat.S_IMODE(sbuf.st_mode)
+#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
+#	mode = stat.S_IMODE(sbuf.st_mode)
+	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
 	if (mode & (stat.S_ISUID | stat.S_ISGID)):
 		if (be_verbose):
 			print 'removing setuid and setgid permissions from '+dst
