@@ -19,6 +19,8 @@
    License along with the GNU C Library; see the file COPYING.LIB.  If not,
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
+#include "config.h"
+#ifndef HAVE_WORDEXP
 
 #include "wordexp2.h"
 
@@ -2103,3 +2105,5 @@ int wordexp(const char *words, wordexp_t * pwordexp, int flags)
 	pwordexp->we_wordc = old_wordc;
 	return error;
 }
+
+#endif /* HAVE_WORDEXP */
