@@ -15,9 +15,15 @@ The allowed actions are read from
 .I /etc/jailkit/jk_lsh.ini
 If you run jk_lsh inside a changed root, make sure jk_lsh.ini is present inside that changed root.
 
+.SH LIMITATIONS
+
 Normal shells can do wildcard expansion. Currently jk_lsh cannot do wildcard expansion, so commands like
 .I scp remotehost:* .
-will not work. This might change in the future.
+will not work. This might change in future versions.
+
+Some shells can also do logical tests, like command1 && command2. The limited shell jk_lsh cannot do any of these tests, another shell should be used if you want enable such features. It is not planned to include this in any future version.
+
+.SH EXAMPLE
 
 An example config file for user test or group test is shown below
 .nf
