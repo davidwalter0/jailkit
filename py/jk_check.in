@@ -157,7 +157,7 @@ def testjailusers(config, chroothome):
 					## test for jk_lsh and test if the user/group is in the config file
 					rline = realep.readline()
 				if (found == 0):
-					print 'ERROR: user '+jpw[0]+' in jail '+chroothome+'does not exist on the real system'
+					print 'ERROR: user '+jpw[0]+' in jail '+chroothome+' does not exist on the real system'
 			jline = jailep.readline()
 
 def testrealpasswd():
