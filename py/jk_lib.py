@@ -119,11 +119,15 @@ def copy_with_permissions(src, dst, be_verbose=0):
 	shutil.copyfile(src,dst)
 	copy_permissions(src, dst, be_verbose, 0)
 
-def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1):
+def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
 	for file in binarieslist:
+		if (file in handledfiles):
+#			print 'handled '+file+' already'
+			break
+#		print 'file',file,'is not in',handledfiles
 		if (not os.path.exists(file)):
 			if (be_verbose):
 				print 'source file '+file+' does not exist'
@@ -147,16 +151,19 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (be_verbose):
 					print 'creating symlink '+chroot+file+' to '+realfile
 				os.symlink(realfile, chroot+file)
+				handledfiles.append(file)
 				if (realfile[1] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
-				copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, 1)
+				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, 1, handledfiles)
 			else:
 				if (be_verbose):
 					print 'copying '+file+' to '+chroot+file
 				copy_with_permissions(file,chroot+file,be_verbose)
+				handledfiles.append(file)
 			if (check_libs):
 				libs = lddlist_libraries(file)
-				copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0)
+				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, handledfiles)
+	return handledfiles
 
 def config_get_option_as_list(cfgparser, sectionname, optionname):
 	"""retrieves a comma separated option from the configparser and splits it into a list, returning an empty list if it does not exist"""
