@@ -42,6 +42,14 @@ AC_CHECK_PROG(HAVE_PYTHON, python, yes)
 if test "x$HAVE_PYTHON" != "xyes" ; then
 	AC_MSG_ERROR(python not found please install python)
 fi
+echo -n "checking for up to date python... "
+if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
+	echo "ok"
+else
+	echo "failed"
+	AC_MSG_ERROR(your python version is too old, please install python 2 or newer)
+fi
+
 AC_PATH_PROG(PROCMAILPATH, procmail, no, /usr/bin)
 if test "x$PROCMAILPATH" != "xno" ; then
 	AC_DEFINE_UNQUOTED(PROCMAILPATH, "$PROCMAILPATH")

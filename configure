@@ -3310,6 +3310,16 @@ if test "x$HAVE_PYTHON" != "xyes" ; then
 echo "$as_me: error: python not found please install python" >&2;}
    { (exit 1); exit 1; }; }
 fi
+echo -n "checking for up to date python... "
+if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
+	echo "ok"
+else
+	echo "failed"
+	{ { echo "$as_me:$LINENO: error: your python version is too old" >&5
+echo "$as_me: error: your python version is too old" >&2;}
+   { (exit please install python 2 or newer); exit please install python 2 or newer; }; }
+fi
+
 # Extract the first word of "procmail", so it can be a program name with args.
 set dummy procmail; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
