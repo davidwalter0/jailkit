@@ -61,6 +61,7 @@ char *stpcpy(char *dest, const char *src) {
 	will probably do. */
 int clearenv(void) {
 	environ = NULL;
+	return 1;
 }
 #endif /* HAVE_CLEARENV */
 
