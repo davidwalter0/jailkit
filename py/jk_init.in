@@ -43,18 +43,21 @@ def add_jk_socketd_entry(config, chroot):
 
 def init_device(config, chroot, path):
 	sb = os.stat(path)
-	major = sb.st_rdev / 256  #major = st_rdev divided by 256
-	minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
-	if (stat.S_ISCHR(sb.st_mode)): 
-		mode = 'c'
-	elif (stat.S_ISBLK(sb.st_mode)): 
-		mode = 'b'
-	else:
-		print 'WARNING, '+path+' is not a character or block device'
-		return 1
-	if (config['verbose']):
-		print 'creating device '+chroot+path
-	ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
+	try:
+		major = sb.st_rdev / 256  #major = st_rdev divided by 256
+		minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
+		if (stat.S_ISCHR(sb.st_mode)): 
+			mode = 'c'
+		elif (stat.S_ISBLK(sb.st_mode)): 
+			mode = 'b'
+		else:
+			print 'WARNING, '+path+' is not a character or block device'
+			return 1
+		if (config['verbose']):
+			print 'creating device '+chroot+path
+		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
+	except:
+		print 'failed to create device '+path
 
 def init_files(config,chroot,files):
 	if (chroot[-1] == '/'):
