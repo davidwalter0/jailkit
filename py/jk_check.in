@@ -94,7 +94,11 @@ def comparefiles(config,first, second):
 		if (stat.S_ISLNK(sb1[stat.ST_MODE]) != stat.S_ISLNK(sb1[stat.ST_MODE])):
 			print 'ERROR: '+first+' and '+second+' are not both symlinks!'
 			return
-		if (not stat.S_ISLNK(sb1[stat.ST_MODE])):
+		if (stat.S_ISLNK(sb1[stat.ST_MODE])):
+			if (os.readlink(first) != os.readlink(second)):
+				print 'ERROR: symlinks '+first+' and '+second+' point to different files!'
+			return
+		else:
 			if (sb1[stat.ST_SIZE] > 1024):
 				startAt = random.randint(0,sb1[stat.ST_SIZE]-1024)
 			else:
