@@ -13,5 +13,3 @@ Description: chroot jail utilities
  and daemons. There are utilities to build a jail, to test a jail, and 
  to run a jail. See 'man jailkit' for further information.
  The jailkit website is at http://olivier.sessink.nl/jailkit/
-
-
