@@ -1,3 +1,6 @@
+
+#include "config.h"
+
 #include <ctype.h> /* isspace() */
 #include <stdio.h> /* fseek() */
 #include <stdlib.h> /* malloc() */

@@ -6,10 +6,10 @@
  * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache 
  * group in this utility
  *
- * Copyright (C) Olivier Sessink 2003
+ * Copyright (C) Olivier Sessink 2003-2004
  */
 
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

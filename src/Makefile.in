@@ -3,11 +3,12 @@ CC = @CC@
 CFLAGS = @CFLAGS@ -g -O2 -Wall -pipe
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 prefix = @prefix@
 
 #CFLAGS = ${CFLAGS} -g -O2 -Wall -pipe
 
-SRCS = jk_socketd.c iniparser.c jk_lsh.o jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c
+SRCS = jk_socketd.c iniparser.c jk_lsh.c jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c utils.c wordexp.c
 OBJS = $(SRCS:.c=.o)
 BINARIES = @BINARIES@
 HAVEPROCMAIL = @HAVEPROCMAIL@
@@ -20,17 +21,17 @@ all: ${BINARIES}
 jk_chrootlaunch: jk_chrootlaunch.o
 	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.o $(LDFLAGS) $(LIBS)
 
-jk_socketd: jk_socketd.o jk_lib.o iniparser.o
-	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o iniparser.o $(LDFLAGS) $(LIBS) -lpthread
+jk_socketd: jk_socketd.o jk_lib.o utils.o iniparser.o
+	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o utils.o iniparser.o $(LDFLAGS) $(LIBS) $(PTHREAD_LIBS)
 
-jk_lsh: jk_lsh.o iniparser.o jk_lib.o
-	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
+jk_lsh: jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o
+	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o $(LDFLAGS) $(LIBS)
 
-jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o
-	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)
+jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
-jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o
-	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o $(LDFLAGS) $(LIBS)
+jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f ${BINARIES}

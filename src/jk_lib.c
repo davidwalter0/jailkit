@@ -1,10 +1,10 @@
 /*
- * Copyright (C) Olivier Sessink 2003
+ * Copyright (C) Olivier Sessink 2003-2004
  */
 
 /* #define DEBUG */
+#include "config.h"
 
-#define _GNU_SOURCE
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include "jk_lib.h"
+#include "utils.h"
 
 /*
  * the path should be owned owner:group

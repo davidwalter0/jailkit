@@ -1,11 +1,12 @@
 /*
- * Copyright (C) Olivier Sessink 2003
+ * Copyright (C) Olivier Sessink 2003-2004
  */
  
 /*
  * Limited shell, will only execute files that are configured in /etc/jailkit/jk_lsh.ini
  */
-#define _GNU_SOURCE
+#include "config.h"
+
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -17,7 +18,12 @@
 #include <grp.h>
 #include <stdlib.h>
 #include <errno.h>
+
+#ifdef HAVE_WORDEXP_H
 #include <wordexp.h>
+#else
+#include "wordexp.h"
+#endif
 
 #define PROGRAMNAME "jk_lsh"
 #define CONFIGFILE "/etc/jailkit/jk_lsh.ini"
@@ -26,6 +32,9 @@
 
 #include "jk_lib.h"
 #include "iniparser.h"
+
+/* doesn't compile on FreeBSD without this */
+extern char **environ;
 
 static int executable_is_allowed(Tiniparser *parser, const char *section, const char *executable) {
 	int klen;

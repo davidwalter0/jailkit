@@ -7,11 +7,11 @@
  * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache 
  * group in this shell
  *
- * Copyright (C) Olivier Sessink 2003
+ * Copyright (C) Olivier Sessink 2003-2004
  *
  */
 
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 #include <sys/errno.h>
 #include <syslog.h>
 
-/* #define DEBUG */
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_MSG printf
@@ -37,9 +37,13 @@
 #define CONFIGFILE "/etc/jailkit/jk_chrootsh.ini"
 
 #include "jk_lib.h"
+#include "utils.h"
 #include "iniparser.h"
 
+/* doesn't compile on FreeBSD without this */
+extern char **environ;
 
+/*
 typedef struct {
 	char *key;
 	char *value;
@@ -69,6 +73,39 @@ static void savedenv_free(Tsavedenv *savedenv) {
 		free(savedenv);
 	}
 }
+*/
+
+static int in_array(char **haystack, char * needle) {
+	if (haystack && needle) {
+		char **tmp = haystack;
+		while (*tmp) {
+			if (strcmp(*tmp, needle)==0) return 1;
+			tmp++;
+		}
+	}
+	return 0;
+}
+
+static void unset_environ_except(char **except) {
+	char **tmp = environ;
+	while (*tmp) {
+		char* pos = strchr(*tmp, '=');
+		if (pos != NULL) {
+			char *key = strndup(*tmp, pos-*tmp);
+			if (in_array(except, key)) {
+				DEBUG_MSG("%s is in except\n",key);
+			} else {
+				DEBUG_MSG("%s is NOT in except\n",key);
+				unsetenv(key);
+			}
+			free(key);
+		} else {
+			DEBUG_MSG("problem with %s\n",*tmp);
+		}
+		tmp++;
+	}
+}
+
 
 int main (int argc, char **argv) {
 	int i;
@@ -128,22 +165,24 @@ int main (int argc, char **argv) {
 		if (section) {
 			if (iniparser_get_string(parser, section, "env", buffer, 1024) > 0) {
 				char **envs;
-				int num,i;
+/*				int num,i;
 				Tsavedenv **envstore;
-				/* there is a 'env' section for this user / this group */
+				/ * there is a 'env' section for this user / this group * / */
 				envs = explode_string(buffer, ',');
-				num = count_array(envs);
+/*				num = count_array(envs);
 				envstore = malloc0(num * sizeof(Tsavedenv *));
 				for (i=0;i<num;i++) {
 					envstore[i] = savedenv_new(envs[i]);
 				}
-				/* clear the environment */
+				/ * clear the environment * /
 				clearenv();
 				for (i=0;i<num;i++) {
 					savedenv_restore(envstore[i]);
 					savedenv_free(envstore[i]);
 				}
 				free(envstore);
+				*/
+				unset_environ_except(envs);
 			}
 			free(section);
 		}
@@ -166,13 +205,13 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to chdir() to %s",jaildir);
 		exit(19);
 	} else {
+		char test[255];
 		/* test if it really succeeded */
-		char *test = get_current_dir_name();
+		getcwd(test, 255);
 		if (strcmp(jaildir, test) != 0) {
 			syslog(LOG_ERR, "abort, current dir != %s after chdir()",jaildir);
 			exit(21);
 		}
-		free(test);
 	}		
 	
 	/* here do test the ownership of the jail and the homedir and such

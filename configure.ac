@@ -15,6 +15,8 @@ AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 
+AC_GNU_SOURCE
+
 AC_ARG_PROGRAM
 AC_PROG_CC
 AC_ISC_POSIX
@@ -31,11 +33,28 @@ dnl ************************
 dnl Checks for header files.
 dnl ************************
 
-AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h)
+AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h)
+
+AC_CHECK_FUNC(strndup,
+	AC_DEFINE(HAVE_STRNDUP, 1)
+	)
+
+AC_CHECK_FUNC(strnlen,
+	AC_DEFINE(HAVE_STRNLEN, 1)
+	)
+
+
+AC_CHECK_FUNC(wordexp,
+	AC_DEFINE(HAVE_WORDEXP, 1)
+	)
+
 
 AC_CHECK_LIB(pthread, pthread_create,
 	PTHREAD_LIBS=-lpthread,
-	AC_MSG_ERROR(libpthread not found)
+	AC_CHECK_LIB(c_r, pthread_create,
+		PTHREAD_LIBS=-lc_r,
+		AC_MSG_ERROR(libpthread not found)
+		)
 	)
 
 AC_CHECK_PROG(HAVE_PYTHON, python, yes)
@@ -61,6 +80,9 @@ if test "x$PROCMAILPATH" != "xno" ; then
 fi
 AC_SUBST(BINARIES)
 AC_SUBST(HAVEPROCMAIL)
+AC_SUBST(LIBS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(PTHREAD_LIBS)
 
 AC_CONFIG_FILES(Makefile src/Makefile py/Makefile man/Makefile)
 AC_OUTPUT
