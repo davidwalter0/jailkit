@@ -78,7 +78,7 @@ def lddlist_libraries(executable):
 				else:
 					print 'ldd returns not existing library '+subl[2]
 		line = pd[1].readline()
-	if (sys.platform[:7] == 'openbsd'):
+	if (sys.platform[4:7] == 'bsd'):
 		retval += ['/usr/libexec/ld.so']
 	return retval
 
@@ -211,42 +211,48 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
 	create_full_path(chroot+'/etc/', be_verbose)
-	if (not os.path.isfile(chroot+'/etc/passwd')):
-		fd2 = open(chroot+'/etc/passwd','w')
+	if (sys.platform[4:7] == 'bsd'):
+		open(chroot+'/etc/passwd','a').close()
+		open(chroot+'/etc/spwd.db','a').close()
+		open(chroot+'/etc/pwd.db','a').close()
+		open(chroot+'/etc/master.passwd','a').close()
 	else:
-# the chroot passwds file exists, check if any of the users exist already
-		fd2 = open(chroot+'/etc/passwd','r+')
-		line = fd2.readline()
-		while (len(line)>0):
-			pwstruct = string.split(line,':')
-			if ((pwstruct[0] in users) or (pwstruct[2] in users)):
-				if (be_verbose):
-					print 'user '+pwstruct[0]+' exists in '+chroot+'/etc/passwd'
-				try:
-					users.remove(pwstruct[0])
-				except ValueError:
-					pass
-				try:
-					users.remove(pwstruct[2])
-				except ValueError:
-					pass
+		if (not os.path.isfile(chroot+'/etc/passwd')):
+			fd2 = open(chroot+'/etc/passwd','w')
+		else:
+	# the chroot passwds file exists, check if any of the users exist already
+			fd2 = open(chroot+'/etc/passwd','r+')
 			line = fd2.readline()
-		fd2.seek(0,2)
-	if (len(users) > 0):
-		fd = open('/etc/passwd','r')
-		line = fd.readline()
-		while (len(line)>0):
-			pwstruct = string.split(line,':')
-			if ((pwstruct[0] in users) or (pwstruct[2] in users)):
-				fd2.write(line)
-				if (be_verbose):
-					print 'writing user '+pwstruct[0]+' to '+chroot+'/etc/passwd'
-				if (not pwstruct[3] in groups):
-					groups += [pwstruct[3]]
+			while (len(line)>0):
+				pwstruct = string.split(line,':')
+				if ((pwstruct[0] in users) or (pwstruct[2] in users)):
+					if (be_verbose):
+						print 'user '+pwstruct[0]+' exists in '+chroot+'/etc/passwd'
+					try:
+						users.remove(pwstruct[0])
+					except ValueError:
+						pass
+					try:
+						users.remove(pwstruct[2])
+					except ValueError:
+						pass
+				line = fd2.readline()
+			fd2.seek(0,2)
+		if (len(users) > 0):
+			fd = open('/etc/passwd','r')
 			line = fd.readline()
-		fd.close()
-	fd2.close()
-# do the same sequence for the group files
+			while (len(line)>0):
+				pwstruct = string.split(line,':')
+				if ((pwstruct[0] in users) or (pwstruct[2] in users)):
+					fd2.write(line)
+					if (be_verbose):
+						print 'writing user '+pwstruct[0]+' to '+chroot+'/etc/passwd'
+					if (not pwstruct[3] in groups):
+						groups += [pwstruct[3]]
+				line = fd.readline()
+			fd.close()
+		fd2.close()
+	# do the same sequence for the group files
 	if (not os.path.isfile(chroot+'/etc/group')):
 		fd2 = open(chroot+'/etc/group','w')
 	else:

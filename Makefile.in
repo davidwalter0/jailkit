@@ -40,14 +40,16 @@ install:
 	@cd man/ && $(MAKE) install
 	# test if the jk_chrootsh is already in /etc/shells
 	if ! grep ${prefix}/bin/jk_chrootsh /etc/shells ; then \
-		echo "appending ${prefix}/bin/jk_chroots to /etc/shells";\
-		echo ${prefix}/bin/jk_chrootsh >> /etc/shells ;\
+		@echo "appending ${prefix}/sbin/jk_chroots to /etc/shells";\
+		echo ${prefix}/sbin/jk_chrootsh >> /etc/shells ;\
 	fi
 
 
 uninstall:
 	rm -f /etc/jailkit/*.ini
-	rmdir --ignore-fail-on-non-empty /etc/jailkit
-	@cd src/ && $(MAKE) uninstall
 	@cd py/ && $(MAKE) uninstall
 	@cd man/ && $(MAKE) uninstall
+	@cd src/ && $(MAKE) uninstall
+	- rmdir --ignore-fail-on-non-empty /etc/jailkit
+	@echo "You must manually remove jk_chrootsh from /etc/shells"
+# remove jk_chrootsh from /etc/shells

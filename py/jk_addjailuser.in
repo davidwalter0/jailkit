@@ -90,20 +90,21 @@ def addusertojail(jail, user, group, home, shell, creategroup):
 	if (jail[-1] == '/'):
 		jail = jail[:-1]
 	pw = pwd.getpwnam(user)
-	if (sys.platform[:7] == 'openbsd'):
+	if (sys.platform[4:7] == 'bsd'):
 		fd = open(jail+'/etc/master.passwd', 'a')
 		fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::0:0:'+pw[4]+':'+home+':'+shell+'\n')
 		fd.close()
 		os.system('pwd_mkdb -d '+jail+'/etc -u '+user+' /etc/master.passwd')
-	elif (sys.platform[:5] == 'linux'):
+	else:
+	#if (sys.platform[:5] == 'linux'):
 		fd = open(jail+'/etc/passwd', 'a')
 		fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+':'+pw[4]+':'+home+':'+shell+'\n')
 		fd.close()
-		if (not jk_lib.test_group_exist(group, jail+'/etc/group')):
-			gr = grp.getgrnam(group)
-			fd = open(jail+'/etc/group', 'a')
-			fd.write(group+':x:'+str(gr[2])+':\n')
-			fd.close()
+	if (not jk_lib.test_group_exist(group, jail+'/etc/group')):
+		gr = grp.getgrnam(group)
+		fd = open(jail+'/etc/group', 'a')
+		fd.write(group+':x:'+str(gr[2])+':\n')
+		fd.close()
 # should be done by the -m option
 #		jk_lib.create_full_path(jail+home, 0)
 #		os.chmod(jail+home, 0700)
@@ -159,7 +160,7 @@ def addtheuser(jail,user,config):
 	else: creategroup = 0
 
 	if s: shell = s
-	else: shell = '/usr/bin/jk_lsh'
+	else: shell = '/usr/sbin/jk_lsh'
 
 	if c: execstr = execstr + " -c \"" + c + "\""
 	execstr = execstr + " -d \"" + d + "\""
@@ -174,7 +175,7 @@ def addtheuser(jail,user,config):
 	if o: execstr = execstr + " -o"
 	if p: execstr = execstr + " -p \"" + p + "\""
 	if r: execstr = execstr + " -r"
-	execstr = execstr + " -s /usr/bin/jk_chrootsh"
+	execstr = execstr + " -s /usr/sbin/jk_chrootsh"
 	if u: execstr = execstr + " -u \"" + u + "\""
 	execstr = execstr + " " + user
 

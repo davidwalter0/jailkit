@@ -25,22 +25,22 @@ jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser
 all: jailkit
 
 install: jailkit
-	${INSTALL} -d -m 755 ${prefix}/bin
+	${INSTALL} -d -m 755 ${prefix}/sbin
 	${INSTALL} -d -m 755 ${PYLIBDIR}
 	${INSTALL} -g 0 -o root -m 0644 jk_lib.py ${PYLIBDIR}/
 	${INSTALL} -g 0 -o root -m 0644 jk_lib.pyc ${PYLIBDIR}/
-	${INSTALL} -g 0 -o root -m 0755 jk_init ${prefix}/bin
-	${INSTALL} -g 0 -o root -m 0755 jk_check ${prefix}/bin
-	${INSTALL} -g 0 -o root -m 0755 jk_cp ${prefix}/bin
-	${INSTALL} -g 0 -o root -m 0755 jk_addjailuser ${prefix}/bin
+	${INSTALL} -g 0 -o root -m 0755 jk_init ${prefix}/sbin
+	${INSTALL} -g 0 -o root -m 0755 jk_check ${prefix}/sbin
+	${INSTALL} -g 0 -o root -m 0755 jk_cp ${prefix}/sbin
+	${INSTALL} -g 0 -o root -m 0755 jk_addjailuser ${prefix}/sbin
 
 uninstall:
-	rm -f ${prefix}/bin/jk_cp
-	rm -f ${prefix}/bin/jk_init
-	rm -f ${prefix}/bin/jk_check
-	rm -f ${prefix}/bin/jk_addjailuser
+	rm -f ${prefix}/sbin/jk_cp
+	rm -f ${prefix}/sbin/jk_init
+	rm -f ${prefix}/sbin/jk_check
+	rm -f ${prefix}/sbin/jk_addjailuser
 	rm -f ${PYLIBDIR}/jk_lib.*
-	rmdir ${PYLIBDIR}
+	- rmdir --ignore-fail-on-non-empty ${PYLIBDIR}
 
 clean:
 	rm -f *~
