@@ -325,7 +325,7 @@ int main(int argc, char**argv) {
 			if (nodetach) printf("cannot get UID and GID for user nobody");
 		}
 		testsafepath(path, 0,0);
-		if (!(chdir(path) && chroot(path))) {
+		if (!(chdir(path)==0 && chroot(path)==0)) {
 			syslog(LOG_ERR, "failed to chroot to /etc/jailkit");
 			if (nodetach) printf("failed to chroot to /etc/jailkit");
 		}
