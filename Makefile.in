@@ -1,5 +1,6 @@
 INSTALL = @INSTALL@
 prefix = @prefix@
+iniprefix = "/etc/jailkit"
 PACKAGE = @PACKAGE@
 
 INIFILES = jk_check.ini jk_init.ini jk_lsh.ini jk_socketd.ini jk_chrootsh.ini
@@ -26,17 +27,23 @@ distclean:
 	@cd man/ && $(MAKE) distclean
 
 install:
-	${INSTALL} -d -m 755 /etc/jailkit
+	${INSTALL} -d -m 755 ${iniprefix}
 	for file in ${INIFILES} ; do \
-		if [ -f /etc/jailkit/$${file} ]; then \
-			${INSTALL} -g root -o root -m 0644 ini/$${file} /etc/jailkit/$${file}.dist ;\
+		if [ -f ${iniprefix}$${file} ]; then \
+			${INSTALL} -g root -o root -m 0644 ini/$${file} ${iniprefix}$${file}.dist ;\
 		else \
-			${INSTALL} -g root -o root -m 0644 ini/$${file} /etc/jailkit/ ;\
+			${INSTALL} -g root -o root -m 0644 ini/$${file} ${iniprefix} ;\
 		fi ;\
 	done
 	@cd src/ && $(MAKE) install
 	@cd py/ && $(MAKE) install
 	@cd man/ && $(MAKE) install
+	# test if the jk_chrootsh is already in /etc/shells
+	if ! grep ${prefix}/bin/jk_chrootsh /etc/shells ; then \
+		echo "appending ${prefix}/bin/jk_chroots to /etc/shells";\
+		echo ${prefix}/bin/jk_chrootsh >> /etc/shells ;\
+	fi
+
 
 uninstall:
 	rm -f /etc/jailkit/*.ini

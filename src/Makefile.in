@@ -40,7 +40,7 @@ clean:
 distclean: clean
 	rm -f Makefile
 
-install:
+install: ${BINARIES}
 	${INSTALL} -d -m 755 ${prefix}
 	${INSTALL} -d -m 755 ${prefix}/bin
 	${INSTALL} -d -m 755 ${prefix}/sbin
@@ -50,11 +50,6 @@ install:
 	${INSTALL} -g root -o root -s -m 4755 jk_chrootsh  ${prefix}/bin/
 	if [ ${HAVEPROCMAIL} -eq "1" ]; then \
 		${INSTALL} -g root -o root -s -m 4755 jk_procmailwrapper  ${prefix}/bin/ ;\
-	fi
-	# test if the jk_chrootsh is already in /etc/shells
-	if ! grep ${prefix}/bin/jk_chrootsh /etc/shells ; then \
-		echo "appending ${prefix}/bin/jk_chroots to /etc/shells";\
-		echo ${prefix}/bin/jk_chrootsh >> /etc/shells ;\
 	fi
 	
 uninstall:
