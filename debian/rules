@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
 #
 # Modified to make a template file for a multi-binary package with separated
@@ -31,7 +29,7 @@ endif
 
 config.status: configure
 	dh_testdir
-	# Add here commands to configure the package.
+	# Here the commands to configure the package.
 	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
 
 
@@ -41,15 +39,14 @@ build: build-arch build-indep
 build-arch: build-arch-stamp
 build-arch-stamp:  config.status
 
-	# Add here commands to compile the arch part of the package.
+	# Here the commands to compile the arch part of the package.
 	$(MAKE) 
 	touch build-arch-stamp
 
 build-indep: build-indep-stamp
 build-indep-stamp:  config.status
 
-	# Add here commands to compile the indep part of the package.
-	#$(MAKE) doc
+	# Here could be the commands to compile the indep part of the package, but there are none.
 	touch build-indep-stamp
 
 clean:
@@ -57,7 +54,7 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp #CONFIGURE-STAMP#
 
-	# Add here commands to clean up after the build process.
+	# Here the commands to clean up after the build process.
 	-$(MAKE) distclean
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
@@ -71,16 +68,7 @@ endif
 
 install: install-arch
 #install-indep:
-#	dh_testdir
-#	dh_testroot
-#	dh_clean -k -i 
-#	dh_installdirs -i
-#
-#	# Add here commands to install the indep part of the package into
-#	# debian/<package>-doc.
-#	#INSTALLDOC#
-#
-#	dh_install -i
+#	# there is no indep
 
 install-arch:
 	dh_testdir
@@ -88,8 +76,8 @@ install-arch:
 	dh_clean -k -s 
 	dh_installdirs -s
 
-	# Add here commands to install the arch part of the package into 
-	# debian/tmp.
+	# Here the commands to install the arch part of the package into 
+	# $(CURDIR)/debian/
 	cd src && $(MAKE) install prefix=$(CURDIR)/debian/jailkit/usr
 	cd man && $(MAKE) install prefix=$(CURDIR)/debian/jailkit/usr
 	cd py  && $(MAKE) install prefix=$(CURDIR)/debian/jailkit/usr
@@ -98,8 +86,7 @@ install-arch:
 	install -m 644 debian/lintian.override $(CURDIR)/debian/jailkit/usr/share/lintian/overrides/jailkit
 
 	dh_install -s
-# Must not depend on anything. This is to be called by
-# binary-arch/binary-indep
+# This is called by binary-arch/binary-indep
 # in another 'make' thread.
 binary-common:
 	dh_testdir
@@ -107,31 +94,21 @@ binary-common:
 	dh_installchangelogs 
 	dh_installdocs
 	dh_installexamples
-#	dh_installmenu
-#	dh_installdebconf	
-#	dh_installlogrotate	
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
 	dh_installinit
-#	dh_installcron
-#	dh_installinfo
 	dh_installman
 	dh_link
 	dh_strip
 	dh_compress 
 	dh_fixperms --exclude jk_chrootsh --exclude jk_procmailwrapper
-#	dh_perl
-#	dh_python
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
-# Build architecture independant packages using the common target.
+# There are no architecture independent sections
 #binary-indep: build-indep install-indep
-#	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+#	
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch
