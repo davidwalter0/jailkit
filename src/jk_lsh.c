@@ -17,6 +17,7 @@
 #include <grp.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <wordexp.h>
 
 #define PROGRAMNAME "jk_lsh"
 #define CONFIGFILE "/etc/jailkit/jk_lsh.ini"
@@ -88,6 +89,12 @@ static char *expand_executable_w_path(const char *executable, char **allowed_pat
 	syslog(LOG_DEBUG,"the requested executable %s is not found\n",executable);
 	return NULL;
 }
+/* returns a NULL terminated array of strings */
+char **expand_newargv(char *string) {
+	wordexp_t p;
+	wordexp(string, &p, 0);
+	return p.we_wordv;
+}
 
 int main (int argc, char **argv) {
 	Tiniparser *parser;
@@ -132,7 +139,8 @@ int main (int argc, char **argv) {
 		char **paths = NULL;
 		char ** newargv;
 		DEBUG_MSG("exploding string '%s'\n",argv[2]);
-		newargv = explode_string(argv[2], ' ');
+/*		newargv = explode_string(argv[2], ' ');*/
+		newargv = expand_newargv(argv[2]);
 		if (iniparser_get_string(parser, section, "paths", buffer, 1024) > 0) {
 			DEBUG_LOG("paths, buffer=%s\n",buffer);
 			paths = explode_string(buffer, ',');
