@@ -263,7 +263,7 @@ int main (int argc, char **argv) {
 			exit(37);
 		}
 		if (strcmp(pw->pw_dir, newhome)!=0) {
-			syslog(LOG_ERR, "abort, home directory is incorrect inside the jail for %d:%d", getuid(), getgid());
+			syslog(LOG_ERR, "abort, home directory %s does not equal %s for %d:%d", pw->pw_dir, newhome, getuid(), getgid());
 			exit(39);
 		}
 		free(oldpw_name);
