@@ -1,0 +1,5 @@
+/etc/jailkit/jk_check.ini
+/etc/jailkit/jk_chrootsh.ini
+/etc/jailkit/jk_init.ini
+/etc/jailkit/jk_lsh.ini
+/etc/jailkit/jk_socketd.ini

@@ -1,17 +1,17 @@
 Source: jailkit
-Maintainer: Olivier Sessink
-Section: web
+Section: admin
 Priority: optional
-Build-Depends: debhelper, autoconf, python
-Standards-Version: 3.5.8.0
-                                                                                
+Maintainer: Olivier Sessink <olivier@lx.student.wau.nl>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.0
+
 Package: jailkit
 Architecture: any
-Depends: ${shlibs:Depends}
-Suggests: 
-Description: Chroot jail utilities
+Depends: ${shlibs:Depends}, python (>= 1.5.0)
+Description: chroot jail utilities
  Jailkit is a set of utilities to create chroot jails for users, processes
  and daemons. There are utilities to build a jail, to test a jail, and 
  to run a jail. See 'man jailkit' for further information.
- 
  The jailkit website is at http://olivier.sessink.nl/jailkit/
+
+

@@ -1,0 +1,7 @@
+jailkit (0.7-1) unstable; urgency=low
+
+  * Initial Release.
+  * First Debian package
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Sat,  1 May 2004 12:02:18 +0200
+
