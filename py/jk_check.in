@@ -163,7 +163,7 @@ def testusers(config, chroothome):
 						print 'ERROR: the real homedir and jail homedir for user '+jpw[0]+' do not correspond in jail '+chroothome
 				rline = realep.readline()
 			if (found == 0):
-				print 'ERROR: user "+jpw[0]+" in jail '+chroothome+'does not exist on the real system'
+				print 'ERROR: user '+jpw[0]+' in jail '+chroothome+'does not exist on the real system'
 			jline = jailep.readline()
 
 def get_list_option(cfgparser, sectionname, optionname):
