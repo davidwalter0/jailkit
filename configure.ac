@@ -9,7 +9,7 @@ AC_CONFIG_SRCDIR(src/jk_socketd.c)
 AC_CONFIG_HEADER(src/config.h)
 
 PACKAGE=jailkit
-VERSION=0.1
+VERSION=0.4
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
@@ -29,6 +29,11 @@ AC_HEADER_STDC
 dnl ************************
 dnl Checks for header files.
 dnl ************************
+
+AC_CHECK_PROG(HAVE_PYTHON, python, no)
+if test "x$HAVE_PYTHON" = "xno" ; then
+	AC_MSG_ERROR(python not found please install python)
+fi
 
 AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h)
 
