@@ -72,6 +72,9 @@ call itself in a jail. It can change the user and group id after jailing the pro
 .BR jk_addjailuser
 is a script to add a user both in the real /etc/passwd as in the JAIL/etc/passwd
 
+.BR jk_procmailwrapper
+is a wrapper for procmail, it will run the .procmailrc from jailed users inside the jail, the .procmailrc from regular users on the normal system.
+
 .SH EXAMPLE
 
 Suppose you need to create an account 'test' that can do sftp and scp
