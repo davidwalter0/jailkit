@@ -48,5 +48,5 @@ tail /var/log/daemon.log /var/log/auth.log
 NOTES ON VARIOUS APPLICATIONS
 
 cvs - cvs needs /tmp/ for temporary files
-
+procmail - needs /dev/null
 
