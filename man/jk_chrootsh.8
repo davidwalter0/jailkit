@@ -23,7 +23,7 @@ Notice that the home directory and the shell are here local inside the chroot
 
 jk_chrootsh needs root access to make the 
 .BR chroot(2)
-system call. Therefore it is setuid root.
+system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot()system call.
 
 .SH FILES
 

@@ -28,7 +28,7 @@ jk_chrootsh: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f jk_socketd jk_lsh jk_chrootsh
+	rm -f jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch
 	rm -f *.o
 	rm -f *~
 
@@ -40,16 +40,20 @@ install:
 	${INSTALL} -d -m 755 ${prefix}/bin
 	${INSTALL} -d -m 755 ${prefix}/sbin
 	${INSTALL} -g root -o root -s -m 0755 jk_socketd ${prefix}/sbin/
-	${INSTALL} -g root -o root -s -m 4755 jk_chrootsh  ${prefix}/bin/
+	${INSTALL} -g root -o root -s -m 0755 jk_chrootlaunch ${prefix}/sbin/
 	${INSTALL} -g root -o root -s -m 0755 jk_lsh  ${prefix}/bin/
+	${INSTALL} -g root -o root -s -m 4755 jk_chrootsh  ${prefix}/bin/
 	# test if the jk_chrootsh is already in /etc/shells
 	if ! grep ${prefix}/bin/jk_chrootsh /etc/shells ; then \
+		echo "appending ${prefix}/bin/jk_chroots to /etc/shells";\
 		echo ${prefix}/bin/jk_chrootsh >> /etc/shells ;\
 	fi
 	
 uninstall:
-	rm -f  ${prefix}jk_socketd
-	rm -f  ${prefix}jk_chrootsh
-	rm -f  ${prefix}jk_lsh
+	rm -f  ${prefix}/sbin/jk_socketd
+	rm -f  ${prefix}/sbin/jk_chrootlaunch
+	rm -f  ${prefix}/bin/jk_lsh
+	rm -f  ${prefix}/bin/jk_chrootsh
+	echo "You must manually remove jk_chrootsh from /etc/shells"
 	# remove jk_chrootsh from /etc/shells
 

@@ -5,9 +5,9 @@ jailkit \- utilities for jailing a user
 
 .SH DESCRIPTION
 
-Jailkit is a set of utilities to limit user accounts to a specific directory and to specific commands. Setting up a jail is a lot easier using these utilities. A jail is a directory in your system, and the user cannot see/do anything outside that directory. The user is jailed in the directory.
+Jailkit is a set of utilities to limit user accounts to a specific directory and to specific commands. Setting up a jail is a lot easier using these utilities. A jail is a directory in your system, and the user cannot see/do anything outside that directory. The user is jailed in the directory. The chroot() system call is used to put the user inside the jail.
 
-Only the super user (root) can break out of a jail. It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
+Only the super user (root) can break out of a jail created with chroot(). It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
 
 If you want the user to be able to do one thing, that one thing should be possible inside the jail. For example if you want the user to be able to run scp, you need to have a copy of scp installed in the jail, and also means to execute it (a shell). As you understand, the fewer executables you have in a jail, and the harder they are to start them, the more work a hacker needs to break out of it.
 

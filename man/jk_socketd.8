@@ -38,7 +38,8 @@ interval = 10
 
 The title of the section is the socket to be created. The directory to create the socket in should exist.
 
-The jailkit socket daemon will change to user nobody once all sockets are opened.
+.SS "Security"
+The jailkit socket daemon will change to user nobody and will chroot() into an empty dir once all sockets are opened.
 
 .SH OPTIONS
 .TP

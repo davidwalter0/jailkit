@@ -88,9 +88,12 @@ static char *ending_slash(const char *src) {
 	}
 }
 
-static void test_jail_and_exec(char *jail, char *exec) {
+/* tests the jail and executable, if they exists etc. 
+returns a newly allocated executable relative to the chroot, 
+so it can be used during exec() */
+static char *test_jail_and_exec(char *jail, char *exec) {
 	struct stat sbuf;
-	char *tmpstr;
+	char *tmpstr, *retval;
 	if (!jail) {
 		syslog(LOG_ERR,"abort, a jaildir must be specified on the commandline");
 		exit(21);
@@ -98,6 +101,10 @@ static void test_jail_and_exec(char *jail, char *exec) {
 	if (!exec) {
 		syslog(LOG_ERR,"abort, an executable must be specified on the commandline");
 		exit(23);
+	}
+	if (jail[0] != '/') {
+		syslog(LOG_ERR,"abort, jail '%s' not accepted, the jail must be an absolute path", jail);
+		exit(27);
 	}
 	/* test the jail existance */
 	if (lstat(jail, &sbuf) == 0) {
@@ -143,11 +150,13 @@ static void test_jail_and_exec(char *jail, char *exec) {
 		syslog(LOG_ERR, "executable %s does not exist",tmpstr);
 		exit(29);
 	}
+	retval = strdup(&tmpstr[strlen(jail)]);
 	free(tmpstr);
+	return retval;
 }
 
 static void print_usage() {
-	printf("\nUsage: "PROGRAMNAME" -j jaildir -x executable [-u user] [-g group] [-p pidfile]\n");
+	printf("\nUsage: "PROGRAMNAME" -j jaildir [-u user] [-g group] [-p pidfile] -x executable -- [executable options]\n");
 	printf("\t-p|--pidfile pidfile\n");
 	printf("\t-j|--jail jaildir\n");
 	printf("\t-x|--exec executable\n");
@@ -160,8 +169,9 @@ static void print_usage() {
 int main (int argc, char **argv) {
 	char *pidfile=NULL, *jail=NULL, *exec=NULL;
 	int uid=-1,gid=-1,i;
+	char **newargv;
 
-	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
+	openlog(PROGRAMNAME, LOG_PID, LOG_DAEMON);
 
 	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
 	for (i=getdtablesize();i>3;i--) {
@@ -169,9 +179,9 @@ int main (int argc, char **argv) {
 	}
 	
 	{
-		int c;
-		char *tuser=NULL, *tgroup=NULL;
-		while (1) {
+		int c=0;
+		char *tuser=NULL, *tgroup=NULL, *texec=NULL;
+		while (c != -1) {
 			int option_index = 0;
 			static struct option long_options[] = {
 				{"pidfile", required_argument, NULL, 'p'},
@@ -183,8 +193,6 @@ int main (int argc, char **argv) {
 				{NULL, 0, NULL, 0}
 			};
 		 	c = getopt_long(argc, argv, "j:p:u:g:x:h",long_options, &option_index);
-			if (c == -1)
-				break;
 			switch (c) {
 			case 'j':
 				jail = ending_slash(optarg);
@@ -199,7 +207,7 @@ int main (int argc, char **argv) {
 				tgroup = strdup(optarg);
 				break;
 			case 'x':
-				exec = strdup(optarg);
+				texec = strdup(optarg);
 				break;
 			case 'h':
 				print_usage();
@@ -208,9 +216,30 @@ int main (int argc, char **argv) {
 		}
 		uid = parse_uid(tuser);
 		gid = parse_gid(tgroup);
-		test_jail_and_exec(jail,exec);
+		exec = test_jail_and_exec(jail,texec);
+		/* construct the new argv from all leftover options */
+		newargv = malloc0((2 + argc - optind)*sizeof(char *));
+		newargv[0] = exec;
+		c = 1;
+		while (optind < argc) {
+			newargv[c] = strdup(argv[optind]);
+			c++;
+			optind++;
+		}
 		free(tuser);
 		free(tgroup);
+		free(texec);
+	}
+	
+	if (pidfile) {
+		FILE *pidfilefd = fopen(pidfile, "w");
+		if (pidfilefd) {
+			int pid = getpid();
+			fscanf(pidfilefd,"%d",&pid);
+			fclose(pidfilefd);
+		} else {
+			syslog(LOG_NOTICE, "failed to write PID into %s", pidfile);
+		}
 	}
 	
 	if (chdir(jail)) {
@@ -229,16 +258,8 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, could not setuid %d", uid);
 		exit(39);
 	}
-	
-	{
-		char **newargv;
-		int i;
-		newargv = malloc0((argc+1)*sizeof(char *));
-		newargv[0] = exec;
-		for (i=1;i<argc;i++) {
-			newargv[i] = argv[i];
-		}
-		execv(exec, newargv);
-	}
+	syslog(LOG_NOTICE,"executing %s in jail %s",exec,jail);
+	execv(exec, newargv);
 	syslog(LOG_ERR, "error: failed to execute %s in jail %s",exec,jail);
+	exit(31);
 }

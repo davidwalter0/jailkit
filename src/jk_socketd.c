@@ -315,6 +315,9 @@ int main(int argc, char**argv) {
 
 	if (pidfile) pidfilefd = fopen(pidfile, "w");
 
+	/* now chroot() to some dir without binaries, and change to nobody:nogroup */
+	chroot("/etc/jailkit");
+	
 	{
 		struct passwd *pw = getpwnam("nobody");
 		if (setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
