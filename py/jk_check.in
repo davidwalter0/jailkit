@@ -25,27 +25,8 @@ def nextpathup(path):
 def testchrootdir(config, path):
 	if (config['verbose']):
 		print "testing basedir "+path
-	try:
-		statbuf = os.lstat(path)
-	except OSError:
-		print "ERROR: cannot lstat() "+path+" !"
-		return 1
-	if (not S_ISDIR(statbuf[ST_MODE])):
-		print "ERROR: "+path+" is not a directory!"
-		return 2
-	if (statbuf[ST_UID] != 0 or statbuf[ST_GID] != 0):
-		print "ERROR: "+path+" is not owned by root:root!"
-		return 3
-	if (statbuf[ST_MODE] & S_IWOTH or statbuf[ST_MODE] & S_IWGRP):
-		print "ERROR: "+path+" is writable by group or others!"
-		return 4
-	npath = nextpathup(path)
-	while (npath != None):
-		retval = testchrootdir(config,npath)
-		if (retval != 0):
-			return retval
-		npath = nextpathup(path)
-
+	jk_lib.chroot_is_safe(path)
+	
 def sizeAndDigest(filename):
 	"""Returns the size and digest of a sequence of strings."""
 	t = 0

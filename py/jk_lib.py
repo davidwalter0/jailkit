@@ -5,6 +5,34 @@ import sys
 import stat
 import shutil
 
+def chroot_is_safe(path, failquiet=0):
+	"""tests if path is a safe jail, not writable, no writable /etc/ and /lib, return 1 if all is OK"""
+	try:
+		statbuf = os.lstat(path)
+	except OSError:
+		if (failquiet == 0):
+			print "ERROR: cannot lstat() "+path+" !"
+		return -1
+	if (not S_ISDIR(statbuf[ST_MODE])):
+		print "ERROR: "+path+" is not a directory!"
+		return -2
+	if (statbuf[ST_UID] != 0 or statbuf[ST_GID] != 0):
+		print "ERROR: "+path+" is not owned by root:root!"
+		return -3
+	if (statbuf[ST_MODE] & S_IWOTH or statbuf[ST_MODE] & S_IWGRP):
+		print "ERROR: "+path+" is writable by group or others!"
+		return -4
+	for subd in 'lib','etc','usr','var','bin','dev','proc','sbin','sys':
+		retval = chroot_is_safe(path+'/'+subd,1)
+		if (retval < -1):
+			return retval
+	npath = nextpathup(path)
+	while (npath != None):
+		retval = testchrootdir(npath)
+		if (retval != 1):
+			return retval
+		npath = nextpathup(path)
+
 def test_suid_sgid(path):
 	"""returns 1 if the file is setuid or setgid, returns 0 if it is not"""
 	statbuf = os.lstat(path)

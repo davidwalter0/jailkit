@@ -167,8 +167,8 @@ def listsections(file):
 def testargs(args,config):
 	if (len(args)<2):
 		jk_lib.clean_exit(2,'need at least a chrootdir and a configfile-section',usage)
-	if (not os.path.isdir(args[0])):
-		jk_lib.clean_exit(3,'chrootdir '+args[0]+' does not exist',usage)
+	if (jk_lib.chroot_is_safe(args[0]) != 1):
+		jk_lib.clean_exit(3,'chrootdir '+args[0]+' is not safe',usage)
 	if (not os.path.isfile(config['file'])):
 		jk_lib.clean_exit(3,'configfile '+config['file']+' does not exist',usage)
 

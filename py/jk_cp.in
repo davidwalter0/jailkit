@@ -73,24 +73,25 @@ def testargs(args):
 			sys.exit(4)
 
 def main():
-        try:
-                opts, args = getopt.getopt(sys.argv[1:], 'fhv', ['help', 'verbose', 'force'])
-        except getopt.GetoptError:
-                usage()
-                sys.exit(1)
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], 'fhv', ['help', 'verbose', 'force'])
+	except getopt.GetoptError:
+		usage()
+		sys.exit(1)
 	config = {}
-        config['verbose'] = 0
+	config['verbose'] = 0
 	config['force'] = 0
-        for o, a in opts:
-                if o in ("-h", "--help"):
-                        usage()
-                        sys.exit()
-                if o in ("-v", "--verbose"):
-                        config['verbose'] = 1
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			usage()
+			sys.exit()
+		if o in ("-v", "--verbose"):
+			config['verbose'] = 1
 		if o in ("-f", "--force"):
 			config['force'] = 1
 	testargs(args)
 	if (args[0][-1] != '/'): args[0] = args[0]+'/'
+	jk_lib.chroot_is_safe(args[0])
 	startcopy(config, args[0], args[1:])
 
 if __name__ == "__main__":
