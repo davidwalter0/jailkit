@@ -101,20 +101,24 @@ typedef struct {
 } Tsavedenv;
 
 static Tsavedenv *savedenv_new(const char *key) {
+	char *val = getenv(key);
+	if (!val) return NULL;
 	Tsavedenv *savedenv = malloc(sizeof(Tsavedenv));
 	savedenv->key = strdup(key);
-	savedenv->value = strdup(getenv(key));
+	savedenv->value = strdup(val);
 	return savedenv;
 }
 
 static void savedenv_restore(Tsavedenv *savedenv) {
-	 setenv(savedenv->key, savedenv->value, 1);
+	if (savedenv) setenv(savedenv->key, savedenv->value, 1);
 }
 
 static void savedenv_free(Tsavedenv *savedenv) {
-	free(savedenv->key);
-	free(savedenv->value);
-	free(savedenv);
+	if (savedenv) {
+		free(savedenv->key);
+		free(savedenv->value);
+		free(savedenv);
+	}
 }
 
 int main (int argc, char **argv) {

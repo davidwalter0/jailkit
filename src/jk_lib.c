@@ -57,11 +57,13 @@ char **explode_string(const char *string, char delimiter) {
 		tmp = (tmp2) ? tmp2+1 : NULL;
 	}
 	arr[cur] = NULL;
+	DEBUG_MSG("exploding string, returning %p\n",arr);
 	return arr;
 }
 
 int count_array(char **arr) {
 	char **tmp = arr;
+	DEBUG_MSG("count_array, started for %p\n",arr);
 	while (*tmp) tmp++;
 	return (tmp-arr);
 }
