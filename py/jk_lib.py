@@ -22,7 +22,8 @@ def lddlist_libraries(executable):
 		if (len(subl)>0):
 			if (subl[0] == 'statically' and subl[1] == 'linked'):
 				return retval
-			retval += [subl[2]]
+			if (len(subl)>=3):
+				retval += [subl[2]]
 		line = pd[1].readline()
 	return retval
 
