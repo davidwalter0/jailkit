@@ -28,7 +28,11 @@ distclean:
 install:
 	${INSTALL} -d -m 755 /etc/jailkit
 	for file in ${INIFILES} ; do \
-		${INSTALL} -g root -o root -m 0644 ini/$${file} /etc/jailkit/ ;\
+		if [ -f /etc/jailkit/$${file} ]; then \
+			${INSTALL} -g root -o root -m 0644 ini/$${file} /etc/jailkit/$${file}.dist ;\
+		else \
+			${INSTALL} -g root -o root -m 0644 ini/$${file} /etc/jailkit/ ;\
+		fi ;\
 	done
 	@cd src/ && $(MAKE) install
 	@cd py/ && $(MAKE) install

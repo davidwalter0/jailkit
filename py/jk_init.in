@@ -42,6 +42,10 @@ def add_jk_socketd_entry(config, chroot):
 	print 'not yet implemented'
 
 def init_device(config, chroot, path):
+	if (os.path.exists(chroot+path)):
+		if (config['verbose']):
+			print 'device '+chroot+path+' does exist already'
+		return
 	sb = os.stat(path)
 	try:
 		major = sb.st_rdev / 256  #major = st_rdev divided by 256
@@ -56,8 +60,9 @@ def init_device(config, chroot, path):
 		if (config['verbose']):
 			print 'creating device '+chroot+path
 		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
+		jk_lib.copy_permissions(path, chroot+path, 0, 0)
 	except:
-		print 'failed to create device '+path
+		print 'failed to create device '+path+', this is a know problem with python 2.1'
 
 def init_files(config,chroot,files):
 	if (chroot[-1] == '/'):

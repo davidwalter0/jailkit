@@ -30,8 +30,15 @@ void iniparser_close(Tiniparser *ip) {
 char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen) {
 	int sectionNameChar=0, sectionStart=0;
 	while (!feof(ip->fd)){
-		char ch=fgetc(ip->fd);
-		if (!sectionStart && ch=='[') {
+		int inComment = 0;
+		char prevch='\0', ch=fgetc(ip->fd);
+		if (ch == '#' && (prevch == '\n' || prevch=='\0')) {
+			inComment = 1;
+		} else if (ch == '\n' && inComment == 1) {
+			inComment = 0;
+		} else if (inComment == 1) {
+			/* do nothing if in comment */
+		} else if (!sectionStart && ch=='[') {
 			DEBUG_MSG("Section begins.\n");
 			sectionStart=1;
 		} else if (sectionStart && ch != ']') {
@@ -43,6 +50,7 @@ char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen) {
 			DEBUG_MSG("Found section name end, in section, found [%s]\n", buf);
 			return buf;
 		}
+		prevch = ch;
 	}
 	return NULL;
 }
@@ -60,14 +68,20 @@ int iniparser_has_section(Tiniparser *ip, const char *section) {
 }
 
 int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, unsigned int position, char *buffer, int bufferlen) {
-	char ch;
-	int sectionNameChar=0, keyNameChar=0, bufferChar=0;
+	char ch, prevch='\0';
+	int sectionNameChar=0, keyNameChar=0, bufferChar=0, inComment=0;
 	int inSection=0, sectionStart=0, foundKey=0;
 	fseek(ip->fd,position,SEEK_SET);
 	DEBUG_LOG("iniparser_get_string_at_position, looking for key %s in section %s, starting at pos %d\n",key,section,position);
 	while (!feof(ip->fd)){
 		ch=fgetc(ip->fd);
-		if (!sectionStart && ch=='['){
+		if (ch == '#' && (prevch == '\n' || prevch == '\0')) {
+			inComment = 1;
+		} else if (ch == '\n' && inComment == 1) {
+			inComment = 0;
+		} else if (inComment == 1) {
+			/* we do nothing if we are inside a comment */
+		} else if (!sectionStart && ch=='['){
 			if (inSection){
 				break;
 			}
@@ -98,8 +112,8 @@ int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const c
 			DEBUG_MSG("Oops, wrong key, guess this key isn't %s= (ch=%c)\n", key,ch);
 			foundKey=0;
 			keyNameChar=0;
-		} else if (inSection && foundKey && (ch==13 || ch==10 || ch==';')){
-			DEBUG_MSG("Invalid character or comment start, done with key %s=\n", key);
+		} else if (inSection && foundKey && ch=='\n'){
+			DEBUG_MSG("End of line, done with key %s=\n", key);
 			foundKey=0;
 			break;
 		} else if (inSection && foundKey && bufferChar < bufferlen){
@@ -109,6 +123,7 @@ int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const c
 			DEBUG_MSG("Hit the buffer max, EOM, done w/ key %s=\n", key);
 			break;
 		}
+		prevch = ch;
 	}
 	buffer[bufferChar]='\0';
 	return bufferChar;

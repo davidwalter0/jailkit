@@ -45,21 +45,25 @@ def create_full_path(directory, be_verbose=0):
 		indx = string.find(directory,'/',indx+1)
 	os.mkdir(directory)
 
-def copy_with_permissions(src, dst, be_verbose=0):
-	"""copies the file and the permissions, except any setuid or setgid bits"""
-	shutil.copyfile(src,dst)
+def copy_permissions(src, dst, be_verbose=0, allow_suid=0):
 	sbuf = os.stat(src)
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
 	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
-	if (mode & (stat.S_ISUID | stat.S_ISGID)):
-		if (be_verbose):
-			print 'removing setuid and setgid permissions from '+dst
-#		print 'setuid!!! mode='+str(mode)
-		mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
-#		print 'setuid!!! after mode='+str(mode)
-#	print 'mode='+str(mode)
+	if (not allow_suid):
+		if (mode & (stat.S_ISUID | stat.S_ISGID)):
+			if (be_verbose):
+				print 'removing setuid and setgid permissions from '+dst
+#			print 'setuid!!! mode='+str(mode)
+			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
+#			print 'setuid!!! after mode='+str(mode)
+#		print 'mode='+str(mode)
 	os.chmod(dst, mode)
+
+def copy_with_permissions(src, dst, be_verbose=0):
+	"""copies the file and the permissions, except any setuid or setgid bits"""
+	shutil.copyfile(src,dst)
+	copy_permissions(src, dst, be_verbose, 0)
 
 def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1):
 	"""copies a list of executables and their libraries to the chroot"""
