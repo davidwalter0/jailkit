@@ -180,7 +180,7 @@ def activateConfig(configfile, verbose):
 
 	jails = testrealpasswd()
 	for jail in jails:
-		if (jail not in cfg.sections()):
+		if ((jail not in cfg.sections()) and (jail[:-1] not in cfg.sections())):
 			cfg.add_section(jail)
 
 	for section in cfg.sections():
