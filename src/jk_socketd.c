@@ -40,21 +40,21 @@ typedef struct {
 	pthread_t thread;
 	char *outpath;
 	char *inpath;
-	int normrate;
-	int peekrate;
-	int roundtime;
+	unsigned int normrate;
+	unsigned int peekrate;
+	unsigned int roundtime;
 
 	int outsocket;
 	int insocket;
 
-	int lastwaspeek; /* the previous round was a peekround */
+	unsigned short int lastwaspeek; /* the previous round was a peekround */
 	struct timeval lasttime; /* last time the socket was checked */
 	struct timeval lastreset; /* last time that lastsize was set to zero */
-	int lastsize; /* bytes since lastreset */
+	unsigned int lastsize; /* bytes since lastreset */
 } Tsocketlink;
 
 /* the only global variable */
-int do_clean_exit = 0;
+unsigned short int do_clean_exit = 0;
 
 static void close_socketlink(Tsocketlink *sl) {
 	close(sl->insocket);
@@ -64,7 +64,7 @@ static void close_socketlink(Tsocketlink *sl) {
 }
 
 static void clean_exit(int numsockets, Tsocketlink **sl) {
-	int i;
+	unsigned int i;
 	for (i=0;i<numsockets;i++) {
 		close_socketlink(sl[i]);
 	}
@@ -143,7 +143,7 @@ static void socketlink_handle(Tsocketlink *sl) {
 			if (sl->lastsize > sl->peekrate) {
 				/* size is over the peekrate, mark this round as peek, and sleep the rest of the second */
 				DEBUG_MSG("sleep, we're over peekrate!! (size=%d)\n",sl->lastsize);
-				syslog(LOG_WARNING, "device %s is over the peek limit (%d bytes/s)", sl->inpath, (sl->peekrate * 1000000 / sl->roundtime));
+				syslog(LOG_WARNING, "device %s is over the peek limit (%d bytes/s)", sl->inpath, (unsigned int)((unsigned long)sl->peekrate * (unsigned long)1000000 / (unsigned long)sl->roundtime));
 				sleepround(sl->roundtime - timediff(sl->lastreset, sl->lasttime),1);
 				sl->lastsize = 0;
 				gettimeofday(&sl->lastreset,NULL);
@@ -199,14 +199,22 @@ static void usage() {
 	printf(" -h|--help                    this help screen\n\n");
 }
 
+static unsigned short int have_socket(char *path, Tsocketlink **sl, unsigned int size) {
+	unsigned int i;
+	for (i=0;i<size;i++) {
+		if (strcmp(sl[i]->inpath, path)==0) return 1;
+	}
+	return 0;
+}
+
 int main(int argc, char**argv) {
 	Tsocketlink *sl[MAX_SOCKETS];
 	
 /*	struct timeval startround, endround;*/
-	int numsockets = 0;
+	unsigned int numsockets = 0;
 	int outsocket;
-	int i;
-	int nodetach = 0;
+	unsigned int i;
+	unsigned short int nodetach = 0;
 	char *pidfile = NULL;
 	FILE *pidfilefd = NULL;
 
@@ -280,30 +288,35 @@ int main(int argc, char**argv) {
 			exit(11);
 		}
 		while (tmp = iniparser_next_section(ip, buf, 1024)) {
-			int base=511, peek=2048, interval;
-			long prevpos, secpos;
-			prevpos = iniparser_get_position(ip);
-			secpos = prevpos - strlen(tmp)-4;
-			DEBUG_MSG("secpos=%d, prevpos=%d\n",secpos,prevpos);
-			base = iniparser_get_int(ip, tmp, "base");
-			iniparser_set_position(ip, secpos);
-			peek = iniparser_get_int(ip, tmp, "peek");
-			iniparser_set_position(ip, secpos);
-			interval = iniparser_get_int(ip, tmp, "interval");
-			iniparser_set_position(ip, secpos);
-			if (10 > base || base >  10000) base = 511;
-			if (100 > peek || peek > 100000 || peek < base) peek = 2048;
-			if (1 > interval || interval > 60) interval = 10;
-			sl[numsockets] = new_socketlink(outsocket, tmp, base, peek, interval*1000000, nodetach);
-			if (sl[numsockets]) {
-				syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%d",tmp,base,peek,interval);
-				if (nodetach) printf("listening on socket %s with rates [%d:%d]/%d\n",tmp,base,peek,interval);
-				numsockets++;
+			if (!have_socket(tmp, sl, numsockets)) {
+				unsigned int base=511, peek=2048, interval;
+				long prevpos, secpos;
+				prevpos = iniparser_get_position(ip);
+				secpos = prevpos - strlen(tmp)-4;
+				DEBUG_MSG("secpos=%d, prevpos=%d\n",secpos,prevpos);
+				base = iniparser_get_int(ip, tmp, "base");
+				iniparser_set_position(ip, secpos);
+				peek = iniparser_get_int(ip, tmp, "peek");
+				iniparser_set_position(ip, secpos);
+				interval = iniparser_get_int(ip, tmp, "interval");
+				iniparser_set_position(ip, secpos);
+				if (10 > base || base >  10000) base = 511;
+				if (100 > peek || peek > 100000 || peek < base) peek = 2048;
+				if (1 > interval || interval > 60) interval = 10;
+				sl[numsockets] = new_socketlink(outsocket, tmp, base, peek, interval*1000000, nodetach);
+				if (sl[numsockets]) {
+					syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%d",tmp,base,peek,interval);
+					if (nodetach) printf("listening on socket %s with rates [%d:%d]/%d\n",tmp,base,peek,interval);
+					numsockets++;
+				} else {
+					if (nodetach) printf("failed to create socket %s\n",tmp);
+				}
+				DEBUG_MSG("setting position to %d\n",prevpos);
+				iniparser_set_position(ip, prevpos);
 			} else {
-				if (nodetach) printf("failed to create socket %s\n",tmp);
+				syslog(LOG_NOTICE, "socket %s is mentioned multiple times in config file",tmp);
+				if (nodetach) printf("socket %s is mentioned multiple times in config file\n",tmp);
 			}
-			DEBUG_MSG("setting position to %d\n",prevpos);
-			iniparser_set_position(ip, prevpos);
 		}
 	}
 	
@@ -315,7 +328,7 @@ int main(int argc, char**argv) {
 
 	if (pidfile) pidfilefd = fopen(pidfile, "w");
 
-	/* now chroot() to some dir without binaries, and change to nobody:nogroup */
+	/* now chroot() to some root:root dir without binaries, and change to nobody:nogroup */
 	
 	{
 		struct passwd *pw = getpwnam("nobody");
@@ -348,7 +361,7 @@ int main(int argc, char**argv) {
 		if (pidfilefd) {
 			/* we should do this using fscanf(pidfilefd,"%d", getpid()) */
 			char buf[32];
-			int size;
+			unsigned int size;
 			size = snprintf(buf, 32, "%d", getpid());
 			fwrite(buf, size, sizeof(char), pidfilefd);
 			fclose(pidfilefd);
