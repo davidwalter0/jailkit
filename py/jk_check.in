@@ -111,7 +111,7 @@ def testchrootfiles(config, chroothome, path=''):
 				if (config['verbose']):
 					print "ignoring path "+chrootpath
 
-def testusers(config, chroothome):
+def testjailusers(config, chroothome):
 	if (os.path.exists(chroothome+'/etc/passwd')):
 		jailep = open(chroothome+'/etc/passwd','r')
 		realep = open('/etc/passwd','r')
@@ -133,11 +133,32 @@ def testusers(config, chroothome):
 					# now check if the jail is correct
 					if (rpw[5] != chroothome+'.'+jpw[5]):
 						print 'ERROR: the real homedir and jail homedir for user '+jpw[0]+' do not correspond in jail '+chroothome
+				## test for jk_lsh and test if the user/group is in the config file
 				rline = realep.readline()
 			if (found == 0):
 				print 'ERROR: user '+jpw[0]+' in jail '+chroothome+'does not exist on the real system'
 			jline = jailep.readline()
 
+def testrealpasswd():
+	"""reads the real /etc/passwd and looks for users that have a jail configured, returns a list of jails"""
+	rep = open('/etc/passwd')
+	rline = rep.readline()
+	retval = []
+	while (len(rline)>0):
+		rpw = string.split(rline, ':')
+		# test if the entry has any jail characteristics
+		jaildot = string.find(rpw[5], '.')
+		if (jaildot != -1):
+			chroot = rpw[5][:jaildot]
+			retval += [chroot]
+			# test if the user actually exists in the chroot
+			if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
+				print 'ERROR: user '+rpw[0]+' does not exist in '+chroot+'/etc/passwd'
+			if (rpw[6] != '/usr/bin/jk_chrootsh\n'):
+				print 'ERROR: user '+rpw[0]+' has a /./ but does not have the jk_chrootsh shell '+rpw[6]
+		rline = rep.readline()
+	return retval
+			
 def get_list_option(cfgparser, sectionname, optionname):
 	retval = []
 	if (cfgparser.has_option(sectionname,optionname)):
@@ -147,10 +168,17 @@ def get_list_option(cfgparser, sectionname, optionname):
 	return retval
 
 def activateConfig(configfile, verbose):
-	if (not os.path.isfile(configfile)):
-		clean_exit(2, "cannot read config file "+configfile)
 	cfg = ConfigParser.ConfigParser()
-	cfg.read([configfile])
+	if (os.path.isfile(configfile)):
+		cfg.read([configfile])
+	else:
+		print 'WARNING: '+configfile+' does not exist, only checking jails found in /etc/passwd'
+
+	jails = testrealpasswd()
+	for jail in jails:
+		if (jail not in cfg.sections()):
+			cfg.add_section(jail)
+
 	for section in cfg.sections():
 		chrootdir = section
 		if (chrootdir[-1:] != '/'): chrootdir += '/'
@@ -165,7 +193,7 @@ def activateConfig(configfile, verbose):
 		config['ignorepatheverywhere'] = get_list_option(cfg,section, 'ignorepatheverywhere')
 		testchrootdir(config, chrootdir)
 		testchrootfiles(config, chrootdir)
-		testusers(config, chrootdir)
+		testjailusers(config, chrootdir)
 
 def clean_exit(errno, message):
 	print "** FAILURE **"

@@ -158,22 +158,27 @@ def clean_exit(exitno,message,usagefunc,type='ERROR'):
 	usagefunc()
 	sys.exit(exitno)
 
-def test_firstitem_exist(item, filename):
-	fd = open(filename,'r+')
+def test_numitem_exist(item,num,filename):
+	try:
+		fd = open(filename,'r')
+	except:
+		#print ''+filename+' does not exist'
+		return 0
 	line = fd.readline()
 	while (len(line)>0):
 		pwstruct = string.split(line,':')
-		if (pwstruct[0] == item):
+		#print 'len pwstruct='+str(len(pwstruct))+' while looking for '+item
+		if (len(pwstruct) > num and pwstruct[num] == item):
 			fd.close()
 			return 1
 		line = fd.readline()
 	return 0
 
 def test_user_exist(user, passwdfile):
-	return test_firstitem_exist(user,passwdfile)
+	return test_numitem_exist(user,0,passwdfile)
 
 def test_group_exist(group, groupfile):
-	return test_firstitem_exist(group,groupfile)
+	return test_numitem_exist(user,0,groupfile)
 
 def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 	if (chroot[-1] == '/'):
