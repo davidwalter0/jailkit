@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# start/stop jailkit logging daemon.
+
+JK_SOCKETD=/usr/sbin/jk_socketd
+
+test -x ${JK_SOCKETD} || exit 0
+
+case "$1" in
+    start)
+	echo -n "Starting jailkit:"
+	echo -n " jk_socketd"
+	${JK_SOCKETD}
+	echo " done."
+	;;
+    stop)
+        echo -n "Stopping jailkit:"
+        echo -n " jk_socketd"
+        killall ${JK_SOCKETD}
+        echo " done."
+	;;
+    restart)
+        $0 stop
+	;;
+    *)
+	echo "Usage: /etc/init.d/portmap {start|stop|restart}"
+	exit 1
+	;;
+esac
+
+exit 0
