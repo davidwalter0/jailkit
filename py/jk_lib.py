@@ -184,7 +184,7 @@ def test_user_exist(user, passwdfile):
 	return test_numitem_exist(user,0,passwdfile)
 
 def test_group_exist(group, groupfile):
-	return test_numitem_exist(user,0,groupfile)
+	return test_numitem_exist(group,0,groupfile)
 
 def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 	if (chroot[-1] == '/'):
