@@ -73,7 +73,7 @@ def lddlist_libraries(executable):
 			if (subl[0] == 'linux-gate.so.1'):
 				pass
 			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
-			if (len(sub1)==2 and sub1[0][0:4] == '/lib' and os.path.exists(subl[0])):
+			if (len(subl)==2 and subl[0][0:4] == '/lib' and os.path.exists(subl[0])):
 				retval += [subl[0]]
 			if (len(subl)>=3):
 				if (os.path.exists(subl[2])):
