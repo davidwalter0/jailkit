@@ -1,10 +1,21 @@
+/*
+ * Copyright (C) Olivier Sessink 2002-2004
+ *
+ * jk_procmailwrapper
+ * this program will simply execute procmail for users that are not in a jail
+ * and it will exit() for users that are in a jail (mail will *not* be delivered)
+ *
+ * this will probably extended in the near future
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include <pwd.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 
-#define NORMAL_PROCMAIL "/usr/bin/procmail"
+#include "config.h"
 
 int user_is_chrooted(const char *homedir) {
 	char *tmp;
@@ -28,9 +39,12 @@ int main(int argc, char *argv[], char *envp[]) {
 		clean_exit(argv[0], 131);
 	}
 	if (user_is_chrooted(pw->pw_dir)) {
+		/* would it be nice if we can do a chroot() and then execute procmail 
+		within the chroot with the right user/group permissions? we'll work on that
+		for the next jailkit release.. */
 		clean_exit(argv[0],111);
 	} else {
-		execve(NORMAL_PROCMAIL, argv, envp);
+		execve(PROCMAILPATH, argv, envp);
 	}
 	exit(0);
 }

@@ -42,6 +42,10 @@ AC_CHECK_PROG(HAVE_PYTHON, python, yes)
 if test "x$HAVE_PYTHON" != "xyes" ; then
 	AC_MSG_ERROR(python not found please install python)
 fi
+AC_PATH_PROG(PROCMAILPATH, procmail, no, /usr/bin)
+if test "x$PROCMAILPATH" != "xno" ; then
+	AC_DEFINE_UNQUOTED(PROCMAILPATH, "$PROCMAILPATH")
+fi
 
 AC_CONFIG_FILES(Makefile src/Makefile py/Makefile man/Makefile)
 AC_OUTPUT

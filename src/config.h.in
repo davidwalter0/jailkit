@@ -3,3 +3,4 @@
  */
 #undef VERSION 
 #undef PACKAGE
+#undef PROCMAILPATH
