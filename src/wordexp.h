@@ -30,7 +30,7 @@
 #define	_WORDEXP_H_
 
 #include <sys/cdefs.h>
-#include <sys/_types.h>
+#include <sys/types.h>
 
 #if __XSI_VISIBLE && !defined(_SIZE_T_DECLARED)
 typedef	__size_t	size_t;
@@ -38,11 +38,11 @@ typedef	__size_t	size_t;
 #endif
 
 typedef struct {
-	__size_t	we_wordc;	/* count of words matched */
+	size_t	we_wordc;	/* count of words matched */
 	char		**we_wordv;	/* pointer to list of words */
-	__size_t	we_offs;	/* slots to reserve in we_wordv */
+	size_t	we_offs;	/* slots to reserve in we_wordv */
 	char		*we_strings;	/* storage for wordv strings */
-	__size_t	we_nbytes;	/* size of we_strings */
+	size_t	we_nbytes;	/* size of we_strings */
 } wordexp_t;
 
 /*
