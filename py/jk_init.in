@@ -86,20 +86,19 @@ def init_files(config,chroot,files):
 
 def init_directory(config,chroot,dirs):
 	for tree in dirs:
-		sb = os.stat(tree)
-		if (sb != None):
-			head,tail = os.path.split(chroot+tree)
-			jk_lib.create_full_path(head, config['verbose'])
-			if (not os.path.isdir(chroot+tree)):
-				if (config['verbose']):
-					print 'creating dir '+chroot+tree
-				os.mkdir(chroot+tree, sb[stat.ST_MODE])
-			ldir = os.listdir(tree)
-			for entry in ldir:
-				if (os.path.isdir(tree+'/'+entry)):
-					init_directory(config,chroot,[tree+'/'+entry])
-				elif (os.path.isfile(tree+'/'+entry)):
-					init_files(config,chroot,[tree+'/'+entry])
+		if (tree[-1:] == '/'):
+			tree = tree[:-1]
+		if (not os.path.isdir(chroot+tree)):
+#			if (config['verbose']):
+#				print 'creating dir '+chroot+tree
+			jk_lib.create_full_path(chroot+tree, config['verbose'])
+			jk_lib.copy_permissions(tree, chroot+tree, config['verbose'])
+		ldir = os.listdir(tree)
+		for entry in ldir:
+			if (os.path.isdir(tree+'/'+entry)):
+				init_directory(config,chroot,[tree+'/'+entry])
+			elif (os.path.isfile(tree+'/'+entry)):
+				init_files(config,chroot,[tree+'/'+entry])
 #				else:
 #					print 'doing nothing for '+tree+'/'+entry
 		else:
@@ -121,6 +120,7 @@ def handle_cfg_section(config,chroot,cfg,section):
 	init_directory(config,chroot,dirs)
 	emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
 	for edir in emptydirs:
+#		print 'DEBUG emptydir='+edir
 		jk_lib.create_full_path(chroot+edir, config['verbose'])
 	users = jk_lib.config_get_option_as_list(cfg,section,'users')
 	groups = jk_lib.config_get_option_as_list(cfg,section,'groups')

@@ -11,13 +11,13 @@ jk_chrootsh \- a shell that will put the user inside a changed root
 
 jk_chrootsh can be used as a shell for a user. That user will be put into a changed root. The directory where to put the user in is read from the users home directory, the last occuring /./ sequence is used to mark the location of the changed root. An example line in /etc/passwd would look like
 
-test:x:10000:10000::/home/testchroot/./home/test:/bin/jk_chrootsh
+test:x:10000:10000::/home/testchroot/./home/test:/usr/sbin/jk_chrootsh
 
 In this example the user will be chroot-ed into /home/testchroot
 
 Inside the chroot-ed directory, it will look for /etc/passwd and it will execute the shell for the user from that file. For the above example that file should have an entry like
 
-test:x:10000:10000::/home/test:/bin/jk_lsh
+test:x:10000:10000::/home/test:/usr/sbin/jk_lsh
 
 Notice that the home directory and the shell are here local inside the chroot
 

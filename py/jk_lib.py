@@ -91,15 +91,17 @@ def create_full_path(directory, be_verbose=0):
 		return
 	tmp = directory
 	while (not os.path.exists(tmp)):
-#		print tmp+' does not exist'
+#		print 'DEBUG A: '+tmp+' does not exist'
 		tmp = os.path.dirname(tmp)
 	indx = string.find(directory,'/',len(tmp)+1)
 	while (indx != -1):
 		if (be_verbose):
 			print 'creating directory '+directory[:indx]
-		os.mkdir(directory[:indx])
+		os.mkdir(directory[:indx], 0755)
 		indx = string.find(directory,'/',indx+1)
-	os.mkdir(directory)
+	if (be_verbose):
+		print 'creating directory '+directory
+	os.mkdir(directory, 0755)
 
 def copy_permissions(src, dst, be_verbose=0, allow_suid=0):
 	sbuf = os.stat(src)
@@ -131,7 +133,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 	for file in binarieslist:
 		if (file in handledfiles):
 #			print 'handled '+file+' already'
-			break
+			continue
 #		print 'file',file,'is not in',handledfiles
 		if (not os.path.exists(file)):
 			if (be_verbose):
@@ -149,7 +151,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				else:
 					if (be_verbose):
 						print 'source file '+chroot+file+' exists already'
-					break
+					continue
 			create_full_path(chroot+os.path.dirname(file),be_verbose)
 			if (os.path.islink(file)):
 				realfile = os.readlink(file)
