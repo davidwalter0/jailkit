@@ -1,6 +1,6 @@
 # Jailkit
 # configure.ac - the autoconf file
-# Copyright (C) 2003 Olivier Sessink
+# Copyright (C) 2003-2004 Olivier Sessink
 #
 
 AC_INIT
@@ -9,7 +9,7 @@ AC_CONFIG_SRCDIR(src/jk_socketd.c)
 AC_CONFIG_HEADER(src/config.h)
 
 PACKAGE=jailkit
-VERSION=pre0.4
+VERSION=0.5
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
