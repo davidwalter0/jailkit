@@ -13,15 +13,6 @@ LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib
 
-def nextpathup(path):
-	try:
-		indx = string.rindex(path,'/')
-		if (indx > 0):
-			return path[:indx]
-	except ValueError:
-		pass
-	return None
-
 def testchrootdir(config, path):
 	if (config['verbose']):
 		print "testing basedir "+path

@@ -5,30 +5,44 @@ import sys
 import stat
 import shutil
 
-def chroot_is_safe(path, failquiet=0):
-	"""tests if path is a safe jail, not writable, no writable /etc/ and /lib, return 1 if all is OK"""
+def nextpathup(path):
+	try:
+		indx = string.rindex(path,'/')
+		if (indx > 0):
+			return path[:indx]
+	except ValueError:
+		pass
+	return None
+
+def path_is_safe(path, failquiet=0):
 	try:
 		statbuf = os.lstat(path)
 	except OSError:
 		if (failquiet == 0):
 			print "ERROR: cannot lstat() "+path+" !"
 		return -1
-	if (not S_ISDIR(statbuf[ST_MODE])):
+	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
 		print "ERROR: "+path+" is not a directory!"
 		return -2
-	if (statbuf[ST_UID] != 0 or statbuf[ST_GID] != 0):
+	if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != 0):
 		print "ERROR: "+path+" is not owned by root:root!"
 		return -3
-	if (statbuf[ST_MODE] & S_IWOTH or statbuf[ST_MODE] & S_IWGRP):
+	if (statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP):
 		print "ERROR: "+path+" is writable by group or others!"
-		return -4
+		return -4	
+
+def chroot_is_safe(path, failquiet=0):
+	"""tests if path is a safe jail, not writable, no writable /etc/ and /lib, return 1 if all is OK"""
+	retval = path_is_safe(path,failquiet)
+	if (retval < -1):
+			return retval
 	for subd in 'lib','etc','usr','var','bin','dev','proc','sbin','sys':
-		retval = chroot_is_safe(path+'/'+subd,1)
+		retval = path_is_safe(path+'/'+subd,1)
 		if (retval < -1):
 			return retval
 	npath = nextpathup(path)
 	while (npath != None):
-		retval = testchrootdir(npath)
+		retval = path_is_safe(npath,0)
 		if (retval != 1):
 			return retval
 		npath = nextpathup(path)
