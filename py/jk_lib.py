@@ -6,7 +6,10 @@ import stat
 import shutil
 
 def nextpathup(path):
+	#if (path[-1:] == '/'):
+	#	path = path[:-1]
 	try:
+		#print 'path='+path
 		indx = string.rindex(path,'/')
 		if (indx > 0):
 			return path[:indx]
@@ -36,7 +39,6 @@ def chroot_is_safe(path, failquiet=0):
 	"""tests if path is a safe jail, not writable, no writable /etc/ and /lib, return 1 if all is OK"""
 	retval = path_is_safe(path,failquiet)
 	if (retval < -1):
-		print 'DEBUG, retval='+str(retval)
 		return retval
 	for subd in 'lib','etc','usr','var','bin','dev','proc','sbin','sys':
 		retval = path_is_safe(path+'/'+subd,1)
@@ -46,8 +48,10 @@ def chroot_is_safe(path, failquiet=0):
 	while (npath != None):
 		retval = path_is_safe(npath,0)
 		if (retval != 1):
+#			print 'testing path='+npath+'returned '+str(retval)
 			return retval
-		npath = nextpathup(path)
+		npath = nextpathup(npath)
+	return 1
 
 def test_suid_sgid(path):
 	"""returns 1 if the file is setuid or setgid, returns 0 if it is not"""

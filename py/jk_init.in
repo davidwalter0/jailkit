@@ -42,6 +42,7 @@ def add_jk_socketd_entry(config, chroot):
 	print 'not yet implemented'
 
 def init_device(config, chroot, path):
+	jk_lib.create_full_path(chroot+os.path.dirname(path), config['verbose'])
 	if (os.path.exists(chroot+path)):
 		if (config['verbose']):
 			print 'device '+chroot+path+' does exist already'
