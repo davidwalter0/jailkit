@@ -4,12 +4,19 @@ prefix = @prefix@
 SRCS = jailkit.8 jk_chrootsh.8 jk_lsh.8 jk_socketd.8 jk_init.8 jk_check.8 jk_cp.8 jk_chrootlaunch.8
 OBJS = $(SRCS:.8=.8.gz)
 
-all: ${SRCS}
-	for file in ${SRCS} ; do \
-		gzip < $${file} > $${file}.gz ;\
-	done
+%.8.gz : %.8
+	gzip > $@ < $<
+
+#all: ${SRCS}
+#	for file in ${SRCS} ; do \
+#		gzip < $${file} > $${file}.gz ;\
+#	done
+
+jailkit: ${OBJS}
+
+all: jailkit
 	
-install:
+install: jailkit
 	${INSTALL} -d -m 755 ${prefix}/share/man/man8/
 	for file in ${OBJS} ; do \
 		${INSTALL} -g root -o root -m 0644 $${file} ${prefix}/share/man/man8/ ;\
