@@ -1,4 +1,4 @@
-QUICK INSTALL
+#QUICK INSTALL
 
 ./configure
 make
@@ -12,3 +12,7 @@ cp extra/jailkit /etc/init.d/jailkit
 # and create the correct symlinks, on Debian
 # you run
 update-rc.d jailkit defaults
+
+# and on Red Hat/Fedora systems you run
+chkconfig jailkit on
+

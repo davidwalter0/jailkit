@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # start/stop jailkit logging daemon.
+#
+# chkconfig: 2345 60 40
+# description: chroot() jail wrapping utilities
 
 JK_SOCKETD=/usr/sbin/jk_socketd
 
