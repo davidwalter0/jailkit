@@ -50,6 +50,9 @@ which is very useful for remote commands like
 or
 .I scp server:somedir/* /tmp/
 
+.SH BSD issues
+FreeBSD and OpenBSD do not include the wordexp(3) function, and word expansion does, therefore, not function as expected. Therefoee disable word expansion on BSD.
+
 The common way to use jk_lsh is to use it as default shell for those restricted accounts. It is recomended to run these accounts inside a changed root using 
 .BR jk_chrootsh(8)
 

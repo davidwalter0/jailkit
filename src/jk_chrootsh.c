@@ -24,7 +24,7 @@
 #include <sys/errno.h>
 #include <syslog.h>
 
-#define DEBUG
+/* #define DEBUG */
 
 #ifdef DEBUG
 #define DEBUG_MSG printf

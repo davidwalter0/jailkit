@@ -78,6 +78,8 @@ def lddlist_libraries(executable):
 				else:
 					print 'ldd returns not existing library '+subl[2]
 		line = pd[1].readline()
+	if (sys.platform[:7] == 'openbsd'):
+		retval += ['/usr/libexec/ld.so']
 	return retval
 
 def create_full_path(directory, be_verbose=0):
@@ -116,8 +118,11 @@ def copy_permissions(src, dst, be_verbose=0, allow_suid=0):
 
 def copy_with_permissions(src, dst, be_verbose=0):
 	"""copies the file and the permissions, except any setuid or setgid bits"""
-	shutil.copyfile(src,dst)
-	copy_permissions(src, dst, be_verbose, 0)
+	try:
+		shutil.copyfile(src,dst)
+		copy_permissions(src, dst, be_verbose, 0)
+	except IOError:
+		print 'could not read source file '+src
 
 def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
