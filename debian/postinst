@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if ! grep /usr/bin/jk_chrootsh /etc/shells >/dev/null; then \
+	echo "/usr/bin/jk_chrootsh" >> /etc/shells ;\
+fi
+exit 0
