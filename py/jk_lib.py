@@ -159,7 +159,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				handledfiles.append(file)
 				if (realfile[1] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
-				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, 1, handledfiles)
+				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, handledfiles)
 			else:
 				if (be_verbose):
 					print 'copying '+file+' to '+chroot+file

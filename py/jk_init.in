@@ -88,10 +88,11 @@ def init_directory(config,chroot,dirs):
 	for tree in dirs:
 		sb = os.stat(tree)
 		if (sb != None):
+			head,tail = os.path.split(chroot+tree)
+			jk_lib.create_full_path(head, config['verbose'])
 			if (not os.path.isdir(chroot+tree)):
 				if (config['verbose']):
 					print 'creating dir '+chroot+tree
-# BUG: THIS FAILS IF THE PARENT DOES NOT EXIST
 				os.mkdir(chroot+tree, sb[stat.ST_MODE])
 			ldir = os.listdir(tree)
 			for entry in ldir:
@@ -118,6 +119,9 @@ def handle_cfg_section(config,chroot,cfg,section):
 	init_files(config,chroot,regulars)
 	dirs = jk_lib.config_get_option_as_list(cfg,section,'directories')
 	init_directory(config,chroot,dirs)
+	emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
+	for edir in emptydirs:
+		jk_lib.create_full_path(chroot+edir, config['verbose'])
 	users = jk_lib.config_get_option_as_list(cfg,section,'users')
 	groups = jk_lib.config_get_option_as_list(cfg,section,'groups')
 	jk_lib.init_passwd_and_group(chroot,users,groups,config['verbose'])
