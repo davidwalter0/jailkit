@@ -118,8 +118,8 @@ int main (int argc, char **argv) {
 	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
 	parser = new_iniparser(CONFIGFILE);
 	if (parser) {
-		char *groupsec, *section=NULL, buffer[1024];;
-		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+6), "group "), gr->gr_name);
+		char *groupsec, *section=NULL, buffer[1024];
+		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
 		if (iniparser_has_section(parser, pw->pw_name)) {
 			section = strdup(pw->pw_name);
 		} else if (iniparser_has_section(parser, groupsec)) {
