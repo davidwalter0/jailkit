@@ -20,7 +20,7 @@ jk_chrootlaunch: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.c $(LDFLAGS) $(LIBS)
 
 jk_socketd: $(SRCS) $(OBJS)
-	$(CC) $(DEFS) -o jk_socketd jk_socketd.o iniparser.o $(LDFLAGS) $(LIBS) -lpthread
+	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o iniparser.o $(LDFLAGS) $(LIBS) -lpthread
 
 jk_lsh: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o $(LDFLAGS) $(LIBS)

@@ -319,11 +319,16 @@ int main(int argc, char**argv) {
 	
 	{
 		struct passwd *pw = getpwnam("nobody");
+		char *path = "/etc/jailkit";
 		if (!pw) {
 			syslog(LOG_ERR, "cannot get UID and GID for user nobody");
 			if (nodetach) printf("cannot get UID and GID for user nobody");
 		}
-		chroot("/etc/jailkit");
+		testsafepath(path, 0,0);
+		if (!(chdir(path) && chroot(path))) {
+			syslog(LOG_ERR, "failed to chroot to /etc/jailkit");
+			if (nodetach) printf("failed to chroot to /etc/jailkit");
+		}
 		if (pw) {
 			if (setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
 				syslog(LOG_ERR, "failed to change to user nobody (uid=%d, gid=%d)", pw->pw_uid, pw->pw_gid);
