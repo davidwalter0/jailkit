@@ -1,4 +1,4 @@
-.TH jk_lsh 8 11-01-2004 JAILKIT jk_lsh
+.TH jk_lsh 8 27-01-2004 JAILKIT jk_lsh
 
 .SH NAME
 jk_lsh \- a shell that limits the binaries it will execute
@@ -26,6 +26,8 @@ paths = /usr/bin/, /usr/lib
 executables = /usr/bin/rsync
 paths = /usr/bin/
 .fi
+
+If user test is in group test, however, he can not execute rsync in the above example. First the user is checked, and only if no user section is found the group section is looked for.
 
 The 
 .B executables

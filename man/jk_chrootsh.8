@@ -1,4 +1,4 @@
-.TH jk_chrootsh 8 11-01-2004 JAILKIT jk_chrootsh
+.TH jk_chrootsh 8 27-01-2004 JAILKIT jk_chrootsh
 
 .SH NAME
 jk_chrootsh \- a shell that will put the user inside a changed root
@@ -23,11 +23,27 @@ Notice that the home directory and the shell are here local inside the chroot
 
 jk_chrootsh needs root access to make the 
 .BR chroot(2)
-system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot()system call.
+system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot() system call.
+
+By default jk_chrootsh does not copy any environment variables. For some functionality, however, environment variables need to be copied (e.g. the TERM variable for a functional terminal emulation, or the DISPLAY variable for X forwarding). In 
+.I /etc/jailkit/jk_chrootsh.ini
+the required environment variables can be listed. An example config file is shown below. In the example, user bill will get the DISPLAY variable, and all users in group jail will get the TERM and PATH variables. 
+
+.nf
+.sp
+[bill]
+env= DISPLAY
+
+[group jail]
+env = TERM, PATH
+.fi
+
+If user bill is in group jail, however, he will not get the TERM variable in the above example. First the user is checked, and only if no user section is found the group section is looked for.
 
 .SH FILES
 
 .I /etc/passwd
+.I /etc/jailkit/jk_chrootsh.ini
 
 .SH DIAGNOSTICS
 
