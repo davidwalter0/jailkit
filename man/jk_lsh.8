@@ -1,0 +1,64 @@
+.TH jk_lsh 8 07-12-2003 JAILKIT jk_lsh
+
+.SH NAME
+jk_lsh \- a shell that limits the binaries it will execute
+
+.SH SYNOPSIS
+
+.B jk_lsh -c command
+
+.SH DESCRIPTION
+
+The jailkit limited shell jk_lsh will allow only configured commands to be executed. All other commands, or regular shell access are denied. This can be used to restrict an account to a specific use. For example, jk_lsh can be used to make rsync, cvs, sftp or scp only accounts.
+
+The allowed actions are read from 
+.I /etc/jailkit/jk_lsh.ini
+If you run jk_lsh inside a changed root, make sure jk_lsh.ini is present inside that changed root.
+
+An example config file for user test or group test is shown below
+.nf
+.sp
+[test]
+executables = /usr/bin/scp, /usr/lib/sftp-server
+paths = /usr/bin/, /usr/lib
+
+[group test]
+executables = /usr/bin/rsync
+paths = /usr/bin/
+.fi
+
+The 
+.B executables
+entry specifies all executables that jk_lsh will execute. The 
+.B paths
+entry specifies where it will look for these executables.
+
+The common way to use jk_lsh is to use it as default shell for those restricted accounts. It is recomended to run these accounts inside a changed root using 
+.BR jk_chrootsh(8)
+
+
+.SH FILES
+.I /etc/jailkit/jk_lsh.ini
+.I /etc/passwd
+.I JAIL/etc/passwd
+
+.SH DIAGNOSTICS
+
+jk_lsh logs errors to syslog, so check your log files. If you run jk_lsh inside a changed root, you have to have a /dev/log in that changed root. See 
+.BR jk_socketd(8)
+for more information how to do this.
+
+.SH AUTHOR
+
+Jailkit is written by Olivier Sessink
+
+.SH "SEE ALSO"
+
+.BR jailkit(8)
+.BR jk_init(8)
+.BR jk_check(8)
+.BR jk_addjailuser(8)
+.BR jk_socketd(8)
+.BR jk_chrootsh(8)
+
+

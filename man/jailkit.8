@@ -1,0 +1,94 @@
+.TH jailkit 8 07-12-2003 JAILKIT jailkit
+
+.SH NAME
+jailkit \- utilities for jailing a user
+
+.SH DESCRIPTION
+
+Jailkit is a set of utilities to limit user accounts to a specific directory and to specific commands. Setting up a jail is a lot easier using these utilities. A jail is a directory in your system, and the user cannot see/do anything outside that directory. The user is jailed in the directory.
+
+Only the super user (root) can break out of a jail. It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
+
+If you want the user to be able to do one thing, that one thing should be possible inside the jail. For example if you want the user to be able to run scp, you need to have a copy of scp installed in the jail, and also means to execute it (a shell). As you understand, the fewer executables you have in a jail, and the harder they are to start them, the more work a hacker needs to break out of it.
+
+.BR jk_init
+can be used to quickly create a jail with several files or directories needed for a specific task. There are many tasks in
+.I /etc/jailkit/jk_init.ini
+predefined. For example a limited shell, a jail to run apache, a jail for just sftp and scp can be quickly set it up by jk_init. It will copy the binaries, the required libraries (and symlinks) and other files like /etc/passwd
+
+.BR jk_cp
+can be used to copy a file into a jail, the file will be copied with the same permissions, except for any setuid or setgid permissions, they are removed. If the file is a binary executable, the libraries are copied as well.
+
+.BR jk_check
+can be used to check a jail for any potential security problems. It checks for setuid and setgid programs, it checks for any modified programs, it checks for world writable directories and more. Very convenient to run daily from the cron daemon. It is controlled by
+.I /etc/jailkit/jk_check.ini
+.
+
+.BR jk_chrootsh
+is a shell for a user that will jail the user in a specific directory, called the JAIL. It does this by using the chroot (change root) system call. The JAIL must contain some basic files, like /etc/passwd and a shell to execute. jk_chrootsh will read the shell to execute inside the JAIL from
+.I JAIL/etc/passwd.
+jk_chrootsh is typically run from 
+.I /etc/passwd
+as default shell for some user.
+
+.BR jk_lsh
+is a limited shell, that will only allow certain commands to be executed based on a config file
+.I /etc/jailkit/jk_lsh.ini.
+It is typically started from 
+.I /etc/passwd
+or started by jk_chrootsh inside a jail from
+.I JAIL/etc/passwd
+(recommended). Use this program if you want to deny regular shell access (e.g. logins) but you want to allow execution from commands like sftp, scp, rsync or cvs.
+
+.BR jk_socketd
+is a daemon that will allow logging to syslog from a jail, in a safe way. It will limit the logging rate based on 
+.I /etc/jailkit/jk_socketd.ini
+
+.BR jk_addjailuser
+is a script to add a user both in the real /etc/passwd as in the JAIL/etc/passwd
+
+.SH EXAMPLE
+
+Suppose you need to create an account 'test' that can do sftp and scp
+only. You want it in a jail called /home/sftproot where it will have 
+a homedirectory /home/test
+.nf
+.sp
+#initialise the jail
+mkdir /home/sftproot
+jk_init /home/sftproot jk_lsh
+jk_init /home/sftproot sftp
+jk_init /home/sftproot scp
+# create the account
+jk_addjailuser /home/sftproot test
+# edit the jk_lsh configfile in the jail
+# you can use every editor you want, I chose 'joe'
+joe /home/sftproot/etc/jailkit/jk_lsh.ini
+# now restart jk_socketd
+killall jk_socketd
+jk_socketd
+# test the account
+sftp test@localhost
+# check the logs if everything is correct
+tail /var/log/daemon.log /var/log/auth.log
+.fi
+
+.SH FILES
+
+The jailkit config files are all located in 
+.I /etc/jailkit/
+
+.SH AUTHOR
+
+Jailkit is written by Olivier Sessink
+
+.SH "SEE ALSO"
+
+.BR jk_socketd(8)
+.BR jk_init(8)
+.BR jk_check(8)
+.BR jk_addjailuser(8)
+.BR jk_lsh(8)
+.BR jk_chrootsh(8)
+.BR jk_cp(8)
+

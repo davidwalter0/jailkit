@@ -1,0 +1,97 @@
+#!/usr/bin/python
+#
+
+import shutil
+import sys
+import os.path
+import os
+import getopt
+import string
+
+LIBDIR='/usr/share/jailkit'
+sys.path.append(LIBDIR)
+import jk_lib
+
+def listlibraries(config,file):
+	return jk_lib.lddlist_libraries(file)
+	
+
+def if_nexists_create_dir(config, dst):
+	if (not os.path.exists(dst)):
+		if (config['verbose']):
+			print 'creating directory '+dst
+		os.mkdir(dst)
+
+def copyfileanddirectory(config,src,dst):
+	dstbase = os.path.dirname(dst)
+	if (not os.path.exists(dstbase)):
+		indx = string.find(dstbase,'/',1)
+		while (indx != -1):
+			if_nexists_create_dir(config,dstbase[:indx])
+			indx = string.find(dstbase,'/',indx+1)
+		if_nexists_create_dir(config,dstbase)
+	if (config['verbose']):
+		print 'copying '+src+' to '+dst
+	jk_lib.copy_with_permissions(src,dst,config['verbose'])
+#	shutil.copyfile(src,dst)
+
+def startcopy(config, chroot, filestocopy, checklibs=1):
+	for file in filestocopy:
+		if ((config['force'] == 0) and os.path.isfile(chroot+file)):
+			if (config['verbose']):
+				print ''+chroot+file+' exists'
+		else:
+			copyfileanddirectory(config,file, chroot+file)
+			if (checklibs):
+				libs = listlibraries(config,file)
+				startcopy(config,chroot,libs,0)
+
+def usage():
+	print "Usage: "+sys.argv[0]+" [OPTIONS]"
+	print ""
+	print "-h --help              : this help screen"
+	print "-v, --verbose          : show what is being copied"
+	print "-f, --force            : overwrite existing files"
+	print ""
+
+def testargs(args):
+	if (len(args) < 2):
+		print "ERROR: need at least a chroot directory and a file to copy"
+		print ""
+		usage()
+		sys.exit(2)
+	if (not os.path.isdir(args[0])):
+		print "ERROR: "+args[0]+" is not a directory"
+		print ""
+		usage()
+		sys.exit(3)
+	for file in args[1:]:
+		if (not os.path.isfile(file)):
+			print "ERROR: "+file+" does not exist"
+			print ""
+			usage()
+			sys.exit(4)
+
+def main():
+        try:
+                opts, args = getopt.getopt(sys.argv[1:], 'fhv', ['help', 'verbose', 'force'])
+        except getopt.GetoptError:
+                usage()
+                sys.exit(1)
+	config = {}
+        config['verbose'] = 0
+	config['force'] = 0
+        for o, a in opts:
+                if o in ("-h", "--help"):
+                        usage()
+                        sys.exit()
+                if o in ("-v", "--verbose"):
+                        config['verbose'] = 1
+		if o in ("-f", "--force"):
+			config['force'] = 1
+	testargs(args)
+	if (args[0][-1] != '/'): args[0] = args[0]+'/'
+	startcopy(config, args[0], args[1:])
+
+if __name__ == "__main__":
+    main()

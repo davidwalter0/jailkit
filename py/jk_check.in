@@ -1,0 +1,201 @@
+#!/usr/bin/python
+#
+
+import ConfigParser
+import sys
+import os
+import string
+from stat import *
+import md5
+import getopt
+
+LIBDIR='/usr/share/jailkit'
+sys.path.append(LIBDIR)
+import jk_lib
+
+def nextpathup(path):
+	try:
+		indx = string.rindex(path,'/')
+		if (indx > 0):
+			return path[:indx]
+	except ValueError:
+		pass
+	return None
+
+def testchrootdir(config, path):
+	if (config['verbose']):
+		print "testing basedir "+path
+	try:
+		statbuf = os.lstat(path)
+	except OSError:
+		print "ERROR: cannot lstat() "+path+" !"
+		return 1
+	if (not S_ISDIR(statbuf[ST_MODE])):
+		print "ERROR: "+path+" is not a directory!"
+		return 2
+	if (statbuf[ST_UID] != 0 or statbuf[ST_GID] != 0):
+		print "ERROR: "+path+" is not owned by root:root!"
+		return 3
+	if (statbuf[ST_MODE] & S_IWOTH or statbuf[ST_MODE] & S_IWGRP):
+		print "ERROR: "+path+" is writable by group or others!"
+		return 4
+	npath = nextpathup(path)
+	while (npath != None):
+		retval = testchrootdir(config,npath)
+		if (retval != 0):
+			return retval
+		npath = nextpathup(path)
+
+def sizeAndDigest(filename):
+	"""Returns the size and digest of a sequence of strings."""
+	t = 0
+	m = md5.md5()
+	f=open(filename, 'rb')
+	buf = f.read(8192)
+	while len(buf)>0:
+		t = t + len(buf)
+		m.update(buf)
+		buf = f.read(8192)
+	return (t, m.digest())
+
+def file_in_list(thelist, file):
+	for tmp in thelist:
+		if (tmp == file):
+			return 1
+	return 0
+
+def filebasedir_in_list(thelist, file):
+	for ipath in thelist:
+#		print 'is '+ipath+'=='+file[:len(ipath)]
+		if (file[:len(ipath)] == ipath):
+			return 1
+	return 0
+
+
+def testfilepermissions(config,path):
+	try:
+		statbuf = os.lstat(path)
+	except OSError:
+		print "ERROR: cannot lstat() "+path+" !"
+		return 1
+	if (config['verbose']):
+		print "testing file permissions for "+path
+	if (statbuf[ST_UID] == 0 or statbuf[ST_GID] == 0):
+#		 we have a root:root file
+		if (statbuf[ST_MODE] & S_ISUID or statbuf[ST_MODE] & S_ISGID):
+#			it is setuid or setgid
+			if (statbuf[ST_MODE] & S_IXOTH):
+				if (file_in_list(config['ignoresetuidexecuteforothers'], path)==0):
+					print "WARNING: "+path+" is executable for others and setuid root!!"
+			if (statbuf[ST_MODE] & S_IXGRP):
+				if (file_in_list(config['ignoresetuidexecuteforgroup'], path)==0):
+					print "WARNING: "+path+" is executable for group and setuid root!!"
+			if (statbuf[ST_MODE] & S_IXUSR):
+				if (file_in_list(config['ignoresetuidexecuteforuser'], path)==0):
+					print "WARNING: "+path+" is executable for user and setuid root!!"
+
+def testdirpermissions(config,path):
+	try:
+		statbuf = os.lstat(path)
+	except OSError:
+		print "ERROR: cannot lstat() "+path+" !"
+		return 1
+	if (config['verbose']):
+		print "testing directory permissions for "+path
+	if (statbuf[ST_MODE] & S_IWOTH):
+		if (filebasedir_in_list(config['ignorewritableforothers'], path) == 0):
+			print "WARNING: "+path+" is writable for others!"
+	if (statbuf[ST_MODE] & S_IWGRP):
+		if (filebasedir_in_list(config['ignorewritableforgroup'], path) == 0):
+			print "WARNING: "+path+" is writable for group!"
+
+def comparefiles(config,first, second):
+	if (config['verbose']):
+		print "comparing  "+first+" and "+second
+	try:
+		f1 = sizeAndDigest(first)
+		f2 = sizeAndDigest(second)
+		if (f1[0] != f2[0] or f1[1] != f1[1]):
+			print 'ERROR: '+first+' and '+second+' are not equal!'
+	except IOError:
+		print 'ERROR: cannot read '+first+' or '+second+' !'
+
+def testchrootfiles(config, chroothome, path=''):
+	testdirpermissions(config,chroothome+path)
+	for f in os.listdir(chroothome+path):
+		chrootpath = chroothome+path+f
+		if (filebasedir_in_list(config['ignorepatheverywhere'],chrootpath) == 0):
+			if os.path.isfile(chrootpath):
+				if (filebasedir_in_list(config['ignorepathoncompare'],chrootpath) == 0):
+					realpath = '/'+path+f
+					comparefiles(config,chrootpath, realpath)
+				testfilepermissions(config,chrootpath)
+			elif os.path.isdir(chrootpath) and not os.path.islink(chrootpath):
+				testchrootfiles(config, chroothome, path+f+'/')
+			else:
+				if (config['verbose']):
+					print "ignoring path "+chrootpath
+
+def get_list_option(cfgparser, sectionname, optionname):
+	retval = []
+	if (cfgparser.has_option(sectionname,optionname)):
+		inputstr = cfgparser.get(sectionname,optionname)
+		for tmp in string.split(inputstr, ','):
+			retval += [string.strip(tmp)]
+	return retval
+
+def activateConfig(configfile, verbose):
+	if (not os.path.isfile(configfile)):
+		clean_exit(2, "cannot read config file "+configfile)
+	cfg = ConfigParser.ConfigParser()
+	cfg.read([configfile])
+	for section in cfg.sections():
+		if (cfg.has_option(section, 'chrootdir')):
+			chrootdir = cfg.get(section, 'chrootdir')
+			if (chrootdir[-1:] != '/'): chrootdir += '/'
+			config = {}
+			config['verbose'] = verbose
+			config['ignorepathoncompare'] = get_list_option(cfg,section, 'ignorepathoncompare')
+			config['ignoresetuidexecuteforuser'] = get_list_option(cfg,section, 'ignoresetuidexecuteforuser')
+			config['ignoresetuidexecuteforgroup'] = get_list_option(cfg,section, 'ignoresetuidexecuteforgroup')
+			config['ignoresetuidexecuteforothers'] = get_list_option(cfg,section, 'ignoresetuidexecuteforothers')
+			config['ignorewritableforothers'] = get_list_option(cfg,section, 'ignorewritableforothers')
+			config['ignorewritableforgroup'] = get_list_option(cfg,section, 'ignorewritableforgroup')
+			config['ignorepatheverywhere'] = get_list_option(cfg,section, 'ignorepatheverywhere')
+			testchrootdir(config, chrootdir)
+			testchrootfiles(config, chrootdir)
+
+def clean_exit(errno, message):
+	print "** FAILURE **"
+	print message
+	print ""
+	sys.exit(errno)
+
+def usage():
+	print "Usage: "+sys.argv[0]+" [OPTIONS]"
+	print ""
+	print "-h --help              : this help screen"
+	print "-c, --configfile=FILE  : specify configfile location"
+	print "-v, --verbose          : show what is being tested"
+	print ""
+
+def main():
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "vhc:", ["help", "configfile=", "verbose"])
+	except getopt.GetoptError:
+		usage()
+		sys.exit(1)
+	configfile = '/etc/jailkit/jk_check.ini'
+	verbose = 0
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			usage()
+			sys.exit()
+		if o in ("-c", "--configfile"):
+			configfile = a
+		if o in ("-v", "--verbose"):
+			verbose = 1
+	activateConfig(configfile, verbose)
+
+if __name__ == "__main__":
+    main()

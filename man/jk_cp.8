@@ -1,0 +1,44 @@
+.TH jk_cp 8 07-12-2003 JAILKIT jk_cp
+
+.SH NAME
+jk_cp \- a utility to copy files including permissions and libraries into a jail
+
+.SH SYNOPSIS
+
+.B jk_cp jail source
+
+.B jk_cp -v jail source
+
+.SH DESCRIPTION
+
+jk_cp will copy any file into a jail on the identical location, with identical permissions and (if required) including any required libraries. It will not copy set user id (setuid) or set group id (setgid) permissions.
+
+jk_cp /home/testchroot /usr/bin/cvs
+
+will copy /usr/bin/cvs to /home/testchroot/usr/bin/cvs, and it will copy the libraries used by cvs also to the jail.
+
+.SH OPTIONS
+
+.TP
+.BR \-f
+Force overwriting of existing files
+.TP
+.BR \-v
+Will give verbose output
+.TP
+.BR \-h
+The help screen
+
+.SH AUTHOR
+
+Jailkit is written by Olivier Sessink
+
+.SH "SEE ALSO"
+
+.BR jailkit(8)
+.BR jk_lsh(8)
+.BR jk_init(8)
+.BR jk_check(8)
+.BR jk_addjailuser(8)
+.BR jk_socketd(8)
+.BR jk_chrootsh(8)

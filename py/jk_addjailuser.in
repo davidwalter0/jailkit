@@ -1,0 +1,159 @@
+#!/usr/bin/python
+#
+
+import os.path
+import grp
+import pwd
+import sys
+import getopt
+
+LIBDIR='/usr/share/jailkit'
+sys.path.append(LIBDIR)
+import jk_lib
+
+def usage():
+	print ''
+	print "Usage: "+sys.argv[0]+" [OPTIONS] chrootdir username"
+	print ''
+	print "-h --help              : this help screen"
+	print "-v, --verbose          : show what is being done"
+	print ''
+
+def getjail_and_user(args):
+	if (len(args)==0):
+		return None,None
+	user=None
+	jail=None
+	if (len(args) > 2):
+		jk_lib.clean_exit(3,'could not understand all arguments',usage)
+	if (len(args) == 2):
+		if (os.path.exists(args[1])):
+			jail = args[1]
+			user = args[0]
+		elif (os.path.exists(args[0])):
+			jail = args[0]
+			user = args[1]
+		else:
+			return None,None
+	else:
+		if os.path.exists(args[0]):
+			jail = args[0]
+		else:
+			user = args[0]
+#	print 'returning',jail,user
+	return jail,user
+
+def askforjail():
+	jail = None
+	while (jail == None):
+		print 'please enter the jail directory:'
+		tmp = raw_input()
+		if os.path.isdir(tmp):
+			jail = tmp
+		else:
+			print 'directory '+tmp+' does not exist..'
+	return jail
+
+def checkuser(user, jail):
+	try:
+		pw= pwd.getpwnam(user)
+		return 0
+	except:
+		if (jk_lib.test_user_exist(user, jail+'/etc/passwd')):
+			return 0
+		return 1
+
+def groupexists(group):
+	try:
+		gr = grp.getgrnam(group)
+		return True
+	except:
+		return False
+
+def askforuser(jail):
+	user = None
+	while (user == None):
+		print 'please enter the username:'
+		tmp = raw_input()
+		if (checkuser(tmp, jail)):
+			user = tmp
+		else:
+			print 'user '+tmp+' exists already'
+	return user		
+
+def addusertojail(jail, user, group, home, shell, creategroup):
+	if (jail[-1] == '/'):
+		jail = jail[:-1]
+	pw = pwd.getpwnam(user)
+	fd = open(jail+'/etc/passwd', 'a')
+	fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+':'+pw[4]+':'+home+':'+shell+'\n')
+	fd.close()
+	if (not jk_lib.test_group_exist(group, jail+'/etc/group')):
+		gr = grp.getgrnam(group)
+		fd = open(jail+'/etc/group', 'a')
+		fd.write(group+':x:'+str(gr[2])+':\n')
+		fd.close()
+	jk_lib.create_full_path(jail+home, 0)
+	os.chmod(jail+home, 0700)
+	os.chown(jail+home, pw[2], pw[3])
+
+def addtheuser(jail,user,config):
+	creategroup = 0
+	print 'please enter the homedir inside the jail [/home/'+user+']:'
+	tmp = raw_input()
+	if (len(tmp)==0):
+		home = '/home/'+user
+	else:
+		home = tmp
+	print 'please enter the initial group for the user [users]:'
+	tmp = raw_input()
+	if (len(tmp)==0):
+		initialgroup = 'users'
+	else:
+		initialgroup = tmp
+	if not groupexists(tmp):
+		print 'the group '+initialgroup+' does not yet exist, will create it'
+		creategroup = 1
+	print 'please enter the shell for the user [/usr/bin/jk_lsh]:'
+	tmp = raw_input()
+	if (len(tmp)==0):
+		shell = '/usr/bin/jk_lsh'
+	else:
+		shell = tmp
+	if (creategroup ==1):
+		os.system('groupadd '+initialgroup)
+	tmp = jail
+	if (jail[-1] != '/'):
+		tmp = tmp + '/'
+	tmp = tmp + '.'
+	if (home[0] != '/'):
+		tmp = tmp + '/'
+	tmp = tmp + home
+	os.system('useradd -d '+tmp+' -g '+initialgroup+' -s /usr/bin/jk_chrootsh '+user)
+	os.system('passwd '+user)
+	addusertojail(jail,user,initialgroup,home,shell,creategroup)
+
+def main():
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "vhfc:", ["help", "verbose"])
+	except getopt.GetoptError:
+		usage()
+		sys.exit(1)
+	config = {}
+	config['verbose'] = 0
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			usage()
+			sys.exit()
+		if o in ("-v", "--verbose"):
+			config['verbose'] = 1
+	jail,user = getjail_and_user(args)
+	if (jail == None):
+		jail = askforjail()
+	if ((user == None) or ( not checkuser(user, jail))):
+		user = askforuser(jail)
+	addtheuser(jail, user, config)
+ 
+if __name__ == "__main__":
+    main()
+    

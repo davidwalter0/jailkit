@@ -1,0 +1,38 @@
+INSTALL = @INSTALL@
+PACKAGE = @PACKAGE@
+prefix = @prefix@
+
+EXECUTABLES = jk_cp jk_init jk_check jk_addjailuser
+PYLIBDIR=${prefix}/share/${PACKAGE}
+
+jk_lib.pyc:
+	python -c "import py_compile;py_compile.compile('jk_lib.py')"
+
+all: jk_lib.pyc
+	for file in ${EXECUTABLES} ; do\
+		sed --in-place=~ -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" $${file} ;\
+	done
+
+install: jk_lib.pyc
+	${INSTALL} -d -m 755 ${prefix}/bin
+	${INSTALL} -d -m 755 ${PYLIBDIR}
+	${INSTALL} -g root -o root -m 0644 jk_lib.py ${PYLIBDIR}/
+	${INSTALL} -g root -o root -m 0644 jk_lib.pyc ${PYLIBDIR}/
+	for file in ${EXECUTABLES} ; do\
+		${INSTALL} -g root -o root -m 0755 $${file} ${prefix}/bin/ ;\
+	done
+
+uninstall:
+	rm -f ${prefix}/bin/jk_cp
+	rm -f ${prefix}/bin/jk_init
+	rm -f ${prefix}/bin/jk_check
+	rm -f ${prefix}/bin/jk_addjailuser
+	rm -f ${PYLIBDIR}/jk_lib.*
+	rmdir ${PYLIBDIR}
+
+clean:
+	rm -f *~
+	rm -f jk_lib.pyc
+
+distclean: clean
+	rm -f Makefile

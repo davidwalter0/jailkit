@@ -1,0 +1,158 @@
+#!/usr/bin/python
+#
+
+import ConfigParser
+import sys
+import os
+import string
+import getopt
+import shutil
+import stat
+
+LIBDIR='/usr/share/jailkit'
+sys.path.append(LIBDIR)
+import jk_lib
+
+def logsocket(config,chroot):
+	if (not os.path.exists(chroot+'/dev')):
+		os.mkdir(chroot+'/dev')
+	fd = open('/etc/jailkit/jk_socketd.ini', 'r')
+	line = fd.readline()
+	while (line):
+		if (line == '['+chroot+'/dev/log]'):
+			if (config['verbose']):
+				print 'we already have '+chroot+'/dev/log in /etc/jailkit/jk_socketd.ini'
+			return
+		line = fd.readline()
+	fd = open('/etc/jailkit/jk_socketd.ini', 'a')
+	fd.write('\n['+chroot+'/dev/log]\nbase=512\npeek=2048\ninterval=10\n')
+	fd.close()
+
+def proc_mount(config, chroot):
+	if (config['verbose']):
+		print 'appending proc mount '+chroot+'proc to /etc/fstab'
+	fd = open('/etc/fstab', 'a')
+	fd.write("proc 	"+chroot+"proc 	proc 	defaults 	0 	0\n")
+	fd.close()
+	if (config['verbose']):
+		print 'executing mount '+chroot+'proc'
+	os.spawnlp(os.P_WAIT, 'mount','mount', chroot+'proc')
+
+def add_jk_socketd_entry(config, chroot):
+	print 'not yet implemented'
+
+def init_device(config, chroot, path):
+	sb = os.stat(path)
+	major = sb.st_rdev / 256  #major = st_rdev divided by 256
+	minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
+	if (stat.S_ISCHR(sb.st_mode)): 
+		mode = 'c'
+	elif (stat.S_ISBLK(sb.st_mode)): 
+		mode = 'b'
+	else:
+		print 'WARNING, '+path+' is not a character or block device'
+		return 1
+	if (config['verbose']):
+		print 'creating device '+chroot+path
+	ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
+
+def init_files(config,chroot,files):
+	if (chroot[-1] == '/'):
+		chroot = chroot[:-1]
+#	print 'init_files, chroot='+chroot
+	for file in files:
+		if (not os.path.isfile(chroot+file) or config['force']==1):
+			jk_lib.create_full_path(chroot+os.path.dirname(file), config['verbose'])
+			if (config['verbose']):
+				print 'copying '+file+' to '+chroot+file
+#			shutil.copyfile(file,chroot+file)
+#			if (not jk_lib.test_suid_sgid(file)):
+			jk_lib.copy_with_permissions(file,chroot+file,config['verbose'])
+#			else:
+#				print 'WARNING: did not copy setuid or setgid permissions for '+file
+		else:
+			if (config['verbose']):
+				print chroot+file+' exists'
+
+def handle_cfg_section(config,chroot,cfg,section):
+	if(chroot[-1] == '/'):
+		chroot = chroot[:-1]
+	sections = jk_lib.config_get_option_as_list(cfg,section,'includesections')
+	for tmp in sections:
+		handle_cfg_section(config,chroot,cfg,tmp)
+	libs = jk_lib.config_get_option_as_list(cfg,section,'libraries')
+	jk_lib.copy_binaries_and_libs(chroot, libs, 0, config['verbose'], 1)
+ 	execs = jk_lib.config_get_option_as_list(cfg,section,'executables')
+	jk_lib.copy_binaries_and_libs(chroot, execs, 0, config['verbose'], 1)
+ 	regulars = jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
+	init_files(config,chroot,regulars)
+	dirs = jk_lib.config_get_option_as_list(cfg,section,'directories')
+	for tmp in dirs:
+		init_directory(config,tmp)
+	users = jk_lib.config_get_option_as_list(cfg,section,'users')
+	groups = jk_lib.config_get_option_as_list(cfg,section,'groups')
+	jk_lib.init_passwd_and_group(chroot,users,groups,config['verbose'])
+	if (cfg.has_option(section,'need_proc')):
+		do_proc = cfg.get(section,'need_proc')
+		if (do_proc):
+			proc_mount(config,chroot)
+	if (cfg.has_option(section,'need_logsocket')):
+		do_logsocket = cfg.get(section,'need_logsocket')
+		if (do_logsocket):
+			logsocket(config,chroot)
+	devices = jk_lib.config_get_option_as_list(cfg,section,'devices')
+	for tmp in devices:
+		init_device(config,chroot,tmp)
+
+def activateConfig(config, args):
+	cfg = ConfigParser.ConfigParser()
+	cfg.read([config['file']])
+	for section in args[1:]:
+		if (cfg.has_section(section)):
+			handle_cfg_section(config,args[0],cfg,section)
+		else:
+			print 'WARNING: section '+section+' does not exist in '+config['file']
+
+def usage():
+	print ''
+	print "Usage: "+sys.argv[0]+" [OPTIONS] chrootdir sections..."
+	print ''
+	print "-h --help              : this help screen"
+	print "-c, --configfile=FILE  : specify configfile location"
+	print "-v, --verbose          : show what is being done"
+	print "-f, --force            : force overwriting of existing files"
+	print ''
+
+def testargs(args,config):
+	if (len(args)<2):
+		jk_lib.clean_exit(2,'need at least a chrootdir and a configfile-section',usage)
+	if (not os.path.isdir(args[0])):
+		jk_lib.clean_exit(3,'chrootdir '+args[0]+' does not exist',usage)
+	if (not os.path.isfile(config['file'])):
+		jk_lib.clean_exit(3,'configfile '+config['file']+' does not exist',usage)
+
+def main():
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "vhfc:", ["help", "configfile=", "verbose", "force"])
+	except getopt.GetoptError:
+		usage()
+		sys.exit(1)
+	config = {}
+	config['file'] = '/etc/jailkit/jk_init.ini'
+	config['verbose'] = 0
+	config['force'] = 0
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			usage()
+			sys.exit()
+		if o in ("-c", "--configfile"):
+			config['file'] = a
+		if o in ("-v", "--verbose"):
+			config['verbose'] = 1
+		if o in ("-f", "--force"):
+			config['force'] = 1
+	testargs(args, config)
+	activateConfig(config, args)
+ 
+if __name__ == "__main__":
+    main()

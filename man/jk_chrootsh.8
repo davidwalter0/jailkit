@@ -1,0 +1,56 @@
+.TH jk_chrootsh 8 07-12-2003 JAILKIT jk_chrootsh
+
+.SH NAME
+jk_chrootsh \- a shell that will put the user inside a changed root
+
+.SH SYNOPSIS
+
+.B jk_chrootsh
+
+.SH DESCRIPTION
+
+jk_chrootsh can be used as a shell for a user. That user will be put into a changed root. The directory where to put the user in is read from the users home directory, the last occuring /./ sequence is used to mark the location of the changed root. An example line in /etc/passwd would look like
+
+test:x:10000:10000::/home/testchroot/./home/test:/bin/jk_chrootsh
+
+In this example the user will be chroot-ed into /home/testchroot
+
+Inside the chroot-ed directory, it will look for /etc/passwd and it will execute the shell for the user from that file. For the above example that file should have an entry like
+
+test:x:10000:10000::/home/test:/bin/jk_lsh
+
+Notice that the home directory and the shell are here local inside the chroot
+
+jk_chrootsh needs root access to make the 
+.BR chroot(2)
+system call. Therefore it is setuid root.
+
+.SH FILES
+
+.I /etc/passwd
+
+.SH DIAGNOSTICS
+
+jk_chrootsh logs everything to syslog, please check the log files
+
+commonly made mistakes are:
+
+forgetting to add the user to JAIL/etc/passwd or the group to JAIL/etc/group
+
+forgetting to have the correct permissions on all files inside the jail, or forgetting files inside the jail (the shell itself, or any libraries used by the shell)
+
+referring to a file outside the chroot
+
+.SH AUTHOR
+
+Jailkit is written by Olivier Sessink
+
+.SH "SEE ALSO"
+
+.BR jailkit(8)
+.BR jk_socketd(8)
+.BR jk_init(8)
+.BR jk_check(8)
+.BR jk_addjailuser(8)
+.BR jk_lsh(8)
+.BR syslogd(8)

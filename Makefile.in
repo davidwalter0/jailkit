@@ -1,0 +1,44 @@
+INSTALL = @INSTALL@
+prefix = @prefix@
+PACKAGE = @PACKAGE@
+
+INIFILES = jk_check.ini jk_init.ini jk_lsh.ini jk_socketd.ini
+
+jailkit: all
+all:
+	@cd src/ && $(MAKE) all
+	@cd py/ && $(MAKE) all
+	@cd man/ && $(MAKE) all
+
+clean:
+	rm -f core *~ ini/*~
+	rm -rf autom4te.cache/
+	@cd src/ && $(MAKE) clean
+	@cd py/ && $(MAKE) clean
+	@cd man/ && $(MAKE) clean
+
+distclean:
+	rm -f core *~ ini/*~
+	rm -rf autom4te.cache/
+	rm -f Makefile config.log config.status
+	@cd src/ && $(MAKE) distclean
+	@cd py/ && $(MAKE) distclean
+	@cd man/ && $(MAKE) distclean
+
+install:
+	${INSTALL} -d -m 755 /etc/jailkit
+	for file in ${INIFILES} ; do \
+		${INSTALL} -g root -o root -m 0644 ini/$${file} /etc/jailkit/ ;\
+	done
+	@cd src/ && $(MAKE) install
+	@cd py/ && $(MAKE) install
+	@cd man/ && $(MAKE) install
+
+uninstall:
+	rm -f /etc/jailkit/*.ini
+	rmdir --ignore-fail-on-non-empty /etc/jailkit
+	@cd src/ && $(MAKE) uninstall
+	@cd py/ && $(MAKE) uninstall
+	@cd man/ && $(MAKE) uninstall
+
+	

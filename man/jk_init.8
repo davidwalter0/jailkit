@@ -1,0 +1,56 @@
+.TH jk_init 8 07-12-2003 JAILKIT jk_init
+
+.SH NAME
+jk_init \- a utility to quicky create functional jail directories
+
+.SH SYNOPSIS
+
+.B jk_init jail section
+
+.B jk_init -v -f jail section
+
+.SH DESCRIPTION
+
+It is not an easy task to setup a jail (a changed root) in a functional way. If you want the user to be able to run cvs for example, it will not work to simply copy the cvs binary into the users jail. You will find that cvs needs libraries as well. Using
+.B ldd /usr/bin/cvs
+you can see all the libraries needed by cvs. Many of those libraries are actually symlinks, so you you have to copy both the library files and create new symlinks. Also cvs needs the /dev/null device. Finally you need to start cvs: you need a shell too. And the shell might need files like /etc/passwd and /etc/nsswitch.conf.
+
+jk_init can do most of these things for you. There are many predefined sections in the configfile
+.I /etc/jailkit/jk_init.ini
+where you can simply choose one, and jk_init can copy all required files.
+
+.SH OPTIONS
+
+.TP
+.BR \-f
+Force overwriting of existing files
+.TP
+.BR \-v
+Will give verbose output
+.TP
+.BR \-c\ configfile
+Use alternative configfile
+.TP
+.BR \-h
+The help screen
+
+.SH FILES
+.I /etc/jailkit/jk_init.ini
+
+.SH AUTHOR
+
+Jailkit is written by Olivier Sessink
+
+.SH "SEE ALSO"
+
+.BR jailkit(8)
+.BR jk_lsh(8)
+.BR jk_check(8)
+.BR jk_addjailuser(8)
+.BR jk_socketd(8)
+.BR jk_chrootsh(8)
+.BR ldd(1)
+.BR mknod(1)
+.BR ln(1)
+.BR chmod(1)
+.BR mkdir(1)

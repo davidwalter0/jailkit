@@ -1,0 +1,7 @@
+QUICK INSTALL
+
+./configure
+make
+su root
+make install
+
