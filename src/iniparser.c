@@ -3,7 +3,11 @@
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* memset() */
 
-/* #define DEBUG */
+#define DEBUG
+
+#ifdef DEBUG
+#include <syslog.h>
+#endif
 
 #include "jk_lib.h"
 #include "iniparser.h"
@@ -29,22 +33,26 @@ void iniparser_close(Tiniparser *ip) {
 
 char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen) {
 	int sectionNameChar=0, sectionStart=0;
+	unsigned short int inComment = 0;
+	char prevch='\0', ch;
 	while (!feof(ip->fd)){
-		unsigned short int inComment = 0;
-		char prevch='\0', ch=fgetc(ip->fd);
+		ch=fgetc(ip->fd);
 		if (ch == '#' && (prevch == '\n' || prevch=='\0')) {
+			DEBUG_MSG("Comment start (%c)\n",ch);
 			inComment = 1;
 		} else if (ch == '\n' && inComment == 1) {
+			DEBUG_MSG("Comment stop (%c)\n",ch);
 			inComment = 0;
 		} else if (inComment == 1) {
 			/* do nothing if in comment */
+			DEBUG_MSG("do nothing, we're in a comment (%c)\n",ch);
 		} else if (!sectionStart && ch=='[') {
-			DEBUG_MSG("Section begins.\n");
+			DEBUG_MSG("Section begins (%c)\n",ch);
 			sectionStart=1;
 		} else if (sectionStart && ch != ']') {
 			buf[sectionNameChar] = ch;
 			sectionNameChar++;
-/*			DEBUG_MSG("added '%c' to sectionname\n",ch);*/
+			DEBUG_MSG("added '%c' to sectionname\n",ch);
 		} else if (sectionStart && sectionNameChar != 0 && ch==']') {
 			buf[sectionNameChar] = '\0';
 			DEBUG_MSG("Found section name end, in section, found [%s]\n", buf);
