@@ -4,13 +4,47 @@ prefix = @prefix@
 SRCS = jailkit.8 jk_chrootsh.8 jk_lsh.8 jk_socketd.8 jk_init.8 jk_check.8 jk_cp.8 jk_chrootlaunch.8 jk_procmailwrapper.8 jk_addjailuser.8
 OBJS = $(SRCS:.8=.8.gz)
 
-%.8.gz : %.8
-	gzip -9 > $@ < $<
+#%.8.gz : %.8
+#	gzip -9 > $@ < $<
 
+#.SUFFIXES: .8 .8.gz
+#	gzip -9 > $@ < $<
+
+#.in.default:
 #all: ${SRCS}
 #	for file in ${SRCS} ; do \
 #		gzip < $${file} > $${file}.gz ;\
 #	done
+
+jailkit.8.gz:
+	gzip < jailkit.8 > jailkit.8.gz
+
+jk_chrootsh.8.gz:
+	gzip < jk_chrootsh.8 > jk_chrootsh.8.gz
+
+jk_lsh.8.gz:
+	gzip < jk_lsh.8 > jk_lsh.8.gz
+
+jk_socketd.8.gz:
+	gzip < jk_socketd.8 > jk_socketd.8.gz
+
+jk_init.8.gz:
+	gzip < jk_init.8 > jk_init.8.gz
+
+jk_check.8.gz:
+	gzip < jk_check.8 > jk_check.8.gz
+
+jk_cp.8.gz:
+	gzip < jk_cp.8 > jk_cp.8.gz
+
+jk_chrootlaunch.8.gz:
+	gzip < jk_chrootlaunch.8 > jk_chrootlaunch.8.gz
+
+jk_procmailwrapper.8.gz:
+	gzip < jk_procmailwrapper.8 > jk_procmailwrapper.8.gz
+
+jk_addjailuser.8.gz:
+	gzip < jk_addjailuser.8 > jk_addjailuser.8.gz
 
 jailkit: ${OBJS}
 
@@ -19,7 +53,7 @@ all: jailkit
 install: jailkit
 	${INSTALL} -d -m 755 ${prefix}/share/man/man8/
 	for file in ${OBJS} ; do \
-		${INSTALL} -g root -o root -m 0644 $${file} ${prefix}/share/man/man8/ ;\
+		${INSTALL} -g 0 -o root -m 0644 $${file} ${prefix}/share/man/man8/ ;\
 	done
 
 uninstall:

@@ -57,10 +57,11 @@ AC_CHECK_LIB(pthread, pthread_create,
 		)
 	)
 
-AC_CHECK_PROG(HAVE_PYTHON, python, yes)
-if test "x$HAVE_PYTHON" != "xyes" ; then
+AC_PATH_PROG(PYTHONPATH, python, no)
+if test "x$PYTHONPATH" == "xno" ; then
 	AC_MSG_ERROR(python not found please install python)
 fi
+AC_SUBST(PYTHONPATH)
 echo -n "checking for up to date python... "
 if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
 	echo "ok"
@@ -71,7 +72,7 @@ fi
 
 BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch"
 
-AC_PATH_PROG(PROCMAILPATH, procmail, no, /usr/bin)
+AC_PATH_PROG(PROCMAILPATH, procmail, no)
 HAVEPROCMAIL="0"
 if test "x$PROCMAILPATH" != "xno" ; then
 	AC_DEFINE_UNQUOTED(PROCMAILPATH, "$PROCMAILPATH")

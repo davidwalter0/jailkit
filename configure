@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP EGREP HAVE_PYTHON PROCMAILPATH BINARIES HAVEPROCMAIL PTHREAD_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP EGREP PYTHONPATH PROCMAILPATH BINARIES HAVEPROCMAIL PTHREAD_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3642,42 +3642,48 @@ fi
 set dummy python; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_HAVE_PYTHON+set}" = set; then
+if test "${ac_cv_path_PYTHONPATH+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$HAVE_PYTHON"; then
-  ac_cv_prog_HAVE_PYTHON="$HAVE_PYTHON" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PYTHONPATH in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHONPATH="$PYTHONPATH" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_HAVE_PYTHON="yes"
+    ac_cv_path_PYTHONPATH="$as_dir/$ac_word$ac_exec_ext"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
 done
 done
 
+  test -z "$ac_cv_path_PYTHONPATH" && ac_cv_path_PYTHONPATH="no"
+  ;;
+esac
 fi
-fi
-HAVE_PYTHON=$ac_cv_prog_HAVE_PYTHON
-if test -n "$HAVE_PYTHON"; then
-  echo "$as_me:$LINENO: result: $HAVE_PYTHON" >&5
-echo "${ECHO_T}$HAVE_PYTHON" >&6
+PYTHONPATH=$ac_cv_path_PYTHONPATH
+
+if test -n "$PYTHONPATH"; then
+  echo "$as_me:$LINENO: result: $PYTHONPATH" >&5
+echo "${ECHO_T}$PYTHONPATH" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 
-if test "x$HAVE_PYTHON" != "xyes" ; then
+if test "x$PYTHONPATH" == "xno" ; then
 	{ { echo "$as_me:$LINENO: error: python not found please install python" >&5
 echo "$as_me: error: python not found please install python" >&2;}
    { (exit 1); exit 1; }; }
 fi
+
 echo -n "checking for up to date python... "
 if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
 	echo "ok"
@@ -3703,7 +3709,7 @@ else
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in /usr/bin
+for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -4375,7 +4381,7 @@ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
-s,@HAVE_PYTHON@,$HAVE_PYTHON,;t t
+s,@PYTHONPATH@,$PYTHONPATH,;t t
 s,@PROCMAILPATH@,$PROCMAILPATH,;t t
 s,@BINARIES@,$BINARIES,;t t
 s,@HAVEPROCMAIL@,$HAVEPROCMAIL,;t t

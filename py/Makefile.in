@@ -1,6 +1,7 @@
 INSTALL = @INSTALL@
 PACKAGE = @PACKAGE@
 prefix = @prefix@
+PYTHONPATH = @PYTHONPATH@
 
 PYLIBDIR=${prefix}/share/${PACKAGE}
 
@@ -8,16 +9,16 @@ jk_lib.pyc: jk_lib.py
 	python -c "import py_compile;py_compile.compile('jk_lib.py')"
 
 jk_init: jk_init.in
-	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_init.in > jk_init
+	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_init.in > jk_init
 
 jk_check: jk_check.in
-	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_check.in > jk_check
+	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_check.in > jk_check
 
 jk_cp: jk_cp.in
-	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_cp.in > jk_cp
+	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_cp.in > jk_cp
 
 jk_addjailuser: jk_addjailuser.in
-	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" < jk_addjailuser.in > jk_addjailuser
+	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_addjailuser.in > jk_addjailuser
 
 jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser
 
@@ -26,12 +27,12 @@ all: jailkit
 install: jailkit
 	${INSTALL} -d -m 755 ${prefix}/bin
 	${INSTALL} -d -m 755 ${PYLIBDIR}
-	${INSTALL} -g root -o root -m 0644 jk_lib.py ${PYLIBDIR}/
-	${INSTALL} -g root -o root -m 0644 jk_lib.pyc ${PYLIBDIR}/
-	${INSTALL} -g root -o root -m 0755 jk_init ${prefix}/bin
-	${INSTALL} -g root -o root -m 0755 jk_check ${prefix}/bin
-	${INSTALL} -g root -o root -m 0755 jk_cp ${prefix}/bin
-	${INSTALL} -g root -o root -m 0755 jk_addjailuser ${prefix}/bin
+	${INSTALL} -g 0 -o root -m 0644 jk_lib.py ${PYLIBDIR}/
+	${INSTALL} -g 0 -o root -m 0644 jk_lib.pyc ${PYLIBDIR}/
+	${INSTALL} -g 0 -o root -m 0755 jk_init ${prefix}/bin
+	${INSTALL} -g 0 -o root -m 0755 jk_check ${prefix}/bin
+	${INSTALL} -g 0 -o root -m 0755 jk_cp ${prefix}/bin
+	${INSTALL} -g 0 -o root -m 0755 jk_addjailuser ${prefix}/bin
 
 uninstall:
 	rm -f ${prefix}/bin/jk_cp

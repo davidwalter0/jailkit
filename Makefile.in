@@ -30,9 +30,9 @@ install:
 	${INSTALL} -d -m 755 ${iniprefix}
 	for file in ${INIFILES} ; do \
 		if [ -f ${iniprefix}$${file} ]; then \
-			${INSTALL} -g root -o root -m 0644 ini/$${file} ${iniprefix}$${file}.dist ;\
+			${INSTALL} -o root -m 0644 ini/$${file} ${iniprefix}$${file}.dist ;\
 		else \
-			${INSTALL} -g root -o root -m 0644 ini/$${file} ${iniprefix} ;\
+			${INSTALL} -o root -m 0644 ini/$${file} ${iniprefix} ;\
 		fi ;\
 	done
 	@cd src/ && $(MAKE) install
@@ -51,5 +51,3 @@ uninstall:
 	@cd src/ && $(MAKE) uninstall
 	@cd py/ && $(MAKE) uninstall
 	@cd man/ && $(MAKE) uninstall
-
-	
