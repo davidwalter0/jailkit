@@ -28,7 +28,6 @@ The most minimal configuration looks like:
 .nf
 .sp
 [/home/testchroot]
-chrootdir=/home/testchroot
 .fi
 
 This will include all the files and directories in /home/testchroot for testing.
@@ -40,7 +39,6 @@ Often you want to ignore some tests on some directories, the following configfil
 .nf
 .sp
 [/home/testchroot]
-chrootdir=/home/testchroot
 ignorepatheverywhere =
 ignorepathoncompare = /home/testchroot/home, /home/testchroot/etc
 ignorewritableforgroup = /home/testchroot/home

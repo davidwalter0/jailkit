@@ -121,6 +121,9 @@ def comparefiles(config,first, second):
 		print 'ERROR: cannot read '+first+' or '+second+' !'
 
 def testchrootfiles(config, chroothome, path=''):
+	if (not os.path.exists(chroothome+path)):
+		print 'cannot check files in '+chroothome+path+', is does not exist'
+		return
 	testdirpermissions(config,chroothome+path)
 	for f in os.listdir(chroothome+path):
 		chrootpath = chroothome+path+f
@@ -136,6 +139,33 @@ def testchrootfiles(config, chroothome, path=''):
 				if (config['verbose']):
 					print "ignoring path "+chrootpath
 
+def testusers(config, chroothome):
+	if (os.path.exists(chroothome+'/etc/passwd')):
+		jailep = open(chroothome+'/etc/passwd','r')
+		realep = open('/etc/passwd','r')
+		jline = jailep.readline()
+		while (len(jline)>0):
+			jpw = string.split(jline,':')
+			if (config['verbose']):
+				print 'comparing jailed user '+jpw[0]+' with the real user'
+			# we test for the username, uid and primary gid
+			found = 0
+			realep.seek(0)
+			rline = realep.readline()
+			while (len(rline)>0 and found ==0):
+				rpw = string.split(rline,':')
+				if (rpw[0] == jpw[0]):
+					found = 1
+					if (rpw[2] != jpw[2] or rpw[3] != jpw[3]):
+						print 'ERROR: user '+rpw[0]+' is changed in jail '+chroothome
+					# now check if the jail is correct
+					if (rpw[5] != chroothome+'.'+jpw[5]):
+						print 'ERROR: the real homedir and jail homedir for user '+jpw[0]+' do not correspond in jail '+chroothome
+				rline = realep.readline()
+			if (found == 0):
+				print 'ERROR: user "+jpw[0]+" in jail '+chroothome+'does not exist on the real system'
+			jline = jailep.readline()
+
 def get_list_option(cfgparser, sectionname, optionname):
 	retval = []
 	if (cfgparser.has_option(sectionname,optionname)):
@@ -150,20 +180,20 @@ def activateConfig(configfile, verbose):
 	cfg = ConfigParser.ConfigParser()
 	cfg.read([configfile])
 	for section in cfg.sections():
-		if (cfg.has_option(section, 'chrootdir')):
-			chrootdir = cfg.get(section, 'chrootdir')
-			if (chrootdir[-1:] != '/'): chrootdir += '/'
-			config = {}
-			config['verbose'] = verbose
-			config['ignorepathoncompare'] = get_list_option(cfg,section, 'ignorepathoncompare')
-			config['ignoresetuidexecuteforuser'] = get_list_option(cfg,section, 'ignoresetuidexecuteforuser')
-			config['ignoresetuidexecuteforgroup'] = get_list_option(cfg,section, 'ignoresetuidexecuteforgroup')
-			config['ignoresetuidexecuteforothers'] = get_list_option(cfg,section, 'ignoresetuidexecuteforothers')
-			config['ignorewritableforothers'] = get_list_option(cfg,section, 'ignorewritableforothers')
-			config['ignorewritableforgroup'] = get_list_option(cfg,section, 'ignorewritableforgroup')
-			config['ignorepatheverywhere'] = get_list_option(cfg,section, 'ignorepatheverywhere')
-			testchrootdir(config, chrootdir)
-			testchrootfiles(config, chrootdir)
+		chrootdir = section
+		if (chrootdir[-1:] != '/'): chrootdir += '/'
+		config = {}
+		config['verbose'] = verbose
+		config['ignorepathoncompare'] = get_list_option(cfg,section, 'ignorepathoncompare')
+		config['ignoresetuidexecuteforuser'] = get_list_option(cfg,section, 'ignoresetuidexecuteforuser')
+		config['ignoresetuidexecuteforgroup'] = get_list_option(cfg,section, 'ignoresetuidexecuteforgroup')
+		config['ignoresetuidexecuteforothers'] = get_list_option(cfg,section, 'ignoresetuidexecuteforothers')
+		config['ignorewritableforothers'] = get_list_option(cfg,section, 'ignorewritableforothers')
+		config['ignorewritableforgroup'] = get_list_option(cfg,section, 'ignorewritableforgroup')
+		config['ignorepatheverywhere'] = get_list_option(cfg,section, 'ignorepatheverywhere')
+		testchrootdir(config, chrootdir)
+		testchrootfiles(config, chrootdir)
+		testusers(config, chrootdir)
 
 def clean_exit(errno, message):
 	print "** FAILURE **"
