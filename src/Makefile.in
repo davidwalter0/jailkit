@@ -9,11 +9,12 @@ prefix = @prefix@
 
 SRCS = jk_socketd.c iniparser.c jk_lsh.o jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c
 OBJS = $(SRCS:.c=.o)
+BINARIES = jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch jk_procmailwrapper
 
 .c.o: $(SRCS)
 	$(CC) $(DEFS) $(CFLAGS) -c -o $@ $<
 
-all: jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch
+all: ${BINARIES}
 
 jk_chrootlaunch: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.c $(LDFLAGS) $(LIBS)
@@ -31,7 +32,7 @@ jk_procmailwrapper: $(SRCS) $(OBJS)
 	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.c $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch
+	rm -f ${BINARIES}
 	rm -f *.o
 	rm -f *~
 
