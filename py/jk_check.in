@@ -118,25 +118,29 @@ def testjailusers(config, chroothome):
 		jline = jailep.readline()
 		while (len(jline)>0):
 			jpw = string.split(jline,':')
-			if (config['verbose']):
-				print 'comparing jailed user '+jpw[0]+' with the real user'
-			# we test for the username, uid and primary gid
-			found = 0
-			realep.seek(0)
-			rline = realep.readline()
-			while (len(rline)>0 and found ==0):
-				rpw = string.split(rline,':')
-				if (rpw[0] == jpw[0]):
-					found = 1
-					if (rpw[2] != jpw[2] or rpw[3] != jpw[3]):
-						print 'ERROR: user '+rpw[0]+' is changed in jail '+chroothome
-					# now check if the jail is correct
-					if (rpw[5] != chroothome+'.'+jpw[5]):
-						print 'ERROR: the real homedir and jail homedir for user '+jpw[0]+' do not correspond in jail '+chroothome
-				## test for jk_lsh and test if the user/group is in the config file
+			if (jpw[0] == 'root'):
+				if (config['verbose']):
+					print 'ignoring entry for user root in jail/etc/passwd'
+			else:
+				if (config['verbose']):
+					print 'comparing jailed user '+jpw[0]+' with the real user'
+				# we test for the username, uid and primary gid
+				found = 0
+				realep.seek(0)
 				rline = realep.readline()
-			if (found == 0):
-				print 'ERROR: user '+jpw[0]+' in jail '+chroothome+'does not exist on the real system'
+				while (len(rline)>0 and found ==0):
+					rpw = string.split(rline,':')
+					if (rpw[0] == jpw[0]):
+						found = 1
+						if (rpw[2] != jpw[2] or rpw[3] != jpw[3]):
+							print 'ERROR: user '+rpw[0]+' is changed in jail '+chroothome
+						# now check if the jail is correct
+						if (rpw[5] != chroothome+'.'+jpw[5]):
+							print 'ERROR: the real homedir and jail homedir for user '+jpw[0]+' do not correspond in jail '+chroothome
+					## test for jk_lsh and test if the user/group is in the config file
+					rline = realep.readline()
+				if (found == 0):
+					print 'ERROR: user '+jpw[0]+' in jail '+chroothome+'does not exist on the real system'
 			jline = jailep.readline()
 
 def testrealpasswd():
