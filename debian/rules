@@ -95,6 +95,7 @@ install-arch:
 	cd py  && $(MAKE) install prefix=$(CURDIR)/debian/jailkit/usr
 	install -m 644 ini/*.ini $(CURDIR)/debian/jailkit/etc/jailkit/
 	install -m 755 extra/jailkit $(CURDIR)/debian/jailkit/etc/init.d/
+	install -m 644 debian/lintian.override $(CURDIR)/debian/jailkit/usr/share/lintian/overrides/jailkit
 
 	dh_install -s
 # Must not depend on anything. This is to be called by
