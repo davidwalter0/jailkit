@@ -79,6 +79,8 @@ def init_directory(config,chroot,dirs):
 		sb = os.stat(tree)
 		if (sb != None):
 			if (os.path.isdir(chroot+tree)):
+				if (config['verbose']):
+					print 'creating dir '+chroot+tree
 				os.mkdir(chroot+tree, sb.st_mode)
 			ldir = os.listdir(tree)
 			for entry in ldir:
@@ -86,6 +88,8 @@ def init_directory(config,chroot,dirs):
 					init_directory(config,chroot,tree+entry)
 				elif (os.path.isfile(tree+entry)):
 					init_files(config,chroot,[tree+entry])
+		else:
+			print 'source directory '+tree+' does not exist'
 
 def handle_cfg_section(config,chroot,cfg,section):
 	if(chroot[-1] == '/'):
