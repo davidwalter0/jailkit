@@ -132,6 +132,15 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			if (be_verbose):
 				print ''+chroot+file+' exists'
 		else:
+			if (os.path.exists(chroot+file)):
+				if (force_overwrite):
+					if (be_verbose):
+						print 'source file '+chroot+file+' exists, deleting'
+					os.unlink(chroot+file)
+				else:
+					if (be_verbose):
+						print 'source file '+chroot+file+' exists already'
+					break
 			create_full_path(chroot+os.path.dirname(file),be_verbose)
 			if (os.path.islink(file)):
 				realfile = os.readlink(file)
