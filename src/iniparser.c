@@ -124,6 +124,7 @@ int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const cha
 	}
 	for (i=0; data[i]; i++){
 		if (data[i] < '0' || data[i] > '9'){
+			char tmp;
 			int nextValid=i+1;
 			while (data[nextValid] && (data[nextValid] < '0' || data[nextValid] > '9')){
 				nextValid++;
@@ -131,7 +132,7 @@ int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const cha
 			if (!data[nextValid]){
 				break;
 			}
-			char tmp=data[i];
+			tmp=data[i];
 			data[i]=data[nextValid];
 			data[nextValid]=tmp;
 		}
