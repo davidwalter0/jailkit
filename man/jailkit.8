@@ -1,4 +1,4 @@
-.TH jailkit 8 11-01-2004 JAILKIT jailkit
+.TH jailkit 8 10-05-2004 JAILKIT jailkit
 
 .SH NAME
 jailkit \- utilities for jailing a user or process
@@ -58,7 +58,9 @@ It is typically started from
 .I /etc/passwd
 or started by jk_chrootsh inside a jail from
 .I JAIL/etc/passwd
-(recommended). Use this program if you want to deny regular shell access (e.g. logins) but you want to allow execution from commands like sftp, scp, rsync or cvs.
+(recommended) in which case the config file is 
+.I JAIL/etc/jailkit/jk_lsh.ini.
+Use this program if you want to deny regular shell access (e.g. logins) but you want to allow execution from commands like sftp, scp, rsync or cvs.
 
 .BR jk_socketd
 is a daemon that will allow logging to syslog from a jail, in a safe way. It will limit the logging rate based on 

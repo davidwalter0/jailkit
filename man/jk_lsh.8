@@ -1,4 +1,4 @@
-.TH jk_lsh 8 29-01-2004 JAILKIT jk_lsh
+.TH jk_lsh 8 10-05-2004 JAILKIT jk_lsh
 
 .SH NAME
 jk_lsh \- a shell that limits the binaries it will execute
@@ -17,11 +17,7 @@ If you run jk_lsh inside a changed root, make sure jk_lsh.ini is present inside 
 
 .SH LIMITATIONS
 
-Normal shells can do wildcard expansion. Currently jk_lsh cannot do wildcard expansion, so commands like
-.I scp remotehost:* .
-will not work. This might change in future versions.
-
-Some shells can also do logical tests, like command1 && command2. The limited shell jk_lsh cannot do any of these tests, another shell should be used if you want enable such features. It is not planned to include this in any future version.
+Some shells can do logical tests, like command1 && command2. The limited shell jk_lsh cannot do any of these tests, another shell should be used if you want enable such features. It is not planned to include this in any future version.
 
 .SH EXAMPLE
 
@@ -31,10 +27,12 @@ An example config file for user test or group test is shown below
 [test]
 executables = /usr/bin/scp, /usr/lib/sftp-server
 paths = /usr/bin/, /usr/lib
+allow_word_expansion = 1
 
 [group test]
 executables = /usr/bin/rsync
 paths = /usr/bin/
+allow_word_expansion = 1
 .fi
 
 If user test is in group test, however, he can not execute rsync in the above example. First the user is checked, and only if no user section is found the group section is looked for.
@@ -43,7 +41,14 @@ The
 .B executables
 entry specifies all executables that jk_lsh will execute. The 
 .B paths
-entry specifies where it will look for these executables.
+entry specifies where it will look for these executables. The 
+.B allow_word_expansion
+if set to 1, will make jk_lsh do word expansion (*, ?, ~, $) using
+.BR wordexp(3)
+which is very useful for remote commands like 
+.I rsync server:./* .
+or
+.I scp server:somedir/* /tmp/
 
 The common way to use jk_lsh is to use it as default shell for those restricted accounts. It is recomended to run these accounts inside a changed root using 
 .BR jk_chrootsh(8)
@@ -52,6 +57,7 @@ The common way to use jk_lsh is to use it as default shell for those restricted 
 .SH FILES
 .I /etc/jailkit/jk_lsh.ini
 .I /etc/passwd
+.I JAIL/etc/jailkit/jk_lsh.ini
 .I JAIL/etc/passwd
 
 .SH DIAGNOSTICS

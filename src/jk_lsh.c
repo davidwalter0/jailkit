@@ -139,8 +139,11 @@ int main (int argc, char **argv) {
 		char **paths = NULL;
 		char ** newargv;
 		DEBUG_MSG("exploding string '%s'\n",argv[2]);
-/*		newargv = explode_string(argv[2], ' ');*/
-		newargv = expand_newargv(argv[2]);
+		if (iniparser_get_int(parser, section, "allow_word_expansion")) {
+			newargv = expand_newargv(argv[2]);
+		} else {
+			newargv = explode_string(argv[2], ' ');
+		}
 		if (iniparser_get_string(parser, section, "paths", buffer, 1024) > 0) {
 			DEBUG_LOG("paths, buffer=%s\n",buffer);
 			paths = explode_string(buffer, ',');

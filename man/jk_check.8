@@ -1,4 +1,4 @@
-.TH jk_check 8 28-02-2004 JAILKIT jk_check
+.TH jk_check 8 10-05-2004 JAILKIT jk_check
 
 .SH NAME
 jk_check \- a utility that will check a jail for security problems
@@ -23,6 +23,8 @@ jk_check will run several tests on all files and directories in a jail. The test
 
 It will test directories based on the config file
 .I /etc/jailkit/jk_check.ini
+but also based on jail patterns (dir/./dir) found in the home directories in 
+.I /etc/passwd
 
 .SS "Minimal configfile"
 The most minimal configuration looks like:
