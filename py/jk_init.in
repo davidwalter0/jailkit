@@ -74,11 +74,16 @@ def init_files(config,chroot,files):
 			if (config['verbose']):
 				print chroot+file+' exists'
 
-def init_directory(config,chroot,dirs):
-	for dir in dirs:
-		sb = os.stat(dir)
-		if (sb != None and not os.path.isdir(chroot+dir)):
-			os.mkdir(chroot+dir, sb.st_mode)
+def init_directory(config,chroot,tree):
+	sb = os.stat(tree)
+	if (sb != None and not os.path.isdir(chroot+tree)):
+		os.mkdir(chroot+tree, sb.st_mode)
+		ldir = os.listdir(tree)
+		for entry in ldir:
+			if (os.path.isdir(tree+entry)):
+				init_directory(config,chroot,tree+entry)
+			else if (os.path.isfile(tree+entry)):
+				init_files(config,chroot,[tree+entry]):
 
 def handle_cfg_section(config,chroot,cfg,section):
 	if(chroot[-1] == '/'):
