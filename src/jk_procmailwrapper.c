@@ -7,6 +7,8 @@
  *
  * this will probably extended in the near future
  */
+#define _GNU_SOURCE
+
 #include <string.h>
 #include <stdio.h>
 #include <pwd.h>
@@ -37,24 +39,6 @@ void clean_exit(char * name, int error) {
 	exit(error);
 }
 
-int oldmain(int argc, char *argv[], char *envp[]) {
-	struct passwd *pw;
-	uid_t uid;
-	uid = getuid();
-	if ((pw = getpwuid(uid)) == NULL) {
-		clean_exit(argv[0], 131);
-	}
-	if (user_is_chrooted(pw->pw_dir)) {
-		/* would it be nice if we can do a chroot() and then execute procmail 
-		within the chroot with the right user/group permissions? we'll work on that
-		for the next jailkit release.. */
-		clean_exit(argv[0],111);
-	} else {
-		execve(PROCMAILPATH, argv, envp);
-	}
-	exit(0);
-}
-
 int main (int argc, char **argv, char **envp) {
 	int i;
 	struct passwd *pw=NULL;
@@ -64,7 +48,20 @@ int main (int argc, char **argv, char **envp) {
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	pw = getpwuid(getuid());
 	if (!user_is_chrooted(pw->pw_dir)) {
-		/* if the user does not have a chroot homedir, we start the normal procmail now */
+		/* if the user does not have a chroot homedir, we start the normal procmail now,
+		but first we drop all privileges */
+		if (setgid(getgid())) {
+			syslog(LOG_ERR, "abort, failed to become gid %d", getgid());
+			exit(34);
+		}
+		if (initgroups(pw->pw_name, getgid())) {
+			syslog(LOG_ERR, "abort, failed to initgroups for user %s and group %d", pw->pw_name, getgid());
+			exit(35);
+		}
+		if (setuid(getuid())) {
+			syslog(LOG_ERR, "abort, failed to become uid %d", getuid());
+			exit(36);
+		}
 		execve(PROCMAILPATH, argv, envp);
 		/* if we get here, there is something wrong */
 		exit(1);
