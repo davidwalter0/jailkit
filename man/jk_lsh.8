@@ -15,6 +15,10 @@ The allowed actions are read from
 .I /etc/jailkit/jk_lsh.ini
 If you run jk_lsh inside a changed root, make sure jk_lsh.ini is present inside that changed root.
 
+Normal shells can do wildcard expansion. Currently jk_lsh cannot do wildcard expansion, so commands like
+.I scp remotehost:* .
+will not work. This might change in the future.
+
 An example config file for user test or group test is shown below
 .nf
 .sp
