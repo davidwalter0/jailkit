@@ -171,16 +171,17 @@ def testrealpasswd():
 	retval = []
 	while (len(rline)>0):
 		rpw = string.split(rline, ':')
-		# test if the entry has any jail characteristics
-		jaildot = string.find(rpw[5], '.')
-		if (jaildot != -1):
-			chroot = rpw[5][:jaildot]
-			retval += [chroot]
-			# test if the user actually exists in the chroot
-			if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
-				print 'ERROR: user '+rpw[0]+' does not exist in '+chroot+'/etc/passwd'
-			if (rpw[6] != '/usr/sbin/jk_chrootsh\n'):
-				print 'ERROR: user '+rpw[0]+' has a /./ but does not have the /usr/sbin/jk_chrootsh shell'
+		if (len(rpw)>=6):
+			# test if the entry has any jail characteristics
+			jaildot = string.find(rpw[5], '.')
+			if (jaildot != -1):
+				chroot = rpw[5][:jaildot]
+				retval += [chroot]
+				# test if the user actually exists in the chroot
+				if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
+					print 'ERROR: user '+rpw[0]+' does not exist in '+chroot+'/etc/passwd'
+				if (rpw[6] != '/usr/sbin/jk_chrootsh\n'):
+					print 'ERROR: user '+rpw[0]+' has a /./ but does not have the /usr/sbin/jk_chrootsh shell'
 		rline = rep.readline()
 	return retval
 			

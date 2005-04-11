@@ -40,8 +40,9 @@ install:
 	@cd py/ && $(MAKE) install
 	@cd man/ && $(MAKE) install
 	# test if the jk_chrootsh is already in /etc/shells
+	# this previously had @echo but that fails on FreeBSD
 	if ! grep ${prefix}/sbin/jk_chrootsh /etc/shells ; then \
-		@echo "appending ${prefix}/sbin/jk_chroots to /etc/shells";\
+		echo "appending ${prefix}/sbin/jk_chroots to /etc/shells";\
 		echo ${prefix}/sbin/jk_chrootsh >> /etc/shells ;\
 	fi
 
