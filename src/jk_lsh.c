@@ -112,6 +112,7 @@ char **expand_newargv(char *string) {
 int main (int argc, char **argv) {
 	Tiniparser *parser;
 	const char *section;
+	struct passwd *pw;
 	
 	DEBUG_MSG(PROGRAMNAME", started\n");
 #ifndef HAVE_WORDEXP_H
@@ -132,9 +133,9 @@ int main (int argc, char **argv) {
 	}
 	/* check if this user has a section */
 	{
-		struct passwd *pw = getpwuid(getuid());
 		struct group *gr = getgrgid(getgid());
 		char *groupsec;
+		pw = getpwuid(getuid());
 		if (!pw || !gr) {
 			syslog(LOG_ERR, "uid %d or gid %d does not have a name", getuid(), getgid());
 			DEBUG_MSG(PROGRAMNAME" cannot get user or group info for %d:%d\n", getuid(),getgid());
@@ -176,21 +177,22 @@ int main (int argc, char **argv) {
 		}
 		if (executable_is_allowed(parser, section, newargv[0])) {
 			int retval;
-			DEBUG_MSG("executing command '%s' for user %d\n", newargv[0], getuid());
-			syslog(LOG_DEBUG, "executing command '%s' for user %d", newargv[0], getuid());
+			DEBUG_MSG("executing command '%s' for user %s (%d)\n", newargv[0],pw->pw_name, getuid());
+			syslog(LOG_DEBUG, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());
 			retval = execve(newargv[0],newargv,environ);
 			DEBUG_MSG("errno=%d, error=%s\n",errno,strerror(errno));
 			DEBUG_MSG("execve() command '%s' returned %d\n", newargv[0], retval);
-			syslog(LOG_ERR, "execve() command '%s' returned %d", newargv[0], retval);
+			syslog(LOG_ERR, "WARNING: running %s failed for user %s (%d): %s", newargv[0],pw->pw_name, getuid(), strerror(retval));
+			syslog(LOG_ERR, "WARNING: check the permissions and libraries for %s", newargv[0]);
 			return retval;
 		} else {
-			DEBUG_MSG("command '%s' denied for user %d\n", newargv[0], getuid());
-			syslog(LOG_ERR, "command '%s' denied for user %d", newargv[0], getuid());
+			DEBUG_MSG("WARNING: user %s (%d) tried to run '%s'\n", pw->pw_name, getuid(),newargv[0]);
+			syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),newargv[0]);
 			exit(4);
 		}
 	} else {
-		DEBUG_MSG("regular shell access denied for user %d, argc=%d\n", getuid(), argc);
-		syslog(LOG_ERR, "regular shell access denied for user %d, argc=%d", getuid(), argc);
+		DEBUG_MSG("WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh\n", pw->pw_name, getuid());
+		syslog(LOG_ERR, "WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh", pw->pw_name, getuid());
 		exit(7);
 	}
 	return 0;

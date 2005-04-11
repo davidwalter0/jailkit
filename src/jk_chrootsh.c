@@ -139,16 +139,24 @@ int main (int argc, char **argv) {
 	}
 
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
-	if (geteuid() != 0 || getuid() == 0) {
-		syslog(LOG_ERR, "abort, "PROGRAMNAME" is not setuid root, or is run by root");
+	if (geteuid() != 0) {
+		syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
 		exit(11);
+	}
+	if (getuid() == 0) {
+		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense");
+		exit(12);
 	}
 
 	DEBUG_MSG("get user info\n");
 	pw = getpwuid(getuid());
+	if (!pw) {
+		syslog(LOG_ERR, "abort, failed to get user information for user ID %d, check /etc/passwd", getuid());
+		exit(13);
+	}
 	gr = getgrgid(getgid());
-	if (!pw || !gr) {
-		syslog(LOG_ERR, "abort, failed to get user or group information for %d:%d", getuid(), getgid());
+	if (!gr) {
+		syslog(LOG_ERR, "abort, failed to get group information for group ID %d, check /etc/groups", getgid());
 		exit(13);
 	}
 
@@ -191,8 +199,8 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, the group ID from /etc/passwd (%d) does not match the group ID we run with (%d)", pw->pw_gid, getgid());
 		exit(15);
 	}
-	if (!pw->pw_dir || strlen(pw->pw_dir) ==0 || strchr(pw->pw_dir, '.') == NULL) {
-		syslog(LOG_ERR, "abort, the homedir does not contain the jail pattern path/./path");
+	if (!pw->pw_dir || strlen(pw->pw_dir) ==0 || strstr(pw->pw_dir, "/./") == NULL) {
+		syslog(LOG_ERR, "abort, the homedir in /etc/passwd does not contain the jail <jail>/./<home>");
 		exit(17);
 	}
 	DEBUG_MSG("get jaildir\n");
@@ -202,14 +210,14 @@ int main (int argc, char **argv) {
 	}
 	DEBUG_MSG("get chdir()\n");
 	if (chdir(jaildir) != 0) {
-		syslog(LOG_ERR, "abort, failed to chdir() to %s",jaildir);
+		syslog(LOG_ERR, "abort, chdir(%s) failed, check the permissions for %s",jaildir,jaildir);
 		exit(19);
 	} else {
 		char test[255];
 		/* test if it really succeeded */
 		getcwd(test, 255);
 		if (strcmp(jaildir, test) != 0) {
-			syslog(LOG_ERR, "abort, current dir != %s after chdir()",jaildir);
+			syslog(LOG_ERR, "abort, the current dir does not equal %s after chdir(%s)",jaildir,jaildir);
 			exit(21);
 		}
 	}		
@@ -221,12 +229,12 @@ int main (int argc, char **argv) {
 	testsafepath(pw->pw_dir, getuid(), getgid());
 
 	/* do a final log message */
-	syslog(LOG_INFO, "now entering jail %s for user %d", jaildir, getuid());
+	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jaildir, pw->pw_name, getuid());
 	
 	DEBUG_MSG("chroot()\n");
 	/* do the chroot() call */
 	if (chroot(jaildir)) {
-		syslog(LOG_ERR, "abort, failed to chroot() to %s", jaildir);
+		syslog(LOG_ERR, "abort, chroot(%s) failed, check the permissions for %s", jaildir, jaildir);
 		exit(33);
 	}
 	
@@ -234,15 +242,15 @@ int main (int argc, char **argv) {
 		then we have to call initgroups(), 
 		then we call setuid() */
 	if (setgid(getgid())) {
-		syslog(LOG_ERR, "abort, failed to become gid %d", getgid());
+		syslog(LOG_ERR, "abort, failed to set effective group ID %d", getgid());
 		exit(34);
 	}
 	if (initgroups(pw->pw_name, getgid())) {
-		syslog(LOG_ERR, "abort, failed to initgroups for user %s and group %d", pw->pw_name, getgid());
+		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/groups", pw->pw_name,getuid(),jaildir);
 		exit(35);
 	}
 	if (setuid(getuid())) {
-		syslog(LOG_ERR, "abort, failed to become uid %d", getuid());
+		syslog(LOG_ERR, "abort, failed to set effective user ID %d", getuid());
 		exit(36);
 	}
 	
@@ -254,16 +262,24 @@ int main (int argc, char **argv) {
 		
 		pw = getpwuid(getuid());
 		gr = getgrgid(getgid());
-		if (!pw || !gr) {
-			syslog(LOG_ERR, "abort, failed to get user and group information in the jail for %d:%d", getuid(), getgid());
+		if (!pw) {
+			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d, check %s/etc/passwd",getuid(),jaildir);
 			exit(35);
 		}
-		if (strcmp(pw->pw_name, oldpw_name)!=0 || strcmp(gr->gr_name, oldgr_name)!=0) {
-			syslog(LOG_ERR, "abort, user or group names differ inside the jail for %d:%d", getuid(), getgid());
+		if (!gr) {
+			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d, check %s/etc/groups",getgid(),jaildir);
+			exit(35);
+		}
+		if (strcmp(pw->pw_name, oldpw_name)!=0) {
+			syslog(LOG_ERR, "abort, username %s differs from jail username %s for user ID %d, check /etc/passwd and %s/etc/passwd", oldpw_name, pw->pw_name, getuid(), jaildir);
+			exit(37);
+		}
+		if (strcmp(gr->gr_name, oldgr_name)!=0) {
+			syslog(LOG_ERR, "abort, groupname %s differs from jail groupname %s for group ID %d, check /etc/passwd and %s/etc/passwd", oldgr_name, gr->gr_name, getgid(), jaildir);
 			exit(37);
 		}
 		if (strcmp(pw->pw_dir, newhome)!=0) {
-			syslog(LOG_ERR, "abort, home directory %s does not equal %s for %d:%d", pw->pw_dir, newhome, getuid(), getgid());
+			syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
 			exit(39);
 		}
 		free(oldpw_name);
@@ -277,13 +293,13 @@ int main (int argc, char **argv) {
 	setenv("HOME",newhome,1);
 	setenv("USER",pw->pw_name,1);
 	if (chdir(newhome) != 0) {
-		syslog(LOG_ERR, "abort, failed to chdir() inside the jail to %s",newhome);
+		syslog(LOG_ERR, "abort, chdir(%s) failed inside the jail %s, check the permissions for %s/%s",newhome,jaildir,jaildir,newhome);
 		exit(41);
 	}
 
 	/* cleanup before execution */
 	free(newhome);
-	free(jaildir);
+	
 
 	/* now execute the jailed shell */
 	/*execl(pw->pw_shell, pw->pw_shell, NULL);*/
@@ -298,7 +314,8 @@ int main (int argc, char **argv) {
 		execv(pw->pw_shell, newargv);
 	}
 	DEBUG_MSG(strerror(errno));
-	syslog(LOG_ERR, "WARNING: could not execute shell %s for user %d:%d",pw->pw_shell,getuid(),getgid());
-	
+	syslog(LOG_ERR, "ERROR: failed to execute shell %s for user %s (%d), check the permissions and libraries of %s/%s",pw->pw_shell,pw->pw_name,getuid(),jaildir,pw->pw_shell);
+
+	free(jaildir);
 	exit(111);
 }
