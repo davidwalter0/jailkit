@@ -234,17 +234,18 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 			line = fd2.readline()
 			while (len(line)>0):
 				pwstruct = string.split(line,':')
-				if ((pwstruct[0] in users) or (pwstruct[2] in users)):
-					if (be_verbose):
-						print 'user '+pwstruct[0]+' exists in '+chroot+'/etc/passwd'
-					try:
-						users.remove(pwstruct[0])
-					except ValueError:
-						pass
-					try:
-						users.remove(pwstruct[2])
-					except ValueError:
-						pass
+				if (len(pwstruct) >=3):
+					if ((pwstruct[0] in users) or (pwstruct[2] in users)):
+						if (be_verbose):
+							print 'user '+pwstruct[0]+' exists in '+chroot+'/etc/passwd'
+						try:
+							users.remove(pwstruct[0])
+						except ValueError:
+							pass
+						try:
+							users.remove(pwstruct[2])
+						except ValueError:
+							pass
 				line = fd2.readline()
 			fd2.seek(0,2)
 		if (len(users) > 0):
@@ -252,12 +253,13 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 			line = fd.readline()
 			while (len(line)>0):
 				pwstruct = string.split(line,':')
-				if ((pwstruct[0] in users) or (pwstruct[2] in users)):
-					fd2.write(line)
-					if (be_verbose):
-						print 'writing user '+pwstruct[0]+' to '+chroot+'/etc/passwd'
-					if (not pwstruct[3] in groups):
-						groups += [pwstruct[3]]
+				if (len(pwstruct) >=3):
+					if ((pwstruct[0] in users) or (pwstruct[2] in users)):
+						fd2.write(line)
+						if (be_verbose):
+							print 'writing user '+pwstruct[0]+' to '+chroot+'/etc/passwd'
+						if (not pwstruct[3] in groups):
+							groups += [pwstruct[3]]
 				line = fd.readline()
 			fd.close()
 		fd2.close()
@@ -269,17 +271,18 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 		line = fd2.readline()
 		while (len(line)>0):
 			groupstruct = string.split(line,':')
-			if ((groupstruct[0] in groups) or (groupstruct[2] in groups)):
-				if (be_verbose):
-					print 'group '+groupstruct[0]+' exists in '+chroot+'/etc/group'
-				try:
-					groups.remove(groupstruct[0])
-				except ValueError:
-					pass
-				try:
-					groups.remove(groupstruct[2])
-				except ValueError:
-					pass
+			if (len(groupstruct) >=2):
+				if ((groupstruct[0] in groups) or (groupstruct[2] in groups)):
+					if (be_verbose):
+						print 'group '+groupstruct[0]+' exists in '+chroot+'/etc/group'
+					try:
+						groups.remove(groupstruct[0])
+					except ValueError:
+						pass
+					try:
+						groups.remove(groupstruct[2])
+					except ValueError:
+						pass
 			line = fd2.readline()
 		fd2.seek(0,2)
 	if (len(groups) > 0):
@@ -287,10 +290,11 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 		line = fd.readline()
 		while (len(line)>0):
 			groupstruct = string.split(line,':')
-			if ((groupstruct[0] in groups) or (groupstruct[2] in groups)):
-				fd2.write(line)
-				if (be_verbose):
-					print 'writing group '+groupstruct[0]+' to '+chroot+'/etc/group'
+			if (len(groupstruct) >=2):
+				if ((groupstruct[0] in groups) or (groupstruct[2] in groups)):
+					fd2.write(line)
+					if (be_verbose):
+						print 'writing group '+groupstruct[0]+' to '+chroot+'/etc/group'
 			line = fd.readline()
 		fd.close()
 	fd2.close()
