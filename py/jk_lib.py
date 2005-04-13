@@ -81,7 +81,7 @@ def lddlist_libraries(executable):
 			else if (len(subl)>=1 and subl[0][0] == '/' and os.path.exists(subl[0])):
 				retval += [subl[0]]
 			else:
-				print 'WARNING: failed to parse '+line
+				print 'WARNING: failed to parse ldd output '+line
 		line = pd[1].readline()
 	if (sys.platform[4:7] == 'bsd'):
 		retval += ['/usr/libexec/ld.so']
