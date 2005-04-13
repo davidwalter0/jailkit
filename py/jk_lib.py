@@ -85,7 +85,7 @@ def lddlist_libraries(executable):
 		line = pd[1].readline()
 	if (sys.platform[4:7] == 'bsd'):
 		retval += ['/usr/libexec/ld.so']
-		retval += ['/usr/libexec/ld-elf.so.1', '/libexec/ld-elf.so.1']
+		retval += ['/usr/libexec/ld-elf.so.1'],['/libexec/ld-elf.so.1']
 	return retval
 
 def create_full_path(directory, be_verbose=0):
@@ -148,7 +148,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		if (not os.path.exists(file)):
 			if (be_verbose):
 				print 'source file '+file+' does not exist'
-			break
+			continue
 		if ((force_overwrite == 0) and os.path.isfile(chroot+file)):
 			if (be_verbose):
 				print ''+chroot+file+' exists'
