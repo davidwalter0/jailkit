@@ -76,7 +76,7 @@ def lddlist_libraries(executable):
 				if (os.path.exists(subl[2])):
 					retval += [subl[2]]
 				else:
-					print 'ldd returns not existing library '+subl[2]
+					print 'ldd returns non existing library '+subl[2]
 			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
 			else if (len(subl)>=1 and subl[0][0] == '/' and os.path.exists(subl[0])):
 				retval += [subl[0]]
