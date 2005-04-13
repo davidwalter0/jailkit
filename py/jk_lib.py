@@ -85,7 +85,7 @@ def lddlist_libraries(executable):
 		line = pd[1].readline()
 	if (sys.platform[4:7] == 'bsd'):
 		retval += ['/usr/libexec/ld.so']
-		retval += ['/usr/libexec/ld-elf.so.1'],['/libexec/ld-elf.so.1']
+		retval += ['/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 	return retval
 
 def create_full_path(directory, be_verbose=0):
@@ -169,7 +169,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 					print 'creating symlink '+chroot+file+' to '+realfile
 				os.symlink(realfile, chroot+file)
 				handledfiles.append(file)
-				if (realfile[1] != '/'):
+				if (realfile[0] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, handledfiles)
 			else:
