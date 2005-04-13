@@ -84,8 +84,7 @@ def lddlist_libraries(executable):
 				print 'WARNING: failed to parse ldd output '+line[:-1]
 		line = pd[1].readline()
 	if (sys.platform[4:7] == 'bsd'):
-		retval += ['/usr/libexec/ld.so']
-		retval += ['/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
+		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 	return retval
 
 def create_full_path(directory, be_verbose=0):
