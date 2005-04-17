@@ -78,10 +78,15 @@ def lddlist_libraries(executable):
 				else:
 					print 'ldd returns non existing library '+subl[2]
 			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
-			elif (len(subl)>=1 and subl[0][0] == '/' and os.path.exists(subl[0])):
-				retval += [subl[0]]
+			elif (len(subl)>=1 and subl[0][0] == '/'):
+				if (os.path.exists(subl[0])):
+					retval += [subl[0]]
+				else:
+					print 'ldd returns non existing library '+subl[0]
 			else:
 				print 'WARNING: failed to parse ldd output '+line[:-1]
+		else:
+			print 'WARNING: failed to parse ldd output '+line[:-1]
 		line = pd[1].readline()
 	if (sys.platform[4:7] == 'bsd'):
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
