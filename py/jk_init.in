@@ -91,19 +91,20 @@ def init_directory(config,chroot,dirs):
 	for tree in dirs:
 		if (tree[-1:] == '/'):
 			tree = tree[:-1]
-		if (not os.path.isdir(chroot+tree)):
-#			if (config['verbose']):
-#				print 'creating dir '+chroot+tree
-			jk_lib.create_full_path(chroot+tree, config['verbose'])
-			jk_lib.copy_permissions(tree, chroot+tree, config['verbose'])
-		ldir = os.listdir(tree)
-		for entry in ldir:
-			if (os.path.isdir(tree+'/'+entry)):
-				init_directory(config,chroot,[tree+'/'+entry])
-			elif (os.path.isfile(tree+'/'+entry)):
-				init_files(config,chroot,[tree+'/'+entry])
-#				else:
-#					print 'doing nothing for '+tree+'/'+entry
+		if (os.path.isdir(tree)):
+			if (not os.path.isdir(chroot+tree)):
+#				if (config['verbose']):
+#					print 'creating dir '+chroot+tree
+				jk_lib.create_full_path(chroot+tree, config['verbose'])
+				jk_lib.copy_permissions(tree, chroot+tree, config['verbose'])
+			ldir = os.listdir(tree)
+			for entry in ldir:
+				if (os.path.isdir(tree+'/'+entry)):
+					init_directory(config,chroot,[tree+'/'+entry])
+				elif (os.path.isfile(tree+'/'+entry)):
+					init_files(config,chroot,[tree+'/'+entry])
+#					else:
+#						print 'doing nothing for '+tree+'/'+entry
 		else:
 			print 'source directory '+tree+' does not exist'
 
