@@ -156,7 +156,7 @@ int main (int argc, char **argv) {
 	}
 	gr = getgrgid(getgid());
 	if (!gr) {
-		syslog(LOG_ERR, "abort, failed to get group information for group ID %d, check /etc/groups", getgid());
+		syslog(LOG_ERR, "abort, failed to get group information for group ID %d, check /etc/group", getgid());
 		exit(13);
 	}
 
@@ -246,7 +246,7 @@ int main (int argc, char **argv) {
 		exit(34);
 	}
 	if (initgroups(pw->pw_name, getgid())) {
-		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/groups", pw->pw_name,getuid(),jaildir);
+		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/group", pw->pw_name,getuid(),jaildir);
 		exit(35);
 	}
 	if (setuid(getuid())) {
@@ -267,7 +267,7 @@ int main (int argc, char **argv) {
 			exit(35);
 		}
 		if (!gr) {
-			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d, check %s/etc/groups",getgid(),jaildir);
+			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d, check %s/etc/group",getgid(),jaildir);
 			exit(35);
 		}
 		if (strcmp(pw->pw_name, oldpw_name)!=0) {
