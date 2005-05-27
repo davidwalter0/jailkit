@@ -47,7 +47,7 @@ static int executable_is_allowed(Tiniparser *parser, const char *section, const 
 	if (klen) {
 		char **arr, **tmp;
 		arr = tmp = explode_string(buffer, ',');
-		while (*tmp) {
+		while (tmp && *tmp) {
 			DEBUG_MSG("comparing '%s' and '%s'\n",*tmp,executable);
 			if (strcmp(*tmp,executable)==0) {
 				free_array(arr);
@@ -55,6 +55,7 @@ static int executable_is_allowed(Tiniparser *parser, const char *section, const 
 			}
 			tmp++;
 		}
+		free_array(arr);
 		return 0;
 	} else {
 		syslog(LOG_ERR, "section %s does not have a key executables", section);
