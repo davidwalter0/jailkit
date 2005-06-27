@@ -113,6 +113,8 @@ int main (int argc, char **argv) {
 	struct group *gr=NULL;
 	char *jaildir=NULL, *newhome=NULL;
 	Tiniparser *parser=NULL;
+	char **envs=NULL;
+	int homecheck = 1;
 
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
@@ -163,28 +165,30 @@ int main (int argc, char **argv) {
 	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
 	parser = new_iniparser(CONFIGFILE);
 	
-	{
-		char **envs=NULL;
-		
-		if (parser) {
-			char *groupsec, *section=NULL, buffer[1024];
-			groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
-			if (iniparser_has_section(parser, pw->pw_name)) {
-				section = strdup(pw->pw_name);
-			} else if (iniparser_has_section(parser, groupsec)) {
-				section = groupsec;
-			}
-			if (section) {
-				if (iniparser_get_string(parser, section, "env", buffer, 1024) > 0) {
-					envs = explode_string(buffer, ',');
-				}
-				free(section);
-			}
+	if (parser) {
+		char *groupsec, *section=NULL, buffer[1024];
+		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
+		if (iniparser_has_section(parser, pw->pw_name)) {
+			section = strdup(pw->pw_name);
+		} else if (iniparser_has_section(parser, groupsec)) {
+			section = groupsec;
 		}
-		unset_environ_except(envs);
-		if (envs) {
-			free_array(envs);
+		if (section) {
+			unsigned int pos = iniparser_get_position(parser);
+			if (iniparser_get_string_at_position(parser, section, "env", pos, buffer, 1024) > 0) {
+				envs = explode_string(buffer, ',');
+			}
+			homecheck = iniparser_get_int_at_position(parser, section, "homecheck", pos);
+			if (homecheck == -1) { /* if we don't have this option, set the default to 1 */
+				homecheck = 1;
+			}
+			free(section);
 		}
+	}
+	
+	unset_environ_except(envs);
+	if (envs) {
+		free_array(envs);
 	}
 	
 	if (pw->pw_gid != getgid()) {
@@ -270,7 +274,7 @@ int main (int argc, char **argv) {
 			syslog(LOG_ERR, "abort, groupname %s differs from jail groupname %s for group ID %d, check /etc/passwd and %s/etc/passwd", oldgr_name, gr->gr_name, getgid(), jaildir);
 			exit(37);
 		}
-		if (strcmp(pw->pw_dir, newhome)!=0) {
+		if (homecheck && strcmp(pw->pw_dir, newhome)!=0) {
 			syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
 			exit(39);
 		}
