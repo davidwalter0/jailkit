@@ -39,7 +39,7 @@ clean:
 	rm -f *~
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.h
 
 install: ${BINARIES}
 	${INSTALL} -d -m 755 ${prefix}
