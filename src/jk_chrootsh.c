@@ -162,39 +162,31 @@ int main (int argc, char **argv) {
 
 	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
 	parser = new_iniparser(CONFIGFILE);
-	if (parser) {
-		char *groupsec, *section=NULL, buffer[1024];
-		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
-		if (iniparser_has_section(parser, pw->pw_name)) {
-			section = strdup(pw->pw_name);
-		} else if (iniparser_has_section(parser, groupsec)) {
-			section = groupsec;
-		}
-		if (section) {
-			if (iniparser_get_string(parser, section, "env", buffer, 1024) > 0) {
-				char **envs;
-/*				int num,i;
-				Tsavedenv **envstore;
-				/ * there is a 'env' section for this user / this group * / */
-				envs = explode_string(buffer, ',');
-/*				num = count_array(envs);
-				envstore = malloc0(num * sizeof(Tsavedenv *));
-				for (i=0;i<num;i++) {
-					envstore[i] = savedenv_new(envs[i]);
-				}
-				/ * clear the environment * /
-				clearenv();
-				for (i=0;i<num;i++) {
-					savedenv_restore(envstore[i]);
-					savedenv_free(envstore[i]);
-				}
-				free(envstore);
-				*/
-				unset_environ_except(envs);
+	
+	{
+		char **envs=NULL;
+		
+		if (parser) {
+			char *groupsec, *section=NULL, buffer[1024];
+			groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
+			if (iniparser_has_section(parser, pw->pw_name)) {
+				section = strdup(pw->pw_name);
+			} else if (iniparser_has_section(parser, groupsec)) {
+				section = groupsec;
 			}
-			free(section);
+			if (section) {
+				if (iniparser_get_string(parser, section, "env", buffer, 1024) > 0) {
+					envs = explode_string(buffer, ',');
+				}
+				free(section);
+			}
+		}
+		unset_environ_except(envs);
+		if (envs) {
+			free_array(envs);
 		}
 	}
+	
 	if (pw->pw_gid != getgid()) {
 		syslog(LOG_ERR, "abort, the group ID from /etc/passwd (%d) does not match the group ID we run with (%d)", pw->pw_gid, getgid());
 		exit(15);
