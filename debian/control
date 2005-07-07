@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Olivier Sessink <olivier@lx.student.wau.nl>
 Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 3.6.1
+Standards-Version: 3.6.2
 
 Package: jailkit
 Architecture: any
