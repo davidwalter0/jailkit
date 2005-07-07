@@ -287,7 +287,7 @@ int main(int argc, char**argv) {
 			if (nodetach) printf("abort, could not parse configfile "CONFIGFILE"\n");
 			exit(11);
 		}
-		while (tmp = iniparser_next_section(ip, buf, 1024)) {
+		while ((tmp = iniparser_next_section(ip, buf, 1024))) {
 			if (!have_socket(tmp, sl, numsockets)) {
 				unsigned int base=511, peek=2048, interval;
 				long prevpos, secpos;
