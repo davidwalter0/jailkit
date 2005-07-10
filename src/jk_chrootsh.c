@@ -116,7 +116,6 @@ int main (int argc, char **argv) {
 	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
 	Tiniparser *parser=NULL;
 	char **envs=NULL;
-	int homecheck = 1;
 
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
@@ -179,10 +178,6 @@ int main (int argc, char **argv) {
 			unsigned int pos = iniparser_get_position(parser);
 			if (iniparser_get_string_at_position(parser, section, "env", pos, buffer, 1024) > 0) {
 				envs = explode_string(buffer, ',');
-			}
-			homecheck = iniparser_get_int_at_position(parser, section, "homecheck", pos);
-			if (homecheck == -1) { /* if we don't have this option, set the default to 1 */
-				homecheck = 1;
 			}
 			free(section);
 		}
