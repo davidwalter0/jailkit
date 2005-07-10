@@ -8,7 +8,7 @@ prefix = @prefix@
 
 #CFLAGS = ${CFLAGS} -g -O2 -Wall -pipe
 
-SRCS = jk_socketd.c iniparser.c jk_lsh.c jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c utils.c wordexp.c
+SRCS = jk_socketd.c iniparser.c jk_lsh.c jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c utils.c wordexp.c passwdparser.c
 OBJS = $(SRCS:.c=.o)
 BINARIES = @BINARIES@
 HAVEPROCMAIL = @HAVEPROCMAIL@
@@ -27,8 +27,8 @@ jk_socketd: jk_socketd.o jk_lib.o utils.o iniparser.o
 jk_lsh: jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o
 	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o $(LDFLAGS) $(LIBS)
 
-jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o utils.o
-	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
+jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o
+	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o $(LDFLAGS) $(LIBS)
 
 jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o utils.o
 	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)

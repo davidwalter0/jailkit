@@ -39,6 +39,7 @@
 #include "jk_lib.h"
 #include "utils.h"
 #include "iniparser.h"
+#include "passwdparser.h"
 
 /* doesn't compile on FreeBSD without this */
 extern char **environ;
@@ -111,7 +112,8 @@ int main (int argc, char **argv) {
 	int i;
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
-	char *jaildir=NULL, *newhome=NULL;
+	struct passwd *intpw=NULL; /* for internal_getpwuid() */
+	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
 	Tiniparser *parser=NULL;
 	char **envs=NULL;
 	int homecheck = 1;
@@ -274,16 +276,27 @@ int main (int argc, char **argv) {
 			syslog(LOG_ERR, "abort, groupname %s differs from jail groupname %s for group ID %d, check /etc/passwd and %s/etc/passwd", oldgr_name, gr->gr_name, getgid(), jaildir);
 			exit(37);
 		}
-		if (homecheck && strcmp(pw->pw_dir, newhome)!=0) {
-			syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
-			exit(39);
+		if (strcmp(pw->pw_dir, newhome)!=0) {
+			/* if these are different, it could be that getpwuid() gets the real user info, 
+			and not the info inside the jail, lets test that, and if true, we should use the 
+			shell from the internal function as well*/
+			intpw = internal_getpwuid(getuid());
+			if (strcmp(pw->pw_dir, newhome)!=0) {
+				syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
+				exit(39);
+			}
 		}
 		free(oldpw_name);
 		free(oldgr_name);
 	}
 	
+	if (intpw) {
+		shell = intpw->pw_shell;
+	} else {
+		shell = pw->pw_shell;
+	}
 	/* test the shell in the jail, it is not allowed to be setuid() root */
-	testsafepath(pw->pw_shell,0,0);
+	testsafepath(shell,0,0);
 	
 	/* prepare the new environment */
 	setenv("HOME",newhome,1);
@@ -303,14 +316,14 @@ int main (int argc, char **argv) {
 		char **newargv;
 		int i;
 		newargv = malloc0((argc+1)*sizeof(char *));
-		newargv[0] = pw->pw_shell;
+		newargv[0] = shell;
 		for (i=1;i<argc;i++) {
 			newargv[i] = argv[i];
 		}
-		execv(pw->pw_shell, newargv);
+		execv(shell, newargv);
 	}
 	DEBUG_MSG(strerror(errno));
-	syslog(LOG_ERR, "ERROR: failed to execute shell %s for user %s (%d), check the permissions and libraries of %s/%s",pw->pw_shell,pw->pw_name,getuid(),jaildir,pw->pw_shell);
+	syslog(LOG_ERR, "ERROR: failed to execute shell %s for user %s (%d), check the permissions and libraries of %s/%s",shell,pw->pw_name,getuid(),jaildir,shell);
 
 	free(jaildir);
 	exit(111);
