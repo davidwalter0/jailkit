@@ -276,7 +276,7 @@ int main (int argc, char **argv) {
 			and not the info inside the jail, lets test that, and if true, we should use the 
 			shell from the internal function as well*/
 			intpw = internal_getpwuid(getuid());
-			if (strcmp(pw->pw_dir, newhome)!=0) {
+			if (strcmp(intpw->pw_dir, newhome)!=0) {
 				syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
 				exit(39);
 			}
