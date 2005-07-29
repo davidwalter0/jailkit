@@ -141,7 +141,7 @@ int main (int argc, char **argv) {
 		exit(2);
 	}
 	
-	if (argc != 3 || strcmp(argv[1],"-c")==0) {
+	if (argc != 3 || strcmp(argv[1],"-c")!=0) {
 		DEBUG_MSG("WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh\n", pw->pw_name, getuid());
 		syslog(LOG_ERR, "WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh", pw->pw_name, getuid());
 		exit(7);
@@ -170,9 +170,11 @@ int main (int argc, char **argv) {
 	DEBUG_MSG("using section %s\n",section);
 	
 	DEBUG_MSG("setting umask\n");
-	umaskval = iniparser_get_int_at_position(parser, section, "umask", section_pos);
+	umaskval = iniparser_get_octalint_at_position(parser, section, "umask", section_pos);
 	if (umaskval != -1) {
-		umask(umaskval);
+		mode_t oldumask;
+		oldumask = umask(umaskval);
+		syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);
 	}
 	
 	DEBUG_MSG("exploding string '%s'\n",argv[2]);

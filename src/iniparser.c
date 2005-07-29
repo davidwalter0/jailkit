@@ -140,7 +140,7 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 	return bufferChar;
 }
 
-unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position) {
+static unsigned int iniparser_scan_int_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position, const char *scanstring) {
 	unsigned int buffer=0;
 	int i;
 	char data[25];
@@ -163,9 +163,18 @@ unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, 
 			data[nextValid]=tmp;
 		}
 	}
-	sscanf(data, "%u", &buffer);
+	sscanf(data, scanstring, &buffer);
 	return buffer;
 }
+
+unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position) {
+	return iniparser_scan_int_at_position(ip, section, key, position, "%u");
+}
+
+unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position) {
+	return iniparser_scan_int_at_position(ip, section, key, position, "%o");
+}
+
 /*
 int iniparser_value_len(Tiniparser *ip, const char *section, const char *key){
 	char ch;

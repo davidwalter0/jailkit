@@ -18,6 +18,7 @@ Tiniparser *new_iniparser(char *filename);
 void iniparser_close(Tiniparser *ip);
 unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, unsigned int position, char *buffer, int bufferlen);
 unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position);
+unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position);
 char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen);
 unsigned short int iniparser_has_section(Tiniparser *ip, const char *section);
 
