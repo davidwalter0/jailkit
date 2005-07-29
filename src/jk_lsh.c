@@ -113,7 +113,14 @@ char **expand_newargv(char *string) {
 int main (int argc, char **argv) {
 	Tiniparser *parser;
 	const char *section;
+	unsigned int section_pos, umaskval;
 	struct passwd *pw;
+	char *new, buffer[1024];
+	char **paths = NULL;
+	char ** newargv;
+	struct group *gr;
+	char *groupsec;
+
 	
 	DEBUG_MSG(PROGRAMNAME", started\n");
 #ifndef HAVE_WORDEXP_H
@@ -125,6 +132,21 @@ int main (int argc, char **argv) {
 	syslog(LOG_NOTICE, PROGRAMNAME", started");
 
 	DEBUG_MSG(PROGRAMNAME" log started\n");
+
+	gr = getgrgid(getgid());
+	pw = getpwuid(getuid());
+	if (!pw || !gr) {
+		syslog(LOG_ERR, "uid %d or gid %d does not have a name", getuid(), getgid());
+		DEBUG_MSG(PROGRAMNAME" cannot get user or group info for %d:%d\n", getuid(),getgid());
+		exit(2);
+	}
+	
+	if (argc != 3 || strcmp(argv[1],"-c")==0) {
+		DEBUG_MSG("WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh\n", pw->pw_name, getuid());
+		syslog(LOG_ERR, "WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh", pw->pw_name, getuid());
+		exit(7);
+	}
+	
 	/* start the config parser */
 	parser = new_iniparser(CONFIGFILE);
 	if (!parser) {
@@ -133,68 +155,60 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 	/* check if this user has a section */
-	{
-		struct group *gr = getgrgid(getgid());
-		char *groupsec;
-		pw = getpwuid(getuid());
-		if (!pw || !gr) {
-			syslog(LOG_ERR, "uid %d or gid %d does not have a name", getuid(), getgid());
-			DEBUG_MSG(PROGRAMNAME" cannot get user or group info for %d:%d\n", getuid(),getgid());
-			exit(2);
-		}
-		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+6), "group "), gr->gr_name);
-		if (iniparser_has_section(parser, pw->pw_name)) {
-			section = pw->pw_name;
-		} else if (iniparser_has_section(parser, groupsec)) {
-			section = groupsec;
-		} else {
-			syslog(LOG_ERR, "both the user %s and the group %s have no section in the configfile "CONFIGFILE, pw->pw_name, gr->gr_name);
-			exit(3);
-		}
-	}
-	DEBUG_MSG("using section %s\n",section);
-	if (argc == 3 && strcmp(argv[1],"-c")==0) {
-		char *new, buffer[1024];
-		char **paths = NULL;
-		char ** newargv;
-		DEBUG_MSG("exploding string '%s'\n",argv[2]);
-		if (iniparser_get_int(parser, section, "allow_word_expansion")) {
-			newargv = expand_newargv(argv[2]);
-		} else {
-			newargv = explode_string(argv[2], ' ');
-		}
-		if (iniparser_get_string(parser, section, "paths", buffer, 1024) > 0) {
-			DEBUG_LOG("paths, buffer=%s\n",buffer);
-			paths = explode_string(buffer, ',');
-		} else {
-			DEBUG_LOG("no key paths found\n");
-		}
-		DEBUG_LOG("paths=%p, newargv[0]=%s",paths,newargv[0]);
-		new = expand_executable_w_path(newargv[0], paths);
-		free_array(paths);
-		if (new) {
-			free(newargv[0]);
-			newargv[0] = new;
-		}
-		if (executable_is_allowed(parser, section, newargv[0])) {
-			int retval;
-			DEBUG_MSG("executing command '%s' for user %s (%d)\n", newargv[0],pw->pw_name, getuid());
-			syslog(LOG_DEBUG, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());
-			retval = execve(newargv[0],newargv,environ);
-			DEBUG_MSG("errno=%d, error=%s\n",errno,strerror(errno));
-			DEBUG_MSG("execve() command '%s' returned %d\n", newargv[0], retval);
-			syslog(LOG_ERR, "WARNING: running %s failed for user %s (%d): %s", newargv[0],pw->pw_name, getuid(), strerror(retval));
-			syslog(LOG_ERR, "WARNING: check the permissions and libraries for %s", newargv[0]);
-			return retval;
-		} else {
-			DEBUG_MSG("WARNING: user %s (%d) tried to run '%s'\n", pw->pw_name, getuid(),newargv[0]);
-			syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),newargv[0]);
-			exit(4);
-		}
+
+	groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+6), "group "), gr->gr_name);
+	if (iniparser_has_section(parser, pw->pw_name)) {
+		section = pw->pw_name;
+	} else if (iniparser_has_section(parser, groupsec)) {
+		section = groupsec;
 	} else {
-		DEBUG_MSG("WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh\n", pw->pw_name, getuid());
-		syslog(LOG_ERR, "WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh", pw->pw_name, getuid());
-		exit(7);
+		syslog(LOG_ERR, "both the user %s and the group %s have no section in the configfile "CONFIGFILE, pw->pw_name, gr->gr_name);
+		exit(3);
 	}
+	section_pos = iniparser_get_position(parser) - strlen(section) - 2;
+	section_pos = section_pos >= 0 ? section_pos : 0;
+	DEBUG_MSG("using section %s\n",section);
+	
+	DEBUG_MSG("setting umask\n");
+	umaskval = iniparser_get_int_at_position(parser, section, "umask", section_pos);
+	if (umaskval != -1) {
+		umask(umaskval);
+	}
+	
+	DEBUG_MSG("exploding string '%s'\n",argv[2]);
+	if (iniparser_get_int_at_position(parser, section, "allow_word_expansion", section_pos)) {
+		newargv = expand_newargv(argv[2]);
+	} else {
+		newargv = explode_string(argv[2], ' ');
+	}
+	if (iniparser_get_string_at_position(parser, section, "paths", section_pos, buffer, 1024) > 0) {
+		DEBUG_LOG("paths, buffer=%s\n",buffer);
+		paths = explode_string(buffer, ',');
+	} else {
+		DEBUG_LOG("no key paths found\n");
+	}
+	DEBUG_LOG("paths=%p, newargv[0]=%s",paths,newargv[0]);
+	new = expand_executable_w_path(newargv[0], paths);
+	free_array(paths);
+	if (new) {
+		free(newargv[0]);
+		newargv[0] = new;
+	}
+	if (executable_is_allowed(parser, section, newargv[0])) {
+		int retval;
+		DEBUG_MSG("executing command '%s' for user %s (%d)\n", newargv[0],pw->pw_name, getuid());
+		syslog(LOG_DEBUG, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());
+		retval = execve(newargv[0],newargv,environ);
+		DEBUG_MSG("errno=%d, error=%s\n",errno,strerror(errno));
+		DEBUG_MSG("execve() command '%s' returned %d\n", newargv[0], retval);
+		syslog(LOG_ERR, "WARNING: running %s failed for user %s (%d): %s", newargv[0],pw->pw_name, getuid(), strerror(retval));
+		syslog(LOG_ERR, "WARNING: check the permissions and libraries for %s", newargv[0]);
+		return retval;
+	} else {
+		DEBUG_MSG("WARNING: user %s (%d) tried to run '%s'\n", pw->pw_name, getuid(),newargv[0]);
+		syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),newargv[0]);
+		exit(4);
+	}
+
 	return 0;
 }

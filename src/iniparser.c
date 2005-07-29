@@ -69,7 +69,7 @@ char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen) {
 unsigned short int iniparser_has_section(Tiniparser *ip, const char *section) {
 	char buffer[256], *found;
 	fseek(ip->fd,0,SEEK_SET);
-	while (found = iniparser_next_section(ip, buffer, 256)) {
+	while ((found = iniparser_next_section(ip, buffer, 256))) {
 		DEBUG_MSG("comparing %s and %s\n",section,found);
 		if (strcmp(found, section)==0) {
 			return 1;
