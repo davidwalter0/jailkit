@@ -11,7 +11,7 @@ LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib
 
-def addusertojail(jail, user, shell):
+def addusertojail(jail, user, shell, config):
 	if (jail[-1] == '/'):
 		jail = jail[:-1]
 	pw = pwd.getpwnam(user)
@@ -22,6 +22,8 @@ def addusertojail(jail, user, shell):
 	try:
 		if (sys.platform[4:7] == 'bsd'):
 			file = jail+'/etc/master.passwd'
+			if (config['verbose'] == 1):
+				print 'adding user '+user+' to '+file+' with shell '+shell
 			fd = open(file, 'a')
 			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::0:0:'+pw[4]+':'+jailhome+':'+shell+'\n')
 			fd.close()
@@ -31,6 +33,8 @@ def addusertojail(jail, user, shell):
 		else:
 		#if (sys.platform[:5] == 'linux'):
 			file  = jail+'/etc/passwd'
+			if (config['verbose'] == 1):
+				print 'adding user '+user+' to '+file+' with shell '+shell
 			fd = open(file, 'a')
 			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::'+pw[4]+':'+jailhome+':'+shell+'\n')
 			fd.close()
@@ -47,6 +51,8 @@ def addusertojail(jail, user, shell):
 	gr = grp.getgrgid(pw[3])
 	if (not jk_lib.test_group_exist(gr.gr_name, jail+'/etc/group')):
 		file = jail+'/etc/group'
+		if (config['verbose'] == 1):
+			print 'adding group '+gr[0]+' to '+file
 		try:
 			fd = open(file, 'a')
 			fd.write(gr[0]+':x:'+str(gr[2])+':\n')
@@ -65,13 +71,14 @@ def moduser(user, home, shell='/usr/sbin/jk_chrootsh'):
 	if (os.system(command)!=0):
 		print 'failed to execute '+command
 		return 0
+	return 1
 
 def jailuser(jail, user, config):
 	pw = pwd.getpwnam(user)
 	if (jail[-1:] != '/'):
 		jail = jail + '/'
 	# add the user in the jail
-	if (not addusertojail(jail, user, config['shell'])):
+	if (not addusertojail(jail, user, config['shell'], config)):
 		sys.exit(2)
 	# change the shell and the homedir
 	if (pw[5][0:len(jail)] == jail):
@@ -82,10 +89,14 @@ def jailuser(jail, user, config):
 			newhome = jail+'.'+pw[5][len(jail)-1:]
 	else:
 		newhome = jail+'.'+pw[5]
-	if (not moduser(user,newhome)):
+	if (config['verbose'] == 1):
+		print 'modify user '+user+'; dir '+newhome+' and shell /usr/sbin/jk_chrootsh'
+	if (not moduser(user,newhome,'/usr/sbin/jk_chrootsh')):
 		sys.exit(3)
 	#move directory contents
 	if (config['movehome'] == 1):
+		if (config['verbose'] == 1):
+			print 'moving files from '+pw[5]+' to '+newhome
 		os.rename(pw[5], newhome)
 	
 
