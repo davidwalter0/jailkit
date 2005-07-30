@@ -21,7 +21,7 @@ def addusertojail(jail, user, shell):
 			fd = open(file, 'a')
 			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::0:0:'+pw[4]+':'+pw[5]+':'+shell+'\n')
 			fd.close()
-			postcommand = 'pwd_mkdb -d '+jail+'/etc -u '+user+' /etc/master.passwd'
+			postcommand = 'pwd_mkdb -d '+jail+'/etc -u '+user+' '+jail+'/etc/master.passwd && rm '+jail+'/etc/spwd.db'
 		else:
 		#if (sys.platform[:5] == 'linux'):
 			file  = jail+'/etc/passwd'
