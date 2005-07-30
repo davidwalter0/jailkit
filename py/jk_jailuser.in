@@ -184,7 +184,7 @@ def main():
 		jail = getjail(jail,config)
 		user = getuser(jail,user,config)
 		if (config['movehome'] == -1):
-			config['movehome'] = getmovehome(jail, user)
+			config['movehome'] = getmovehome(jail, user, config)
 	except KeyboardInterrupt:
 		print
 		print 'aborted.. '

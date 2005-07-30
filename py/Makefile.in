@@ -20,7 +20,10 @@ jk_cp: jk_cp.in
 jk_addjailuser: jk_addjailuser.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_addjailuser.in > jk_addjailuser
 
-jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser
+jk_jailuser: jk_jailuser.in
+	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_jailuser.in > jk_jailuser
+
+jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser
 
 all: jailkit
 
