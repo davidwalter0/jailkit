@@ -27,7 +27,8 @@ An example config file for user test or group test is shown below
 [test]
 executables = /usr/bin/scp, /usr/lib/sftp-server
 paths = /usr/bin/, /usr/lib
-allow_word_expansion = 1
+allow_word_expansion = 0
+umask = 002
 
 [group test]
 executables = /usr/bin/rsync
@@ -49,13 +50,11 @@ which is very useful for remote commands like
 .I rsync server:./* .
 or
 .I scp server:somedir/* /tmp/
-
-.SH BSD issues
-FreeBSD and OpenBSD do not include the wordexp(3) function, and word expansion does, therefore, not function as expected. Therefoee disable word expansion on BSD.
+.B umask
+if you want a specific umask
 
 The common way to use jk_lsh is to use it as default shell for those restricted accounts. It is recomended to run these accounts inside a changed root using 
 .BR jk_chrootsh(8)
-
 
 .SH FILES
 .I /etc/jailkit/jk_lsh.ini
