@@ -21,7 +21,9 @@ def addusertojail(jail, user, shell):
 			fd = open(file, 'a')
 			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::0:0:'+pw[4]+':'+pw[5]+':'+shell+'\n')
 			fd.close()
-			postcommand = 'pwd_mkdb -d '+jail+'/etc -u '+user+' '+jail+'/etc/master.passwd && rm '+jail+'/etc/spwd.db'
+			# adding -u user might speed up the next command, but if the password files do not exist
+			# yet (and jail/etc/spwd.db does not exist) this generates an error
+			postcommand = 'pwd_mkdb -d '+jail+'/etc '+jail+'/etc/master.passwd && rm '+jail+'/etc/spwd.db'
 		else:
 		#if (sys.platform[:5] == 'linux'):
 			file  = jail+'/etc/passwd'
@@ -51,7 +53,11 @@ def addusertojail(jail, user, shell):
 	return 1
 
 def moduser(user, home, shell='/usr/sbin/jk_chrootsh'):
-	command = 'usermod -d '+home+' -s '+shell+' '+user
+	if (sys.platform[4:7] == 'bsd'):
+		command = 'pw usermod '+user+' -d '+home+' -s '+shell
+	else:
+	#if (sys.platform[:5] == 'linux'):
+		command = 'usermod -d '+home+' -s '+shell+' '+user
 	if (os.system(command)!=0):
 		print 'failed to execute '+command
 		return 0
@@ -164,6 +170,7 @@ def main():
 	config['verbose'] = 0
 	config['interactive'] = 1
 	config['movehome'] = -1 # -1 = interactive
+	config['changehome'] = 1
 	config['shell'] = '/usr/sbin/jk_lsh' # default shell
 	for o, a in opts:
 		if o in ("-h", "-?", "--help"):
