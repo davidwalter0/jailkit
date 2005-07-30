@@ -27,7 +27,7 @@ def addusertojail(jail, user, shell):
 			fd.close()
 			# adding -u user might speed up the next command, but if the password files do not exist
 			# yet (and jail/etc/spwd.db does not exist) this generates an error
-			postcommand = 'pwd_mkdb -d '+jail+'/etc '+jail+'/etc/master.passwd && rm '+jail+'/etc/spwd.db'
+			postcommand = 'pwd_mkdb -p -d '+jail+'/etc '+jail+'/etc/master.passwd && rm '+jail+'/etc/spwd.db'
 		else:
 		#if (sys.platform[:5] == 'linux'):
 			file  = jail+'/etc/passwd'
@@ -82,7 +82,7 @@ def jailuser(jail, user, config):
 			newhome = jail+'.'+pw[5][len(jail)-1:]
 	else:
 		newhome = jail+'.'+pw[5]
-	if (not moduser(user,newhome,config['shell'])):
+	if (not moduser(user,newhome)):
 		sys.exit(3)
 	#move directory contents
 	if (config['movehome'] == 1):
