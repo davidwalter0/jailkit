@@ -1,0 +1,39 @@
+.TH jk_jailuser 8 30-07-2005 JAILKIT jk_jailuser
+
+.SH NAME
+jk_jailuser \- a utility to put an existing user in a jail
+
+.SH SYNOPSIS
+
+.B jk_jailuser [OPTIONS] chrootdir username
+
+.SH DESCRIPTION
+
+The jk_jailuser utility will change the shell to jk_chrootsh and change the home directory to <jail>/./<homedir>
+
+
+.SH OPTIONS
+
+.TP
+.BR \-v
+Will give verbose output
+.TP
+.BR \-h
+The help screen
+.TP
+
+.SH AUTHOR
+
+Jailkit is written by Olivier Sessink
+
+.SH "SEE ALSO"
+
+.BR jailkit(8)
+.BR jk_chrootlaunch(8)
+.BR jk_chrootsh(8)
+.BR jk_cp(8)
+.BR jk_init(8)
+.BR jk_lsh(8)
+.BR jk_procmailwrapper(8)
+.BR jk_socketd(8)
+.BR usermod(8)

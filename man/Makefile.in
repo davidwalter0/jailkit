@@ -1,7 +1,7 @@
 INSTALL = @INSTALL@
 prefix = @prefix@
 
-SRCS = jailkit.8 jk_chrootsh.8 jk_lsh.8 jk_socketd.8 jk_init.8 jk_check.8 jk_cp.8 jk_chrootlaunch.8 jk_procmailwrapper.8 jk_addjailuser.8
+SRCS = jailkit.8 jk_chrootsh.8 jk_lsh.8 jk_socketd.8 jk_init.8 jk_check.8 jk_cp.8 jk_chrootlaunch.8 jk_procmailwrapper.8 jk_addjailuser.8 jk_jailuser.8
 OBJS = $(SRCS:.8=.8.gz)
 
 #%.8.gz : %.8
@@ -42,6 +42,9 @@ jk_chrootlaunch.8.gz:
 
 jk_procmailwrapper.8.gz:
 	gzip -9 < jk_procmailwrapper.8 > jk_procmailwrapper.8.gz
+
+jk_jailuser.8.gz:
+	gzip -9 < jk_jailuser.8 > jk_jailuser.8.gz
 
 jk_addjailuser.8.gz:
 	gzip -9 < jk_addjailuser.8 > jk_addjailuser.8.gz
