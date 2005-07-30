@@ -129,7 +129,7 @@ int main (int argc, char **argv) {
 #endif
 	/* open the log facility */
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
-	syslog(LOG_NOTICE, PROGRAMNAME", started");
+	syslog(LOG_INFO, PROGRAMNAME", started");
 
 	DEBUG_MSG(PROGRAMNAME" log started\n");
 
@@ -174,7 +174,7 @@ int main (int argc, char **argv) {
 	if (umaskval != -1) {
 		mode_t oldumask;
 		oldumask = umask(umaskval);
-		syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);
+/*		syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);*/
 	}
 	
 	DEBUG_MSG("exploding string '%s'\n",argv[2]);
@@ -199,7 +199,7 @@ int main (int argc, char **argv) {
 	if (executable_is_allowed(parser, section, newargv[0])) {
 		int retval;
 		DEBUG_MSG("executing command '%s' for user %s (%d)\n", newargv[0],pw->pw_name, getuid());
-		syslog(LOG_DEBUG, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());
+		syslog(LOG_INFO, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());
 		retval = execve(newargv[0],newargv,environ);
 		DEBUG_MSG("errno=%d, error=%s\n",errno,strerror(errno));
 		DEBUG_MSG("execve() command '%s' returned %d\n", newargv[0], retval);
