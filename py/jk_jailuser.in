@@ -15,11 +15,15 @@ def addusertojail(jail, user, shell):
 	if (jail[-1] == '/'):
 		jail = jail[:-1]
 	pw = pwd.getpwnam(user)
+	if (pw[5][0:len(jail)] == jail):
+		jailhome = pw[5][len(jail):]
+	else:
+		jailhome = pw[5]
 	try:
 		if (sys.platform[4:7] == 'bsd'):
 			file = jail+'/etc/master.passwd'
 			fd = open(file, 'a')
-			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::0:0:'+pw[4]+':'+pw[5]+':'+shell+'\n')
+			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::0:0:'+pw[4]+':'+jailhome+':'+shell+'\n')
 			fd.close()
 			# adding -u user might speed up the next command, but if the password files do not exist
 			# yet (and jail/etc/spwd.db does not exist) this generates an error
@@ -28,7 +32,7 @@ def addusertojail(jail, user, shell):
 		#if (sys.platform[:5] == 'linux'):
 			file  = jail+'/etc/passwd'
 			fd = open(file, 'a')
-			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::'+pw[4]+':'+pw[5]+':'+shell+'\n')
+			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::'+pw[4]+':'+jailhome+':'+shell+'\n')
 			fd.close()
 			postcommand = None
 	except IOError:
@@ -40,7 +44,7 @@ def addusertojail(jail, user, shell):
 			print 'failed to execute '+postcommand
 			return 0
 	# lookup the primary group and make sure it also exists in the jail
-	gr = grp.getgrgid(pw[2])
+	gr = grp.getgrgid(pw[3])
 	if (not jk_lib.test_group_exist(gr.gr_name, jail+'/etc/group')):
 		file = jail+'/etc/group'
 		try:
@@ -70,7 +74,14 @@ def jailuser(jail, user, config):
 	if (not addusertojail(jail, user, config['shell'])):
 		sys.exit(2)
 	# change the shell and the homedir
-	newhome = jail+'.'+pw[5]
+	if (pw[5][0:len(jail)] == jail):
+		# the home is within in the jail already, does it have the /./ sequence?
+		if (pw[5][0:len(jail)+2] == jail+'./'):
+			newhome = pw[5]
+		else:
+			newhome = jail+'.'+pw[5][len(jail)-1:]
+	else:
+		newhome = jail+'.'+pw[5]
 	if (not moduser(user,newhome,config['shell'])):
 		sys.exit(3)
 	#move directory contents
@@ -170,7 +181,6 @@ def main():
 	config['verbose'] = 0
 	config['interactive'] = 1
 	config['movehome'] = -1 # -1 = interactive
-	config['changehome'] = 1
 	config['shell'] = '/usr/sbin/jk_lsh' # default shell
 	for o, a in opts:
 		if o in ("-h", "-?", "--help"):
