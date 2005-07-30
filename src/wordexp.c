@@ -3,7 +3,8 @@
    This file is part of the GNU C Library.
    Contributed by Tim Waugh <tim@cyberelk.demon.co.uk>.
    
-   Changes to make this compile on FreeBSD (C) 2004 Olivier Sessink
+   Changes to make this compile on older *BSD platforms that do 
+   not have wordexp() in their libc (C) 2004 Olivier Sessink
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License as

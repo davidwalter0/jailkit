@@ -51,3 +51,10 @@ NOTES ON VARIOUS APPLICATIONS
 cvs - cvs needs /tmp/ for temporary files
 procmail - needs /dev/null
 
+COPYRIGHT
+
+Copyright (C) 2003, 2004, 2005, Olivier Sessink
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
