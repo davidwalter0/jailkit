@@ -36,6 +36,7 @@ install: jailkit
 	${INSTALL} -g 0 -o root -m 0755 jk_check ${prefix}/sbin
 	${INSTALL} -g 0 -o root -m 0755 jk_cp ${prefix}/sbin
 	${INSTALL} -g 0 -o root -m 0755 jk_addjailuser ${prefix}/sbin
+	${INSTALL} -g 0 -o root -m 0755 jk_jailuser ${prefix}/sbin
 
 uninstall:
 	rm -f ${prefix}/sbin/jk_cp
