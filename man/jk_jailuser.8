@@ -5,12 +5,13 @@ jk_jailuser \- a utility to put an existing user in a jail
 
 .SH SYNOPSIS
 
-.B jk_jailuser [OPTIONS] chrootdir username
+.B jk_jailuser [OPTIONS] <jail> <user>
 
 .SH DESCRIPTION
 
-The jk_jailuser utility will change the shell to jk_chrootsh and change the home directory to <jail>/./<homedir>
+The jk_jailuser utility will change the shell of an existing user <user> to jk_chrootsh and change the home directory to <jail>/./<home directory>, and it will add the user to <jail>/etc/passwd. On *BSD systems this is <jail>/etc/master.passwd and pwd_mkdb is used to generate the other password files.
 
+If the previous <home directory> was already inside the jail, a /./ seperator is placed in between. If the previous home directory was not in the jail, it is changed. You are asked if you want to move the contents, use the --move option to move without interaction.
 
 .SH OPTIONS
 
@@ -20,7 +21,15 @@ Will give verbose output
 .TP
 .BR \-h\ \-\-help
 The help screen
-
+.TP
+.BR \-m\ \-\-move
+Move the contents of the home directory inside the jail
+.TP
+.BR \-n\ \-\-noninteractive
+No user interaction
+.TP
+.BR \-s\ \-\-shell
+The shell to use inside the jail
 
 .SH AUTHOR
 

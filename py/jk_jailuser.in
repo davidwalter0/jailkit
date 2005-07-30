@@ -133,7 +133,7 @@ def usage():
 	print 'Usage: '+sys.argv[0]+' [OPTIONS] jaildir username'
 	print
 	print ' -v | --verbose        : verbose output'
-	print ' -n | --noninteractive : verbose output'
+	print ' -n | --noninteractive : no user interaction'
 	print ' -s | --shell shell    : set shell inside jail (/usr/sbin/jk_lsh default)'
 	print ' -m | --move        : move home if home outside jail'
 	print ' -h | --help        : this message'
