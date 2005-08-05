@@ -124,11 +124,16 @@ def jailuser(jail, user, config):
 		sys.exit(3)
 	#move directory contents
 	if (config['movehome'] == 1):
-		if (config['verbose'] == 1):
-			print 'moving files from '+pw[5]+' to '+newhome
-		os.rename(pw[5], newhome)
+		if (not os.path.exists(pw[5])):
+			print 'home directory '+pw[5]+' does not exist, nothing moved'
+		else:
+			# test if the base directory for newhome exists
+			tmp = jk_lib.nextpathup(newhome)
+			jk_lib.create_full_path(tmp, (config['verbose'] == 1))
+			if (config['verbose'] == 1):
+				print 'moving files from '+pw[5]+' to '+newhome
+			os.rename(pw[5], newhome)
 	
-
 def getjail_and_user(args):
 	if (len(args)==0):
 		return None,None
