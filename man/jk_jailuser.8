@@ -5,7 +5,7 @@ jk_jailuser \- a utility to put an existing user in a jail
 
 .SH SYNOPSIS
 
-.B jk_jailuser [OPTIONS] <jail> <user>
+.B jk_jailuser [OPTIONS] <user> [more usernames]
 
 .SH DESCRIPTION
 
@@ -15,6 +15,9 @@ If the previous <home directory> was already inside the jail, a /./ seperator is
 
 .SH OPTIONS
 
+.TP
+.BR \-j\ \-\-jail= jail
+The jail directory to use. This jail should exist, and should have at least <jail>/etc/passwd
 .TP
 .BR \-v\ \-\-verbose
 Will give verbose output
@@ -28,7 +31,7 @@ Move the contents of the home directory inside the jail. If in interactive mode,
 .BR \-n\ \-\-noninteractive
 No user interaction.
 .TP
-.BR \-s\ \-\-shell
+.BR \-s\ \-\-shell= shell
 The shell to use inside the jail. Defaults to /usr/sbin/jk_lsh
 
 .SH "SEE ALSO"
