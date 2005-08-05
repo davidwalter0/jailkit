@@ -45,7 +45,10 @@ def addusertojail(jail, user, shell, config):
 		jail = jail[:-1]
 	pw = pwd.getpwnam(user)
 	if (pw[5][0:len(jail)] == jail):
-		jailhome = pw[5][len(jail):]
+		if (pw[5][0:len(jail)+3] == jail+'/./'):
+			jailhome = pw[5][len(jail)+2:]
+		else:
+			jailhome = pw[5][len(jail):]
 	else:
 		jailhome = pw[5]
 	try:
@@ -65,7 +68,7 @@ def addusertojail(jail, user, shell, config):
 			if (config['verbose'] == 1):
 				print 'adding user '+user+' to '+file+' with shell '+shell
 			fd = open(file, 'a')
-			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+'::'+pw[4]+':'+jailhome+':'+shell+'\n')
+			fd.write(user+':x:'+str(pw[2])+':'+str(pw[3])+':'+pw[4]+':'+jailhome+':'+shell+'\n')
 			fd.close()
 			postcommand = None
 	except IOError:
