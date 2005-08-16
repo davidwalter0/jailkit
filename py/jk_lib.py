@@ -202,7 +202,11 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				realfile = os.readlink(file)
 				if (be_verbose):
 					print 'creating symlink '+chroot+file+' to '+realfile
-				os.symlink(realfile, chroot+file)
+				try:
+					os.symlink(realfile, chroot+file)
+				except OSError:
+					# if the gile exists already
+					pass
 				handledfiles.append(file)
 				if (realfile[0] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile

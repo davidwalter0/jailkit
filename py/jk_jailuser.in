@@ -125,10 +125,10 @@ def jailuser(jail, user, movehome, config):
 			newhome = jail+'.'+pw[5][len(jail)-1:]
 	else:
 		newhome = jail+'.'+pw[5]
-	if (pw[5] != newhome or pw[6] != config['shell']):
+	if (pw[5] != newhome or pw[6] != '/usr/sbin/jk_chrootsh'):
 		if (config['verbose'] == 1):
-			print 'modify user '+user+'; dir '+newhome+' and shell '+config['shell']
-		if (not moduser(user,newhome,config['shell'])):
+			print 'modify user '+user+'; dir '+newhome+' and shell /usr/sbin/jk_chrootsh'
+		if (not moduser(user,newhome,'/usr/sbin/jk_chrootsh')):
 			print 'failed to modify user '+user
 	else:
 		if (config['verbose'] == 1):
