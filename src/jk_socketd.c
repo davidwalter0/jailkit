@@ -90,12 +90,12 @@ static void close_socketlink(Tsocketlink *sl) {
 	free(sl);
 }
 
-static void clean_exit(int numsockets, Tsocketlink **sl) {
+/*static void clean_exit(int numsockets, Tsocketlink **sl) {
 	unsigned int i;
 	for (i=0;i<numsockets;i++) {
 		close_socketlink(sl[i]);
 	}
-}
+}*/
 
 static Tsocketlink *new_socketlink(int outsocket, char *inpath, int normrate, int peekrate, int roundtime, int nodetach) {
 	Tsocketlink *sl;
@@ -210,14 +210,16 @@ static void socketlink_handle(Tsocketlink *sl) {
 		}
 	}
 }
-
+/*
 static void sigterm_handler(int signal) {
+	DEBUG_MSG("sigterm_handler, called\n");
+	exit(1);
 	if (do_clean_exit != 1) {
 		syslog(LOG_NOTICE, "got signal %d, exiting", signal);
 		do_clean_exit = 1;
-		raise(SIGTERM);
+		/ *raise(SIGTERM);* /
 	}
-}
+}*/
 
 static void usage() {
 	printf(PROGRAMNAME" usage:\n\n");
@@ -245,8 +247,8 @@ int main(int argc, char**argv) {
 	char *pidfile = NULL;
 	FILE *pidfilefd = NULL;
 
-	signal(SIGINT, sigterm_handler);
-	signal(SIGTERM, sigterm_handler);
+/*	signal(SIGINT, sigterm_handler);
+	signal(SIGTERM, sigterm_handler);*/
 
 	{
 		int c;
@@ -320,7 +322,7 @@ int main(int argc, char**argv) {
 				long prevpos, secpos;
 				prevpos = iniparser_get_position(ip);
 				secpos = prevpos - strlen(tmp)-4;
-				DEBUG_MSG("secpos=%d, prevpos=%d\n",secpos,prevpos);
+				DEBUG_MSG("secpos=%ld, prevpos=%ld\n",secpos,prevpos);
 				base = iniparser_get_int(ip, tmp, "base");
 				iniparser_set_position(ip, secpos);
 				peek = iniparser_get_int(ip, tmp, "peek");
@@ -338,7 +340,7 @@ int main(int argc, char**argv) {
 				} else {
 					if (nodetach) printf("failed to create socket %s\n",tmp);
 				}
-				DEBUG_MSG("setting position to %d\n",prevpos);
+				DEBUG_MSG("setting position to %ld\n",prevpos);
 				iniparser_set_position(ip, prevpos);
 			} else {
 				syslog(LOG_NOTICE, "socket %s is mentioned multiple times in config file",tmp);
@@ -380,8 +382,10 @@ int main(int argc, char**argv) {
 	if (!nodetach) {
 		/* detach and set the detached process as the new process group leader */
 		if (fork() != 0) {
+			DEBUG_MSG("exit process %d\n", getpid());
 			exit(0);
 		}
+		DEBUG_MSG("after fork(), process id %d continues\n", getpid());
 		setsid();
 	}
 	if (pidfile) {
@@ -396,14 +400,18 @@ int main(int argc, char**argv) {
 			syslog(LOG_NOTICE, "failed to write pid to %s", pidfile);
 		}
 	}	
-	
-	for (i=0;i<numsockets;i++) {
+	/* use sl[0] for the main process */
+	for (i=1;i<numsockets;i++) {
 		pthread_create(&sl[i]->thread, NULL,(void*)&socketlink_handle, (void*) sl[i]);
+		DEBUG_MSG("created thread %i for %s\n",i,sl[i]->inpath);
 	}
+	DEBUG_MSG("main thread starting work on socket\n");
+	socketlink_handle(sl[0]);
+/*	DEBUG_MSG("pause() for process %d\n",getpid());
 	pause();
 	DEBUG_MSG("before clean_exit\n");
 	clean_exit(numsockets,sl);
 	DEBUG_MSG("after clean_exit\n");
-	if (nodetach) printf("caught signal, exiting\n");
+	if (nodetach) printf("caught signal, exiting\n");*/
 	exit(0);
 }
