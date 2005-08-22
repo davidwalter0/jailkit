@@ -67,10 +67,10 @@ char **libc_argv;
 /* doesn't compile on FreeBSD without this */
 extern char **environ;
 
-static int executable_is_allowed(Tiniparser *parser, const char *section, const char *executable) {
+static int executable_is_allowed(Tiniparser *parser, const char *section, const char *executable, int position) {
 	int klen;
 	char buffer[1024];
-	klen = iniparser_get_string(parser, section, "executables", buffer, 1024);
+	klen = iniparser_get_string_at_position(parser, section, "executables",position, buffer, 1024);
 	if (klen) {
 		char **arr, **tmp;
 		arr = tmp = explode_string(buffer, ',');
@@ -223,7 +223,7 @@ int main (int argc, char **argv) {
 		free(newargv[0]);
 		newargv[0] = new;
 	}
-	if (executable_is_allowed(parser, section, newargv[0])) {
+	if (executable_is_allowed(parser, section, newargv[0],section_pos)) {
 		int retval;
 		DEBUG_MSG("executing command '%s' for user %s (%d)\n", newargv[0],pw->pw_name, getuid());
 		syslog(LOG_INFO, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());

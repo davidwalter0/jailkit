@@ -8,17 +8,17 @@ typedef struct {
 	FILE *fd;
 } Tiniparser;
 
-#define iniparser_rewind(ip) fseek(ip->fd, 0, SEEK_SET)
+#define iniparser_rewind(ip) fseek(ip->fd, 0L, SEEK_SET)
 #define iniparser_get_position(ip) ftell(ip->fd)
 #define iniparser_set_position(ip, position) fseek(ip->fd, position, SEEK_SET)
-#define iniparser_get_string(ip,section,key,buffer,buflen) iniparser_get_string_at_position(ip,section,key,0,buffer,buflen)
-#define iniparser_get_int(ip,section,key) iniparser_get_int_at_position(ip,section,key,0)
+#define iniparser_get_string(ip,section,key,buffer,buflen) iniparser_get_string_at_position(ip,section,key,0L,buffer,buflen)
+#define iniparser_get_int(ip,section,key) iniparser_get_int_at_position(ip,section,key,0L)
 
 Tiniparser *new_iniparser(char *filename);
 void iniparser_close(Tiniparser *ip);
-unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, unsigned int position, char *buffer, int bufferlen);
-unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position);
-unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, unsigned int position);
+unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, long position, char *buffer, int bufferlen);
+unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position);
+unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, long position);
 char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen);
 unsigned short int iniparser_has_section(Tiniparser *ip, const char *section);
 
