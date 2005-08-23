@@ -78,7 +78,7 @@ char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen) {
 			inComment = 0;
 		} else if (inComment == 1) {
 			/* do nothing if in comment */
-			DEBUG_MSG("do nothing, we're in a comment (%c)\n",ch);
+			/*DEBUG_MSG("do nothing, we're in a comment (%c)\n",ch);*/
 		} else if (!sectionStart && ch=='[') {
 			DEBUG_MSG("Section begins (%c)\n",ch);
 			sectionStart=1;
@@ -168,7 +168,8 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 			if (ch==key[keyNameChar]){
 				DEBUG_MSG("Found a valid letter of the key: %c on position %d of %s, continue to test if next character is also valid\n", ch,keyNameChar,key);
 				keyNameChar++;
-			} else if (keyNameChar != 0 && isspace(ch)) {
+			} else if (isspace(ch)) {
+				/* *before* the key, and *after* the key, before the '=' there can be spaces */
 				DEBUG_MSG("found a space, we ignore spaces when we are looking for the key\n");
 			} else if (keyNameChar != 0 && ch == '='){
 				DEBUG_MSG("Character %c, found the key %s, set foundKey to 1\n", ch,key);
