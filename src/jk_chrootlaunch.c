@@ -146,7 +146,7 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 			exit(27);
 		}
 	} else {
-		syslog(LOG_ERR, "jail %s does not exist",jail);
+		syslog(LOG_ERR, "abort, could not get properties of jail directory %s: %s",jail, strerror(errno));
 		exit(25);
 	}
 	/* test the executable, first we test if the executable was specified relative in the jail or absolute */
@@ -176,7 +176,7 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 			exit(29);
 		}
 	} else {
-		syslog(LOG_ERR, "executable %s does not exist",tmpstr);
+		syslog(LOG_ERR, "abort, could not get properties for executable %s: %s",tmpstr,strerror(errno));
 		exit(29);
 	}
 	retval = strdup(&tmpstr[strlen(jail)]);
@@ -272,11 +272,11 @@ int main (int argc, char **argv) {
 	}
 	
 	if (chdir(jail)) {
-		syslog(LOG_ERR, "abort, could not change directory chdir() to the jail %s", jail);
+		syslog(LOG_ERR, "abort, could not change directory chdir() to the jail %s: %s", jail,strerror(errno));
 		exit(33);
 	}
 	if (chroot(jail)) {
-		syslog(LOG_ERR, "abort, could not change root chroot() to the jail %s", jail);
+		syslog(LOG_ERR, "abort, could not change root chroot() to the jail %s: %s", jail,strerror(errno));
 		exit(35);
 	}
 	if (gid != -1 && setgid(gid)) {
@@ -289,6 +289,6 @@ int main (int argc, char **argv) {
 	}
 	syslog(LOG_NOTICE,"executing %s in jail %s",exec,jail);
 	execv(exec, newargv);
-	syslog(LOG_ERR, "error: failed to execute %s in jail %s",exec,jail);
+	syslog(LOG_ERR, "error: failed to execute %s in jail %s: %d",exec,jail,strerror(errno));
 	exit(31);
 }
