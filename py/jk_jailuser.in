@@ -146,7 +146,7 @@ def jailuser(jail, user, movehome, config):
 				print 'moving files from '+pw[5]+' to '+newhome
 			try:
 				shutil.move(pw[5], newhome)
-			excep Error:
+			except IOError, OSError:
 				print 'FAILED TO MOVE '+pw[5]+' TO '+newhome+'. Possibly the target is full, or read-only'
 
 def user_exists(user):
@@ -234,12 +234,18 @@ def main():
 			jail = a
 	if (config['interactive'] == 0 and config['movehome'] == -1):
 		config['movehome'] = 0
+	if (len(args)==0):
+		print
+		print 'aborted, no username specified'
+		sys.exit(2)
 	try:
 		jail = getjail(jail,config)
 		for username in args:
 			if user_exists(username):
 				if (config['movehome'] == -1):
 					movehome = getmovehome(jail, username, config)
+				else:
+					movehome = config['movehome']
 				jailuser(jail, username, movehome, config)
 			else:
 				print 'user '+username+' does not exist'
