@@ -35,15 +35,36 @@ import grp
 import pwd
 import sys
 import getopt
+import string
 import shutil
 
 LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib
 
+def striptrailingslash(dir):
+	if (dir[-1] == '/'):
+		return dir[:-1]
+	return dir
+
+def addgrouptojail(jail, group_id, config):
+	jail = striptrailingslash(jail)
+	gr = grp.getgrgid(group_id)
+	if (not jk_lib.test_group_exist(gr.gr_name, jail+'/etc/group')):
+		file = jail+'/etc/group'
+		if (config['verbose'] == 1):
+			print 'adding group '+gr[0]+' to '+file
+		try:
+			fd = open(file, 'a')
+			fd.write(gr[0]+':x:'+str(gr[2])+':'+string.join(gr[3],',')+'\n')
+			fd.close()
+		except IOError:
+			print 'failed to write to '+file+''
+			return 0
+	return 1
+
 def addusertojail(jail, user, shell, config):
-	if (jail[-1] == '/'):
-		jail = jail[:-1]
+	jail = striptrailingslash(jail)
 	if (jk_lib.test_user_exist(user, jail+'/etc/passwd')):
 		if (config['verbose']):
 			print 'user '+user+' already exists in '+jail+'/etc/passwd'
@@ -84,19 +105,6 @@ def addusertojail(jail, user, shell, config):
 		if (ret != 0):
 			print 'failed to execute '+postcommand
 			return 0
-	# lookup the primary group and make sure it also exists in the jail
-	gr = grp.getgrgid(pw[3])
-	if (not jk_lib.test_group_exist(gr.gr_name, jail+'/etc/group')):
-		file = jail+'/etc/group'
-		if (config['verbose'] == 1):
-			print 'adding group '+gr[0]+' to '+file
-		try:
-			fd = open(file, 'a')
-			fd.write(gr[0]+':x:'+str(gr[2])+':\n')
-			fd.close()
-		except IOError:
-			print 'failed to write to '+file+''
-			return 0
 	return 1
 
 def moduser(user, home, shell='/usr/sbin/jk_chrootsh'):
@@ -117,6 +125,16 @@ def jailuser(jail, user, movehome, config):
 	# add the user in the jail
 	if (not addusertojail(jail, user, config['shell'], config)):
 		sys.exit(2)
+	# lookup the primary group and make sure it also exists in the jail
+	if not addgrouptojail(jail, pw[3], config):
+		return 0
+	# look up all other groups
+	groups = grp.getgrall()
+	for gr in groups:
+		if (user in gr.gr_mem):
+			ret = addgrouptojail(jail, gr.gr_gid, config)
+			if not ret:
+				return 0
 	# change the shell and the homedir
 	if (pw[5][0:len(jail)] == jail):
 		# the home is within in the jail already, does it have the /./ sequence?
@@ -126,7 +144,9 @@ def jailuser(jail, user, movehome, config):
 			newhome = jail+'.'+pw[5][len(jail)-1:]
 	else:
 		newhome = jail+'.'+pw[5]
-	if (pw[5] != newhome or pw[6] != '/usr/sbin/jk_chrootsh'):
+	newhome = striptrailingslash(newhome)
+	oldhome = striptrailingslash(pw[5])
+	if (oldhome != newhome or pw[6] != '/usr/sbin/jk_chrootsh'):
 		if (config['verbose'] == 1):
 			print 'modify user '+user+'; dir '+newhome+' and shell /usr/sbin/jk_chrootsh'
 		if (not moduser(user,newhome,'/usr/sbin/jk_chrootsh')):
@@ -136,21 +156,25 @@ def jailuser(jail, user, movehome, config):
 			print 'user '+user+' has a correct home directory and shell already'
 	#move directory contents
 	if (movehome == 1):
-		if (pw[5] == newhome):
-			print 'home directory '+pw[5]+' is already inside the jail'
+		if (oldhome == newhome):
+			print 'home directory '+oldhome+' is already inside the jail'
 		else:
-			if (not os.path.exists(pw[5])):
-				print 'home directory '+pw[5]+' does not exist, nothing moved'
+			if (not os.path.exists(oldhome)):
+				print 'home directory '+oldhome+' does not exist, nothing moved'
 			else:
 				# test if the base directory for newhome exists
 				tmp = jk_lib.nextpathup(newhome)
 				jk_lib.create_full_path(tmp, (config['verbose'] == 1))
 				if (config['verbose'] == 1):
-					print 'moving files from '+pw[5]+' to '+newhome
+					print 'moving files from '+oldhome+' to '+newhome
 				try:
-					shutil.move(pw[5], newhome)
+					os.rename(oldhome, newhome)
 				except OSError:
-					print 'FAILED TO MOVE '+pw[5]+' TO '+newhome+'. Possibly the target is full, or read-only, or the target directory already exists'
+					# if the destination is on a different device, you get: OSError: [Errno 18] Invalid cross-device link
+					try:
+						shutil.copy(oldhome, newhome)
+					except OSError:
+						print 'FAILED TO MOVE '+oldhome+' TO '+newhome+'. Possibly the target is full, or read-only, or the target directory already exists'
 
 def user_exists(user):
 	try:
