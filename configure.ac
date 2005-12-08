@@ -100,6 +100,16 @@ AC_CHECK_LIB(pthread, pthread_create,
 		)
 	)
 
+AC_CHECK_FUNCS([getopt_long],,
+   [# FreeBSD has a gnugetopt library for this
+    	AC_CHECK_LIB([gnugetopt],
+    		[getopt_long],
+    		[AC_DEFINE([HAVE_GETOPT_LONG])],
+    		[])
+    ]
+)
+
+
 AC_PATH_PROG(PYTHONPATH, python, no)
 if test "x$PYTHONPATH" == "xno" ; then
 	AC_MSG_ERROR(python not found please install python)
