@@ -16,5 +16,6 @@
 #undef HAVE_STPCPY
 #undef HAVE_CLEARENV
 #undef HAVE_GETCURRENTDIRNAME
+#undef HAVE_GETOPT_H
 
 #endif /* __CONFIG_H */

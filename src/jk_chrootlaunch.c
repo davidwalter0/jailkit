@@ -48,7 +48,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <syslog.h>
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 #include <grp.h>
 #include <pwd.h>
 
@@ -289,6 +291,6 @@ int main (int argc, char **argv) {
 	}
 	syslog(LOG_NOTICE,"executing %s in jail %s",exec,jail);
 	execv(exec, newargv);
-	syslog(LOG_ERR, "error: failed to execute %s in jail %s: %d",exec,jail,strerror(errno));
+	syslog(LOG_ERR, "error: failed to execute %s in jail %s: %s",exec,jail,strerror(errno));
 	exit(31);
 }

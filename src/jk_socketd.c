@@ -37,7 +37,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/socket.h> /* socket() */
 #include <sys/times.h> /* times() */
 #include <unistd.h> /* sysconf(), getopt() */
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 #include <time.h> /* nanosleep() */
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* strcpy() */
