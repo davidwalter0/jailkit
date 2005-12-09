@@ -100,13 +100,18 @@ AC_CHECK_LIB(pthread, pthread_create,
 		)
 	)
 
+# FreeBSD has a gnugetopt library for this
+# Solaris might have libiberty
 AC_CHECK_FUNCS([getopt_long],,
-   [# FreeBSD has a gnugetopt library for this
-    	AC_CHECK_LIB([gnugetopt],
-    		[getopt_long],
-    		[AC_DEFINE([HAVE_GETOPT_LONG])],
-    		[])
-    ]
+	AC_CHECK_LIB(gnugetopt,getopt_long,
+		AC_DEFINE(HAVE_GETOPT_LONG)
+		LIBS="$LIBS -lgnugetopt",
+		AC_CHECK_LIB(iberty,getopt_long,
+			AC_DEFINE(HAVE_GETOPT_LONG)
+  			LIBS="$LIBS -liberty",
+  			AC_MSG_ERROR(getopt_long not found)
+  		)
+	)
 )
 
 
