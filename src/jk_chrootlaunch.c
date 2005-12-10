@@ -51,6 +51,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+#ifdef HAVE_LIBERTY_H
+#include <liberty.h>
+#endif
 #include <grp.h>
 #include <pwd.h>
 

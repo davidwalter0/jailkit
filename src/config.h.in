@@ -17,5 +17,6 @@
 #undef HAVE_CLEARENV
 #undef HAVE_GETCURRENTDIRNAME
 #undef HAVE_GETOPT_H
+#undef HAVE_LIBERTY_H
 #undef HAVE_GETOPT_LONG
 #endif /* __CONFIG_H */

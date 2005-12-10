@@ -40,6 +40,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+#ifdef HAVE_LIBERTY_H
+#include <liberty.h>
+#endif
 #include <time.h> /* nanosleep() */
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* strcpy() */

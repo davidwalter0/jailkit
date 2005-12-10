@@ -62,43 +62,55 @@ dnl ************************
 dnl Checks for header files.
 dnl ************************
 
-AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h)
+AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h liberty.h)
 
 AC_CHECK_FUNC(strndup,
-	AC_DEFINE(HAVE_STRNDUP, 1)
+	AC_DEFINE(HAVE_STRNDUP, 1),
+	AC_CHECK_LIB(strndup, iberty,
+		LIBS="$LIBS -liberty"
+		AC_DEFINE(HAVE_STRNDUP, 1)
 	)
+)
 
 AC_CHECK_FUNC(strnlen,
 	AC_DEFINE(HAVE_STRNLEN, 1)
-	)
+)
 
 AC_CHECK_FUNC(wordexp,
 	AC_DEFINE(HAVE_WORDEXP, 1)
-	)
+)
 
 AC_CHECK_FUNC(mempcpy,
-	AC_DEFINE(HAVE_MEMPCPY, 1)
+	AC_DEFINE(HAVE_MEMPCPY, 1),
+	AC_CHECK_LIB(mempcpy, iberty,
+		LIBS="$LIBS -liberty"
+		AC_DEFINE(HAVE_MEMPCPY, 1)
 	)
+)
 
 AC_CHECK_FUNC(stpcpy,
-	AC_DEFINE(HAVE_STPCPY, 1)
+	AC_DEFINE(HAVE_STPCPY, 1),
+	AC_CHECK_LIB(stpcpy, iberty,
+		LIBS="$LIBS -liberty"
+		AC_DEFINE(HAVE_STPCPY, 1)
 	)
+)
 
 AC_CHECK_FUNC(clearenv,
 	AC_DEFINE(HAVE_CLEARENV, 1)
-	)
+)
 
 AC_CHECK_FUNC(get_current_dir_name,
 	AC_DEFINE(HAVE_GETCURRENTDIRNAME, 1)
-	)
+)
 
 AC_CHECK_LIB(pthread, pthread_create,
 	PTHREAD_LIBS=-lpthread,
 	AC_CHECK_LIB(c_r, pthread_create,
 		PTHREAD_LIBS=-lc_r,
 		AC_MSG_ERROR(libpthread not found)
-		)
 	)
+)
 
 # FreeBSD has a gnugetopt library for this
 # Solaris might have libiberty
