@@ -174,19 +174,19 @@ int main (int argc, char **argv) {
 		exit(11);
 	}
 	if (getuid() == 0) {
-		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense");
+		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense because user root can break out of a jail anyway");
 		exit(12);
 	}
 
 	DEBUG_MSG("get user info\n");
 	pw = getpwuid(getuid());
 	if (!pw) {
-		syslog(LOG_ERR, "abort, failed to get user information for user ID %d, check /etc/passwd", getuid());
+		syslog(LOG_ERR, "abort, failed to get user information for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
 		exit(13);
 	}
 	gr = getgrgid(getgid());
 	if (!gr) {
-		syslog(LOG_ERR, "abort, failed to get group information for group ID %d, check /etc/group", getgid());
+		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
 		exit(13);
 	}
 
@@ -230,7 +230,7 @@ int main (int argc, char **argv) {
 	}
 	DEBUG_MSG("get chdir()\n");
 	if (chdir(jaildir) != 0) {
-		syslog(LOG_ERR, "abort, chdir(%s) failed, check the permissions for %s",jaildir,jaildir);
+		syslog(LOG_ERR, "abort, chdir(%s) failed: %s, check the permissions for %s",jaildir,strerror(errno),jaildir);
 		exit(19);
 	} else {
 		char test[255];
@@ -254,7 +254,7 @@ int main (int argc, char **argv) {
 	DEBUG_MSG("chroot()\n");
 	/* do the chroot() call */
 	if (chroot(jaildir)) {
-		syslog(LOG_ERR, "abort, chroot(%s) failed, check the permissions for %s", jaildir, jaildir);
+		syslog(LOG_ERR, "abort, chroot(%s) failed: %s, check the permissions for %s", jaildir, strerror(errno), jaildir);
 		exit(33);
 	}
 	
@@ -262,7 +262,7 @@ int main (int argc, char **argv) {
 		then we have to call initgroups(), 
 		then we call setuid() */
 	if (setgid(getgid())) {
-		syslog(LOG_ERR, "abort, failed to set effective group ID %d", getgid());
+		syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
 		exit(34);
 	}
 	if (initgroups(pw->pw_name, getgid())) {
@@ -270,7 +270,7 @@ int main (int argc, char **argv) {
 		exit(35);
 	}
 	if (setuid(getuid())) {
-		syslog(LOG_ERR, "abort, failed to set effective user ID %d", getuid());
+		syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
 		exit(36);
 	}
 	
@@ -281,13 +281,13 @@ int main (int argc, char **argv) {
 		oldgr_name = strdup(gr->gr_name);
 		
 		pw = getpwuid(getuid());
-		gr = getgrgid(getgid());
 		if (!pw) {
-			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d, check %s/etc/passwd",getuid(),jaildir);
+			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jaildir);
 			exit(35);
 		}
+		gr = getgrgid(getgid());
 		if (!gr) {
-			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d, check %s/etc/group",getgid(),jaildir);
+			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d: %s, check %s/etc/group",getgid(),strerror(errno),jaildir);
 			exit(35);
 		}
 		if (strcmp(pw->pw_name, oldpw_name)!=0) {
@@ -324,7 +324,7 @@ int main (int argc, char **argv) {
 	setenv("HOME",newhome,1);
 	setenv("USER",pw->pw_name,1);
 	if (chdir(newhome) != 0) {
-		syslog(LOG_ERR, "abort, chdir(%s) failed inside the jail %s, check the permissions for %s/%s",newhome,jaildir,jaildir,newhome);
+		syslog(LOG_ERR, "abort, chdir(%s) failed inside the jail %s: %s, check the permissions for %s/%s",newhome,jaildir,strerror(errno),jaildir,newhome);
 		exit(41);
 	}
 
