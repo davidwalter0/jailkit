@@ -164,10 +164,24 @@ int main (int argc, char **argv, char **envp) {
 	
 	/* here do test the ownership of the jail and the homedir and such
 	the function testsafepath doe exit itself on any failure */
-	DEBUG_MSG("test paths\n");
-	testsafepath(jaildir,0,0);
-	testsafepath(pw->pw_dir, getuid(), getgid());
-
+	{ 
+		int ret;
+		DEBUG_MSG("test paths\n");
+		ret = testsafepath(jaildir,0,0);
+		if (ret != 0) {
+			syslog(LOG_ERR, "abort, path %s is not a safe jail, check ownership and permissions", jaildir);
+			exit(53);	
+		}
+		ret = testsafepath(pw->pw_dir, getuid(), getgid());
+		if ((ret & TESTPATH_NOREGPATH) ) {
+			syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
+			exit(53);	
+		}
+		if ((ret & TESTPATH_OWNER) ) {
+			syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
+			exit(53);
+		}
+	}
 	/* do a final log message */
 	syslog(LOG_INFO, "now entering jail %s for user %d", jaildir, getuid());
 	

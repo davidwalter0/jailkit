@@ -22,7 +22,17 @@
 #define HAVE_MALLOC0
 #endif /* HAVE_MALLOC0 */
 
-void testsafepath(const char *path, int owner, int group);
+
+#define TESTPATH_NOREGPATH 1    // (0000 0001)
+#define TESTPATH_GROUPW    2    // (0000 0010)
+#define TESTPATH_OTHERW    4    // (0000 0100)
+#define TESTPATH_SETUID    8    // (0000 1000)
+#define TESTPATH_SETGID   16    // (0001 0000)
+#define TESTPATH_OWNER    32    // (0010 0000)
+#define TESTPATH_GROUP    64    // (0100 0000)
+
+
+int testsafepath(const char *path, int owner, int group);
 int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir);
 char *strip_string(char * string);
 int count_char(const char *string, char lookfor);

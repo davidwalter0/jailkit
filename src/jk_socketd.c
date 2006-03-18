@@ -366,12 +366,18 @@ int main(int argc, char**argv) {
 	
 	{
 		struct passwd *pw = getpwnam("nobody");
+		int ret;
 		char *path = "/etc/jailkit";
 		if (!pw) {
 			syslog(LOG_ERR, "cannot get UID and GID for user nobody");
 			if (nodetach) printf("cannot get UID and GID for user nobody");
 		}
-		testsafepath(path, 0,0);
+		ret = testsafepath(path, 0,0);
+		if (ret != 0) {
+			syslog(LOG_ERR, "abort, path %s is not owned root:root or does not have 0644 permissions\n",path);
+			exit(53);		
+		}
+		
 		if (!(chdir(path)==0 && chroot(path)==0)) {
 			syslog(LOG_ERR, "failed to chroot to /etc/jailkit");
 			if (nodetach) printf("failed to chroot to /etc/jailkit");

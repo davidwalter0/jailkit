@@ -143,6 +143,9 @@ int main (int argc, char **argv) {
 	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
 	Tiniparser *parser=NULL;
 	char **envs=NULL;
+	int relax_home_group_permissions=0;
+	int relax_home_other_permissions=0;
+	int relax_home_group=0;
 
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
@@ -202,10 +205,13 @@ int main (int argc, char **argv) {
 			section = groupsec;
 		}
 		if (section) {
-			unsigned int pos = iniparser_get_position(parser);
+			unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
 			if (iniparser_get_string_at_position(parser, section, "env", pos, buffer, 1024) > 0) {
 				envs = explode_string(buffer, ',');
 			}
+			relax_home_group_permissions = iniparser_get_int_at_position(parser, section, "relax_home_group_permissions", pos);
+			relax_home_other_permissions = iniparser_get_int_at_position(parser, section, "relax_home_other_permissions", pos);
+			relax_home_group = iniparser_get_int_at_position(parser, section, "relax_home_group", pos);
 			free(section);
 		}
 	}
@@ -228,6 +234,7 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to read the jail and the home from %s",pw->pw_dir);
 		exit(17);
 	}
+	DEBUG_MSG("dir=%s,jaildir=%s,newhome=%s\n",pw->pw_dir, jaildir, newhome);
 	DEBUG_MSG("get chdir()\n");
 	if (chdir(jaildir) != 0) {
 		syslog(LOG_ERR, "abort, chdir(%s) failed: %s, check the permissions for %s",jaildir,strerror(errno),jaildir);
@@ -244,10 +251,36 @@ int main (int argc, char **argv) {
 	
 	/* here do test the ownership of the jail and the homedir and such
 	the function testsafepath doe exit itself on any failure */
-	DEBUG_MSG("test paths\n");
-	testsafepath(jaildir,0,0);
-	testsafepath(pw->pw_dir, getuid(), getgid());
-
+	{ 
+		int ret;
+		DEBUG_MSG("test paths\n");
+		ret = testsafepath(jaildir,0,0);
+		if (ret != 0) {
+			syslog(LOG_ERR, "abort, path %s is not a safe jail, check ownership and permissions", jaildir);
+			exit(53);	
+		}
+		ret = testsafepath(pw->pw_dir, getuid(), getgid());
+		if ((ret & TESTPATH_NOREGPATH) ) {
+			syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
+			exit(53);	
+		}
+		if ((ret & TESTPATH_OWNER) ) {
+			syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
+			exit(53);
+		}
+		if (!relax_home_group && (ret & TESTPATH_GROUP)) {
+			syslog(LOG_ERR, "abort, path %s does not have group %d", pw->pw_dir,getgid());
+			exit(53);
+		}
+		if (!relax_home_group_permissions && (ret & TESTPATH_GROUPW)) {
+			syslog(LOG_ERR, "abort, path %s is group writable", pw->pw_dir);
+			exit(53);
+		}
+		if (!relax_home_other_permissions && (ret & TESTPATH_OTHERW)) {
+			syslog(LOG_ERR, "abort, path %s is writable for other", pw->pw_dir);
+			exit(53);
+		}
+	}
 	/* do a final log message */
 	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jaildir, pw->pw_name, getuid());
 	
@@ -281,6 +314,7 @@ int main (int argc, char **argv) {
 		oldgr_name = strdup(gr->gr_name);
 		
 		pw = getpwuid(getuid());
+		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
 		if (!pw) {
 			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jaildir);
 			exit(35);
@@ -299,11 +333,13 @@ int main (int argc, char **argv) {
 			exit(37);
 		}
 		if (strcmp(pw->pw_dir, newhome)!=0) {
+			DEBUG_MSG("%s!=%s\n",pw->pw_dir, newhome);
 			/* if these are different, it could be that getpwuid() gets the real user info, 
 			and not the info inside the jail, lets test that, and if true, we should use the 
 			shell from the internal function as well*/
 			intpw = internal_getpwuid(getuid());
 			if (strcmp(intpw->pw_dir, newhome)!=0) {
+				DEBUG_MSG("%s!=%s\n",intpw->pw_dir, newhome);
 				syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
 				exit(39);
 			}

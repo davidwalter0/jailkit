@@ -50,28 +50,39 @@ POSSIBILITY OF SUCH DAMAGE.
  * it should not be writable for group or others
  * it should not be a symlink
  */
-void testsafepath(const char *path, int owner, int group) {
+int testsafepath(const char *path, int owner, int group) {
 	struct stat sbuf;
 	if (lstat(path, &sbuf) == 0) {
+		int retval=0;
 		if (S_ISLNK(sbuf.st_mode)) {
 			syslog(LOG_ERR, "abort, path %s is a symlink", path);
-			exit(53);
+			retval |= TESTPATH_NOREGPATH;
 		}
-		if (S_ISREG(sbuf.st_mode) && (sbuf.st_mode & (S_ISUID | S_ISGID))) {
-			syslog(LOG_ERR, "abort, path %s is setuid/setgid file", path);
-			exit(55);
+		if (sbuf.st_mode & S_ISUID) {
+			syslog(LOG_ERR, "abort, path %s is setuid", path);
+			retval |= TESTPATH_SETUID;
 		}
-		if (sbuf.st_mode & (S_IWGRP | S_IWOTH)) {
-			syslog(LOG_ERR, "abort, path %s is writable for group or others", path);
-			exit(57);
+		if (sbuf.st_mode & S_ISGID) {
+			syslog(LOG_ERR, "abort, path %s is setgid", path);
+			retval |= TESTPATH_SETGID;
 		}
-		if (sbuf.st_uid != owner || sbuf.st_gid != group) {
-			syslog(LOG_ERR, "abort, path %s is not owned %d:%d",path,owner,group);
-			exit(59);
+		if (sbuf.st_mode & S_IWGRP) {
+			syslog(LOG_ERR, "abort, path %s is setgid", path);
+			retval |= TESTPATH_GROUPW;
 		}
+		if (sbuf.st_mode & S_IWOTH) {
+			syslog(LOG_ERR, "abort, path %s is setgid", path);
+			retval |= TESTPATH_OTHERW;
+		}
+		if (sbuf.st_uid != owner){
+			retval |= TESTPATH_OWNER;
+		}
+		if (sbuf.st_gid != group){
+			retval |= TESTPATH_GROUP;
+		}
+		return retval;
 	} else {
-		syslog(LOG_ERR, "abort, path %s does not exist", path);
-		exit(51);
+		return TESTPATH_NOREGPATH;
 	}
 }
 

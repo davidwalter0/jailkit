@@ -111,7 +111,6 @@ struct passwd *internal_getpwuid(uid_t uid) {
 	
 	snprintf(find,10,"%d",(int)uid);
 	line = find_line("/etc/passwd", find, 2);
-/*	printf("got line %s\n",line);*/
 	if (line) {
 		retpw.pw_name = field_from_line(line, 0);
 		retpw.pw_passwd = NULL; /* not required */

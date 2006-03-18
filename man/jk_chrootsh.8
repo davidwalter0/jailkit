@@ -27,12 +27,17 @@ system call. Therefore it is setuid root. It will drop its root priveleges immed
 
 By default jk_chrootsh does not copy any environment variables. For some functionality, however, environment variables need to be copied (e.g. the TERM variable for a functional terminal emulation, or the DISPLAY variable for X forwarding). In 
 .I /etc/jailkit/jk_chrootsh.ini
-the required environment variables can be listed. An example config file is shown below. In the example, user bill will get the DISPLAY variable, and all users in group jail will get the TERM and PATH variables. 
+the required environment variables can be listed. An example config file is shown below. In the example, user bill will get the DISPLAY variable, and all users in group jail will get the TERM and PATH variables.
+
+By default jk_chrootsh requires a home directory that has the same group as the primary group from the user, and requires the home directory to be non-writable for group and others. You can relax these requirements in the configfile as shown below. 
 
 .nf
 .sp
 [bill]
 env= DISPLAY
+relax_home_group=1
+relax_home_group_permissions=1
+relax_home_other_permissions=1
 
 [group jail]
 env = TERM, PATH
