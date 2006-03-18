@@ -1296,7 +1296,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=jailkit
-VERSION=post1.3
+VERSION=2.0
 
 
 cat >>confdefs.h <<_ACEOF

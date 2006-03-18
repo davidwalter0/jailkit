@@ -42,6 +42,10 @@ import jk_lib
 
 def usage():
 	print
+	print '*** jk_addjailuser is deprecated ***'
+	print
+	print 'please add the user like any other user, and use jk_jailuser to jail the user'
+	print
 	print 'Usage: '+sys.argv[0]+' [OPTIONS] chrootdir username'
 	print
 	print '       [-c comment] [-d home dir] [-e expire_date]'
