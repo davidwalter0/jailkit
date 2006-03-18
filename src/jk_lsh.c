@@ -188,6 +188,8 @@ int main (int argc, char **argv) {
 		section = pw->pw_name;
 	} else if (iniparser_has_section(parser, groupsec)) {
 		section = groupsec;
+	} else if (iniparser_has_section(parser, "DEFAULT")) {
+		section = "DEFAULT";
 	} else {
 		syslog(LOG_ERR, "both the user %s and the group %s have no section in the configfile "CONFIGFILE, pw->pw_name, gr->gr_name);
 		exit(3);
