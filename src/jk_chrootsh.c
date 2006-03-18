@@ -203,6 +203,8 @@ int main (int argc, char **argv) {
 			section = strdup(pw->pw_name);
 		} else if (iniparser_has_section(parser, groupsec)) {
 			section = groupsec;
+		} else if (iniparser_has_section(parser, "DEFAULT")) {
+			section = strdup("DEFAULT");
 		}
 		if (section) {
 			unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;

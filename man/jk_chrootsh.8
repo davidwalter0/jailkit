@@ -33,9 +33,11 @@ By default jk_chrootsh requires a home directory that has the same group as the 
 
 .nf
 .sp
+[DEFAULT]
+relax_home_group=1
+
 [bill]
 env= DISPLAY
-relax_home_group=1
 relax_home_group_permissions=1
 relax_home_other_permissions=1
 
@@ -43,7 +45,7 @@ relax_home_other_permissions=1
 env = TERM, PATH
 .fi
 
-If user bill is in group jail, however, he will not get the TERM variable in the above example. First the user is checked, and only if no user section is found the group section is looked for.
+If user bill is in group jail, however, he will not get the TERM variable in the above example. Neither will any user in group jail get relaxed requirements for the group of the home directory. First the user is checked, and only if no user section is found the group section is looked for, and if no group section is found, the DEFAULT section is used.
 
 .SH FILES
 
