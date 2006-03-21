@@ -78,7 +78,7 @@ uninstall:
 
 clean:
 	rm -f *~
-	rm -f jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser
+	rm -f jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser
 
 distclean: clean
 	rm -f Makefile
