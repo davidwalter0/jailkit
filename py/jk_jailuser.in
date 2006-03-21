@@ -108,11 +108,13 @@ def addusertojail(jail, user, shell, config):
 	return 1
 
 def moduser(user, home, shell='/usr/sbin/jk_chrootsh'):
-	if (sys.platform[4:7] == 'bsd'):
+	if (sys.platform[:7] == 'freebsd'):
 		command = 'pw usermod '+user+' -d '+home+' -s '+shell
-	else:
-	#if (sys.platform[:5] == 'linux'):
+	elif (sys.platform[:5] == 'linux') or (sys.platform[:7] == 'openbsd'):
 		command = 'usermod -d '+home+' -s '+shell+' '+user
+	else:
+		print 'please report that user modding on platform '+sys.platform+' is not yet handled'
+		print 'to the jailkit developers, and suggest which command is needed to modify users'
 	if (os.system(command)!=0):
 		print 'failed to execute '+command
 		return 0
