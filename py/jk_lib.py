@@ -91,7 +91,7 @@ def test_suid_sgid(path):
 		return 1
 	return 0
 
-def lddlist_libraries(executable):
+def lddlist_libraries_linux(executable):
 	"""returns a list of libraries that the executable depends on """
 	retval = []
 	pd = os.popen3('ldd '+executable)
@@ -119,9 +119,48 @@ def lddlist_libraries(executable):
 		else:
 			print 'WARNING: failed to parse ldd output '+line[:-1]
 		line = pd[1].readline()
-	if (sys.platform[4:7] == 'bsd'):
-		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 	return retval
+
+def lddlist_libraries_openbsd(executable):
+	"""returns a list of libraries that the executable depends on """
+	retval = []
+	pd = os.popen3('ldd '+executable)
+	line = pd[1].readline()
+	while (len(line)>0):
+		subl = string.split(line)
+		if (len(subl)>0):
+			if (subl[0] == 'statically' and subl[1] == 'linked'):
+				return retval
+			elif (subl[0] == 'linux-gate.so.1'):
+				pass
+			elif (len(subl)>=3):
+				if (os.path.exists(subl[2])):
+					retval += [subl[2]]
+				else:
+					print 'ldd returns non existing library '+subl[2]
+			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
+			elif (len(subl)>=1 and subl[0][0] == '/'):
+				if (os.path.exists(subl[0])):
+					retval += [subl[0]]
+				else:
+					print 'ldd returns non existing library '+subl[0]
+			else:
+				print 'WARNING: failed to parse ldd output '+line[:-1]
+		else:
+			print 'WARNING: failed to parse ldd output '+line[:-1]
+		line = pd[1].readline()
+	return retval
+
+
+def lddlist_libraries(executable):
+	if (sys.platform[:5] == 'linux'):
+		return lddlist_libraries_linux(executable)
+	elif (sys.platform[:7] == 'openbsd'):
+		return lddlist_libraries_openbsd(executable)
+	else:
+		retval = lddlist_libraries_linux(executable)
+		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
+		return retval
 
 def create_full_path(directory, be_verbose=0):
 	"""creates the directory and all its parents id needed"""
