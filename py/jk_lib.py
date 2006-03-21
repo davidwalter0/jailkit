@@ -129,21 +129,15 @@ def lddlist_libraries_openbsd(executable):
 	while (len(line)>0):
 		subl = string.split(line)
 		if (len(subl)>0):
-			if (subl[0] == 'statically' and subl[1] == 'linked'):
-				return retval
-			elif (subl[0] == 'linux-gate.so.1'):
+			if (subl[0] == executable+':'):
 				pass
-			elif (len(subl)>=3):
-				if (os.path.exists(subl[2])):
-					retval += [subl[2]]
+			elif (subl[0] == 'Start'):
+				pass
+			elif (len(subl)>=5):
+				if (os.path.exists(subl[4])):
+					retval += [subl[4]]
 				else:
 					print 'ldd returns non existing library '+subl[2]
-			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
-			elif (len(subl)>=1 and subl[0][0] == '/'):
-				if (os.path.exists(subl[0])):
-					retval += [subl[0]]
-				else:
-					print 'ldd returns non existing library '+subl[0]
 			else:
 				print 'WARNING: failed to parse ldd output '+line[:-1]
 		else:
