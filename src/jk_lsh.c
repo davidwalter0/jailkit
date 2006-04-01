@@ -205,6 +205,20 @@ int main (int argc, char **argv) {
 		oldumask = umask(umaskval);
 /*		syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);*/
 	}
+	if (iniparser_get_string_at_position(parser, section, "environment", section_pos, buffer, 1024) > 0) {
+		char **envs, **tmp;
+		envs = explode_string(buffer, ',');
+		tmp = envs;
+		while (*tmp) {
+			char **keyval = explode_string(*tmp, '=');
+			if (keyval[0] && keyval[1] && keyval[2]==NULL) {
+				setenv(keyval[0],keyval[1],1);
+			}
+			free_array(keyval);
+			tmp++;
+		}
+		free_array(envs);
+	}
 	
 	DEBUG_MSG("exploding string '%s'\n",argv[2]);
 	if (iniparser_get_int_at_position(parser, section, "allow_word_expansion", section_pos)) {
