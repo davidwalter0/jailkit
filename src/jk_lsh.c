@@ -67,6 +67,32 @@ char **libc_argv;
 /* doesn't compile on FreeBSD without this */
 extern char **environ;
 
+/* creates a string from an array of strings, with the delimiter inbetween
+use arrlen -1 if the array is NULL terminated.
+the strings should all be '\0' terminated*/
+static char *implode_array(char **arr, int arrlen, const char *delimiter) {
+	int count=0,i=0,reqsize=1, delsize=strlen(delimiter);
+	char **tmp = arr;
+	char *retval;	
+	/* find required memory length */
+	while (*tmp && (count != arrlen)) {
+		count++;
+		reqsize += delsize + strlen(*tmp);
+		tmp++;
+	}
+	retval = malloc(reqsize*sizeof(char));
+	retval[0] = '\0';
+	for (i=0;i<count;i++) {
+		DEBUG_MSG("apending %s\n",arr[i]);
+		if (i != 0) {
+			retval = strcat(retval, delimiter);
+		}
+		retval = strcat(retval, arr[i]);
+		
+	}
+	return retval;
+}
+
 static int executable_is_allowed(Tiniparser *parser, const char *section, const char *executable, int position) {
 	int klen;
 	char buffer[1024];
@@ -168,9 +194,13 @@ int main (int argc, char **argv) {
 		exit(2);
 	}
 	
-	if (argc != 3 || strcmp(argv[1],"-c")!=0) {
-		DEBUG_MSG("WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh\n", pw->pw_name, getuid());
-		syslog(LOG_ERR, "WARNING: user %s (%d) tried to get an interactive shell session, which is never allowed by jk_lsh", pw->pw_name, getuid());
+	/* the last argument should be the commandstring, and the one before should be -c
+	before that there could be an argument like --login that we simply ignore */
+	if (argc < 3 || strcmp(argv[argc - 2],"-c")!=0) {
+		char *requeststring = implode_array(argv,argc," ");
+		DEBUG_MSG("WARNING: user %s (%d) tried to get an interactive shell session (%s), which is never allowed by jk_lsh\n", pw->pw_name, getuid(),requeststring);
+		syslog(LOG_ERR, "WARNING: user %s (%d) tried to get an interactive shell session (%s), which is never allowed by jk_lsh", pw->pw_name, getuid(),requeststring);
+		free(requeststring);
 		exit(7);
 	}
 	
@@ -220,11 +250,11 @@ int main (int argc, char **argv) {
 		free_array(envs);
 	}
 	
-	DEBUG_MSG("exploding string '%s'\n",argv[2]);
+	DEBUG_MSG("exploding string '%s'\n",argv[argc-1]);
 	if (iniparser_get_int_at_position(parser, section, "allow_word_expansion", section_pos)) {
-		newargv = expand_newargv(argv[2]);
+		newargv = expand_newargv(argv[argc-1]);
 	} else {
-		newargv = explode_string(argv[2], ' ');
+		newargv = explode_string(argv[argc-1], ' ');
 	}
 	if (iniparser_get_string_at_position(parser, section, "paths", section_pos, buffer, 1024) > 0) {
 		DEBUG_LOG("paths, buffer=%s\n",buffer);
@@ -241,8 +271,11 @@ int main (int argc, char **argv) {
 	}
 	if (executable_is_allowed(parser, section, newargv[0],section_pos)) {
 		int retval;
-		DEBUG_MSG("executing command '%s' for user %s (%d)\n", newargv[0],pw->pw_name, getuid());
-		syslog(LOG_INFO, "executing command '%s' for user %s (%d)", newargv[0],pw->pw_name, getuid());
+		char *logstring;
+		logstring = implode_array(newargv,-1," ");
+		DEBUG_MSG("executing command '%s' for user %s (%d)\n", logstring,pw->pw_name, getuid());
+		syslog(LOG_INFO, "executing command '%s' for user %s (%d)", logstring,pw->pw_name, getuid());
+		free(logstring);
 		retval = execve(newargv[0],newargv,environ);
 		DEBUG_MSG("errno=%d, error=%s\n",errno,strerror(errno));
 		DEBUG_MSG("execve() command '%s' returned %d\n", newargv[0], retval);
@@ -250,8 +283,11 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "WARNING: check the permissions and libraries for %s", newargv[0]);
 		return retval;
 	} else {
+		char *logstring;
+		logstring = implode_array(newargv,-1," ");
 		DEBUG_MSG("WARNING: user %s (%d) tried to run '%s'\n", pw->pw_name, getuid(),newargv[0]);
-		syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),newargv[0]);
+		syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),logstring);
+		free(logstring);
 		exit(4);
 	}
 

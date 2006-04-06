@@ -121,7 +121,7 @@ static void unset_environ_except(char **except) {
 		if (pos != NULL) {
 			char *key = strndup(*tmp, pos-*tmp);
 			if (in_array(except, key)) {
-				DEBUG_MSG("%s is in except\n",key);
+				DEBUG_MSG("%s is in except, with value %s\n",key,getenv(key));
 			} else {
 				DEBUG_MSG("%s is NOT in except\n",key);
 				unsetenv(key);
