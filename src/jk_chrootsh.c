@@ -211,7 +211,7 @@ int main (int argc, char **argv) {
 		for (i=0;i<ngroups;i++) {
 			printf("%d, ",gids[i]);
 		}
-		printf("\n")
+		printf("\n");
 	}
 #endif
 
