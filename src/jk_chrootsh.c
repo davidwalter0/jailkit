@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <syslog.h>
-
+#include <limits.h>
 /* #define DEBUG */
 
 #ifdef DEBUG
@@ -139,7 +139,8 @@ int main (int argc, char **argv) {
 	int i;
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
-	long ngroups_max=32,ngroups=0;
+	long ngroups_max=NGROUPS_MAX;
+	long ngroups=0;
 	gid_t *gids;
 	struct passwd *intpw=NULL; /* for internal_getpwuid() */
 	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
@@ -198,7 +199,7 @@ int main (int argc, char **argv) {
 		exit(13);
 	}
 	DEBUG_MSG("get additional groups\n");
-	ngroups_max = sysconf(_SC_NGROUPS_MAX);
+	/* ngroups_max = sysconf(_SC_NGROUPS_MAX);*/
 	gids = malloc(ngroups_max * sizeof(gid_t));
 	ngroups = getgroups(ngroups_max,gids);
 	if (ngroups == -1) {
