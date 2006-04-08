@@ -335,7 +335,7 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
 		exit(34);
 	}
-	if (setgroups(ngroups_max, gids)!=0) {
+	if (setgroups(ngroups, gids)==-1) {
 		syslog(LOG_ERR, "abort, failed to set additional groups: %s", strerror(errno));
 		exit(35);
 	}
