@@ -139,7 +139,7 @@ int main (int argc, char **argv) {
 	int i;
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
-	long ngroups_max;
+	long ngroups_max=32,ngroups=0;
 	gid_t *gids;
 	struct passwd *intpw=NULL; /* for internal_getpwuid() */
 	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
@@ -200,11 +200,20 @@ int main (int argc, char **argv) {
 	DEBUG_MSG("get additional groups\n");
 	ngroups_max = sysconf(_SC_NGROUPS_MAX);
 	gids = malloc(ngroups_max * sizeof(gid_t));
-	if (getgroups(ngroups_max,gids) != 0) {
+	ngroups = getgroups(ngroups_max,gids);
+	if (ngroups == -1) {
 		syslog(LOG_ERR, "abort, failed to get additional group information: %s, check /etc/group", strerror(errno));
 		exit(13);
 	}
-
+#ifdef DEBUG
+	{
+		printf("got additional groups ");
+		for (i=0;i<ngroups;i++) {
+			printf("%s, ",gids[i].gr_name);
+		}
+		printf("\n")
+	}
+#endif
 
 	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
 	parser = new_iniparser(CONFIGFILE);
