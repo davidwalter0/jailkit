@@ -209,7 +209,7 @@ int main (int argc, char **argv) {
 	{
 		printf("got additional groups ");
 		for (i=0;i<ngroups;i++) {
-			printf("%s, ",gids[i].gr_name);
+			printf("%d, ",gids[i]);
 		}
 		printf("\n")
 	}
