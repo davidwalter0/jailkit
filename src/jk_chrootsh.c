@@ -235,7 +235,11 @@ int main (int argc, char **argv) {
 					section, relax_home_group_permissions, relax_home_other_permissions, 
 					relax_home_group, injail_shell, skip_injail_passwd_check);
 			free(section);
+		} else {
+			DEBUG_MSG("no relevant section found in configfile\n");
 		}
+	} else {
+		DEBUG_MSG("no configfile "CONFIGFILE" ??\n");
 	}
 	
 	unset_environ_except(envs);
