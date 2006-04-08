@@ -229,8 +229,10 @@ int main (int argc, char **argv) {
 		} else if (iniparser_has_section(parser, "DEFAULT")) {
 			section = strdup("DEFAULT");
 		}
+		if (section != groupsec) free(groupsec);
 		if (section) {
 			unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
+			
 			if (iniparser_get_string_at_position(parser, section, "env", pos, buffer, 1024) > 0) {
 				envs = explode_string(buffer, ',');
 			}
@@ -399,7 +401,7 @@ int main (int argc, char **argv) {
 	}
 	/* test the shell in the jail, it is not allowed to be setuid() root */
 	testsafepath(shell,0,0);
-	
+
 	/* prepare the new environment */
 	setenv("HOME",newhome,1);
 	setenv("USER",pw->pw_name,1);
@@ -411,7 +413,6 @@ int main (int argc, char **argv) {
 	/* cleanup before execution */
 	free(newhome);
 	
-
 	/* now execute the jailed shell */
 	/*execl(pw->pw_shell, pw->pw_shell, NULL);*/
 	{

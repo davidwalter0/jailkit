@@ -178,8 +178,11 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 				DEBUG_MSG("End of line, start looking again for %s\n", key);
 				inWrongKey=0;
 				keyNameChar=0;
+			} else if (ch=='[') {
+				DEBUG_MSG("Found the start of a new section, abort, the key does not exist\n");
+				break;				
 			} else {
-				DEBUG_MSG("%c must be a character that is not on position %d of key %s, set inWrongKey\n",ch,keyNameChar,key);
+				DEBUG_MSG("if all else fails: %c must be a character that is not on position %d of key %s, set inWrongKey\n",ch,keyNameChar,key);
 				inWrongKey=1;
 			}
 		} else if (foundKey /* && inSection is implied */) {
