@@ -139,6 +139,8 @@ int main (int argc, char **argv) {
 	int i;
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
+	long ngroups_max;
+	gid_t *gids;
 	struct passwd *intpw=NULL; /* for internal_getpwuid() */
 	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
 	Tiniparser *parser=NULL;
@@ -146,6 +148,8 @@ int main (int argc, char **argv) {
 	int relax_home_group_permissions=0;
 	int relax_home_other_permissions=0;
 	int relax_home_group=0;
+	char *injail_shell=NULL;
+	int skip_injail_passwd_check=0;
 
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
@@ -192,6 +196,13 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
 		exit(13);
 	}
+	ngroups_max = sysconf(_SC_NGROUPS_MAX);
+	gids = malloc(ngroups_max * sizeof(gid_t));
+	if (getgroups(ngroups_max,gids) != 0) {
+		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
+		exit(13);
+	}
+
 
 	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
 	parser = new_iniparser(CONFIGFILE);
@@ -214,6 +225,12 @@ int main (int argc, char **argv) {
 			relax_home_group_permissions = iniparser_get_int_at_position(parser, section, "relax_home_group_permissions", pos);
 			relax_home_other_permissions = iniparser_get_int_at_position(parser, section, "relax_home_other_permissions", pos);
 			relax_home_group = iniparser_get_int_at_position(parser, section, "relax_home_group", pos);
+			if (iniparser_get_string_at_position(parser, section, "injail_shell", pos, buffer, 1024) > 0) {
+				injail_shell = strdup(buffer);
+			}
+			if (injail_shell) {
+				skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
+			}
 			free(section);
 		}
 	}
@@ -300,17 +317,22 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
 		exit(34);
 	}
-	if (initgroups(pw->pw_name, getgid())) {
-		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/group", pw->pw_name,getuid(),jaildir);
+	if (setgroups(ngroups_max, gids)!=0) {
+		syslog(LOG_ERR, "abort, failed to set additional groups: %s", strerror(errno));
 		exit(35);
 	}
+	free(gids);
+/*	if (initgroups(pw->pw_name, getgid())) {
+		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/group", pw->pw_name,getuid(),jaildir);
+		exit(35);
+	}*/
 	if (setuid(getuid())) {
 		syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
 		exit(36);
 	}
 	
 	/* test for user and group info, is it the same? checks username, groupname and home */
-	{
+	if (!skip_injail_passwd_check){
 		char *oldpw_name,*oldgr_name;
 		oldpw_name = strdup(pw->pw_name);
 		oldgr_name = strdup(gr->gr_name);
@@ -349,8 +371,9 @@ int main (int argc, char **argv) {
 		free(oldpw_name);
 		free(oldgr_name);
 	}
-	
-	if (intpw) {
+	if (injail_shell) {
+		shell = injail_shell;
+	} else if (intpw) {
 		shell = intpw->pw_shell;
 	} else {
 		shell = pw->pw_shell;
