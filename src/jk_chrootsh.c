@@ -338,11 +338,11 @@ int main (int argc, char **argv) {
 		oldgr_name = strdup(gr->gr_name);
 		
 		pw = getpwuid(getuid());
-		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
 		if (!pw) {
 			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jaildir);
 			exit(35);
 		}
+		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
 		gr = getgrgid(getgid());
 		if (!gr) {
 			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d: %s, check %s/etc/group",getgid(),strerror(errno),jaildir);
