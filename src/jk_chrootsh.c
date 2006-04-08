@@ -231,6 +231,9 @@ int main (int argc, char **argv) {
 			if (injail_shell) {
 				skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
 			}
+			DEBUG_MSG("section %s: relax_home_group_permissions=%d, relax_home_other_permissions=%d, relax_home_group=%d, injail_shell=%s, skip_injail_passwd_check=%d\n",
+					section, relax_home_group_permissions, relax_home_other_permissions, 
+					relax_home_group, injail_shell, skip_injail_passwd_check);
 			free(section);
 		}
 	}
