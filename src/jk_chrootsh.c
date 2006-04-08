@@ -191,15 +191,17 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to get user information for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
 		exit(13);
 	}
+	DEBUG_MSG("got user %s\nget group info\n",pw->pw_name);
 	gr = getgrgid(getgid());
 	if (!gr) {
 		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
 		exit(13);
 	}
+	DEBUG_MSG("get additional groups\n");
 	ngroups_max = sysconf(_SC_NGROUPS_MAX);
 	gids = malloc(ngroups_max * sizeof(gid_t));
 	if (getgroups(ngroups_max,gids) != 0) {
-		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
+		syslog(LOG_ERR, "abort, failed to get additional group information: %s, check /etc/group", strerror(errno));
 		exit(13);
 	}
 
