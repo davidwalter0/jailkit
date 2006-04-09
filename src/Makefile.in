@@ -59,3 +59,7 @@ uninstall:
 	rm -f  ${prefix}/sbin/jk_chrootsh
 	rm -f  ${prefix}/sbin/jk_procmailwrapper
 
+iniparsertester: iniparser.o iniparsertester.o
+	$(CC) $(DEFS) -o iniparsertester iniparsertester.o iniparser.o $(LDFLAGS) $(LIBS)
+
+	

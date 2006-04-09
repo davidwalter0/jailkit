@@ -111,7 +111,7 @@ unsigned short int iniparser_has_section(Tiniparser *ip, const char *section) {
 }
 
 unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, long position, char *buffer, int bufferlen) {
-	char ch, prevch='\0';
+	char ch='\0', prevch='\0';
 	unsigned int sectionNameChar=0, keyNameChar=0, bufferChar=0;
 	unsigned short int inSection=0, sectionStart=0, foundKey=0, inComment=0, inWrongKey=0;
 	DEBUG_MSG("iniparser_get_string_at_position, looking for key %s in section %s, starting at pos %ld\n",key,section,position);
@@ -121,16 +121,19 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 	}
 	DEBUG_MSG("current position of the stream is %ld\n",ftell(ip->fd));
 	while (!feof(ip->fd)){
+		prevch = ch;		
 		ch=fgetc(ip->fd);
-		if (ch == '#' && (prevch == '\n' || prevch == '\0')) {
+
+		if (inComment == 1) {
+			if (ch == '\n') {
+				DEBUG_MSG("end of comment found\n");
+				inComment = 0;
+			}
+			continue;
+		} else if  (ch == '#' && (prevch == '\n' || prevch == '\0')) {
 			DEBUG_MSG("inComment!\n");
 			inComment = 1;
 			continue;
-		} else if (ch == '\n' && inComment == 1) {
-			inComment = 0;
-			continue;
-		} else if (inComment == 1) {
-			/* we do nothing if we are inside a comment */
 		}
 
 		if (!inSection) {
