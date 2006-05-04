@@ -231,6 +231,11 @@ static void usage() {
 	printf(" -n|--nodetach                do not detach from the terminal, useful for debugging\n");
 	printf(" -p pidfile|--pidfile=pidfile write PID to file pidfile\n");
 	printf(" -h|--help                    this help screen\n\n");
+	printf(" -h|--help                    this help screen\n\n");
+	printf(" --socket=/path/to/socket     do not read ini file, create specific socket\n");
+	printf(" --base=integer               message rate limit (in bytes) per interval\n");
+	printf(" --peek=integer               message rate limit peek (in bytes)\n");
+	printf(" --interval=integer           message rate limit interval\n\n");
 }
 
 static unsigned short int have_socket(char *path, Tsocketlink **sl, unsigned int size) {
@@ -249,8 +254,10 @@ int main(int argc, char**argv) {
 	int outsocket;
 	unsigned int i;
 	unsigned short int nodetach = 0;
+	char *m_socket = NULL;
 	char *pidfile = NULL;
 	FILE *pidfilefd = NULL;
+	unsigned int m_base=511, m_peek=2048, m_interval=10;
 
 /*	signal(SIGINT, sigterm_handler);
 	signal(SIGTERM, sigterm_handler);*/
@@ -263,6 +270,10 @@ int main(int argc, char**argv) {
 				{"pidfile", required_argument, NULL, 0},
 				{"nodetach", no_argument, NULL, 0},
 				{"help", no_argument, NULL, 0},
+				{"socket", required_argument, NULL, 0},
+				{"base", required_argument, NULL, 0},
+				{"interval", required_argument, NULL, 0},
+				{"peek", required_argument, NULL, 0},
 				{NULL, 0, NULL, 0}
 			};
 		 	c = getopt_long(argc, argv, "p:nh",long_options, &option_index);
@@ -280,6 +291,18 @@ int main(int argc, char**argv) {
 				case 2:
 					usage();
 					exit(0);
+				case 3:
+					m_socket = strdup(optarg);
+					break;
+				case 4:
+					m_base = atoi(optarg);
+					break;
+				case 5:
+					m_interval = atoi(optarg);
+					break;
+				case 6:
+					m_peek = atoi(optarg);
+					break;
 				}
 				break;
 			case 'p':
@@ -313,6 +336,7 @@ int main(int argc, char**argv) {
 		}
 	}
 	
+	if (!m_socket)
 	{
 		char buf[1024], *tmp;
 		Tiniparser *ip = new_iniparser(CONFIGFILE);
@@ -351,6 +375,21 @@ int main(int argc, char**argv) {
 				syslog(LOG_NOTICE, "socket %s is mentioned multiple times in config file",tmp);
 				if (nodetach) printf("socket %s is mentioned multiple times in config file\n",tmp);
 			}
+		}
+	}
+	else
+	{
+		unsigned int base=m_base, peek=m_peek, interval=m_interval;
+		if (10 > base || base >  10000) base = 511;
+		if (100 > peek || peek > 100000 || peek < base) peek = 2048;
+		if (1 > interval || m_interval > 60) interval = 10;
+		sl[numsockets] = new_socketlink(outsocket, m_socket, base, peek, interval*1000000, nodetach);
+		if (sl[numsockets]) {
+			syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%d",m_socket,base,peek,interval);
+			if (nodetach) printf("listening on socket %s with rates [%d:%d]/%d\n",m_socket,base,peek,interval);
+			numsockets++;
+		} else {
+			if (nodetach) printf("failed to create socket %s\n",m_socket);
 		}
 	}
 	
