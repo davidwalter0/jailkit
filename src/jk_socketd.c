@@ -227,7 +227,7 @@ static void sigterm_handler(int signal) {
 }*/
 
 static void usage() {
-	printf(PROGRAMNAME" usage:\n\n");
+	printf(PROGRAMNAME" version "VERSION", usage:\n\n");
 	printf(" -n|--nodetach                do not detach from the terminal, useful for debugging\n");
 	printf(" -p pidfile|--pidfile=pidfile write PID to file pidfile\n");
 	printf(" -h|--help                    this help screen\n\n");
@@ -327,8 +327,8 @@ int main(int argc, char**argv) {
 		client_addr.sa_family = AF_UNIX;
 		if (connect(outsocket, &client_addr, sizeof(client_addr)) != 0) {
 			/*DEBUG_MSG("connect returned erno %d: %s\n",errno, strerror(errno));*/
-			syslog(LOG_CRIT, "while connecting to /dev/log: %s", strerror(errno));
-			if (nodetach) printf("while connecting to /dev/log: %s\n",strerror(errno) );
+			syslog(LOG_CRIT, "version "VERSION", while connecting to /dev/log: %s", strerror(errno));
+			if (nodetach) printf("version "VERSION", while connecting to /dev/log: %s\n",strerror(errno) );
 			close(outsocket);
 			exit(1);
 		} else {
@@ -341,13 +341,14 @@ int main(int argc, char**argv) {
 		char buf[1024], *tmp;
 		Tiniparser *ip = new_iniparser(CONFIGFILE);
 		if (!ip) {
-			syslog(LOG_CRIT, "abort, could not parse configfile "CONFIGFILE);
-			if (nodetach) printf("abort, could not parse configfile "CONFIGFILE"\n");
+			syslog(LOG_CRIT, "version "VERSION", abort, could not parse configfile "CONFIGFILE);
+			if (nodetach) printf("version "VERSION", abort, could not parse configfile "CONFIGFILE"\n");
 			exit(11);
 		}
 		while ((tmp = iniparser_next_section(ip, buf, 1024))) {
 			if (!have_socket(tmp, sl, numsockets)) {
-				unsigned int base=511, peek=2048, interval;
+				unsigned int base=511, peek=2048;
+				float interval=5.0;
 				long prevpos, secpos;
 				prevpos = iniparser_get_position(ip);
 				secpos = prevpos - strlen(tmp)-4;
@@ -361,17 +362,17 @@ int main(int argc, char**argv) {
 				if (0.01 > interval || interval > 60.0) interval = 5.0;
 				sl[numsockets] = new_socketlink(outsocket, tmp, base, peek, (int)(interval*1000000.0), nodetach);
 				if (sl[numsockets]) {
-					syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%d",tmp,base,peek,interval);
-					if (nodetach) printf("listening on socket %s with rates [%d:%d]/%d\n",tmp,base,peek,interval);
+					syslog(LOG_NOTICE, "version "VERSION", listening on socket %s with rates [%d:%d]/%f",tmp,base,peek,interval);
+					if (nodetach) printf("version "VERSION", listening on socket %s with rates [%d:%d]/%f\n",tmp,base,peek,interval);
 					numsockets++;
 				} else {
-					if (nodetach) printf("failed to create socket %s\n",tmp);
+					if (nodetach) printf("version "VERSION", failed to create socket %s\n",tmp);
 				}
 				DEBUG_MSG("setting position to %ld\n",prevpos);
 				iniparser_set_position(ip, prevpos);
 			} else {
-				syslog(LOG_NOTICE, "socket %s is mentioned multiple times in config file",tmp);
-				if (nodetach) printf("socket %s is mentioned multiple times in config file\n",tmp);
+				syslog(LOG_NOTICE, "version "VERSION", socket %s is mentioned multiple times in config file",tmp);
+				if (nodetach) printf("version "VERSION", socket %s is mentioned multiple times in config file\n",tmp);
 			}
 		}
 	}
@@ -384,17 +385,17 @@ int main(int argc, char**argv) {
 		if (0.01 > interval || m_interval > 60.0) interval = 5.0;
 		sl[numsockets] = new_socketlink(outsocket, m_socket, base, peek, (int)(interval*1000000.0), nodetach);
 		if (sl[numsockets]) {
-			syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%f",m_socket,base,peek,interval);
-			if (nodetach) printf("listening on socket %s with rates [%d:%d]/%f\n",m_socket,base,peek,interval);
+			syslog(LOG_NOTICE, "version "VERSION", listening on socket %s with rates [%d:%d]/%f",m_socket,base,peek,interval);
+			if (nodetach) printf("version "VERSION", listening on socket %s with rates [%d:%d]/%f\n",m_socket,base,peek,interval);
 			numsockets++;
 		} else {
-			if (nodetach) printf("failed to create socket %s\n",m_socket);
+			if (nodetach) printf("version "VERSION",failed to create socket %s\n",m_socket);
 		}
 	}
 	
 	if (numsockets == 0) {
-		printf("no sockets specified in configfile or on commandline, nothing to do, exiting...\n");
-		syslog(LOG_ERR,"no sockets specified in configfile or on commandline, nothing to do, exiting...");
+		printf("version "VERSION",no sockets specified in configfile or on commandline, nothing to do, exiting...\n");
+		syslog(LOG_ERR,"version "VERSION",no sockets specified in configfile or on commandline, nothing to do, exiting...");
 		exit(1);
 	}
 

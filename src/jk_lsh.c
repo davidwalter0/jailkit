@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -175,14 +175,14 @@ int main (int argc, char **argv) {
 	char *groupsec;
 
 	
-	DEBUG_MSG(PROGRAMNAME", started\n");
+	DEBUG_MSG(PROGRAMNAME" version "VERSION", started\n");
 #ifndef HAVE_WORDEXP_H
 	libc_argc = argc;
 	libc_argv = argv;
 #endif
 	/* open the log facility */
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
-	syslog(LOG_INFO, PROGRAMNAME", started");
+	syslog(LOG_INFO, PROGRAMNAME" version "VERSION", started");
 
 	DEBUG_MSG(PROGRAMNAME" log started\n");
 
