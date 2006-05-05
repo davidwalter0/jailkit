@@ -34,7 +34,7 @@ The config file consists of several entries where each entry looks like this:
 [/home/testchroot/dev/log]
 base = 512
 peek = 2048
-interval = 10
+interval = 5.0
 .fi
 
 The title of the section is the socket to be created. The directory to create the socket in should exist.
@@ -52,6 +52,18 @@ write PID to pidfile
 .TP
 .BR \-h\ \-\-help
 show help screen
+.TP
+.BR \-\-socket=/path/to/socket
+do not read ini file, create specific socket
+.TP
+.BR \-\-base=integer
+message rate limit (in bytes) per interval for socket specified by --socket
+.TP
+.BR \-\-peek=integer
+message rate limit peek (in bytes) for socket specified by --socket
+.TP
+.BR \-\-interval=float
+message rate limit interval in seconds for socket specified by --socket
 
 .SH FILES
 
@@ -77,7 +89,7 @@ otherwise run jk_socketd -n and it will not detach from the terminal, and it wil
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006 Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

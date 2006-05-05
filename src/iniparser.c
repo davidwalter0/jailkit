@@ -213,41 +213,43 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 	return bufferChar;
 }
 
-static unsigned int iniparser_scan_int_at_position(Tiniparser *ip, const char *section, const char *key, long position, const char *scanstring) {
-	unsigned int buffer=0;
-	int i;
+unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
 	char data[25];
+	unsigned int buffer=0;
 	memset(data, 0, 25);
 	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
 		return -1;
 	}
-	for (i=0; data[i]; i++){
-		if (data[i] < '0' || data[i] > '9'){
-			char tmp;
-			int nextValid=i+1;
-			while (data[nextValid] && (data[nextValid] < '0' || data[nextValid] > '9')){
-				nextValid++;
-			}
-			if (!data[nextValid]){
-				break;
-			}
-			tmp=data[i];
-			data[i]=data[nextValid];
-			data[nextValid]=tmp;
-		}
-	}
-	sscanf(data, scanstring, &buffer);
+	strip_string(data);	
+	sscanf(data, "%u", &buffer);
 	return buffer;
 }
 
-unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
-	return iniparser_scan_int_at_position(ip, section, key, position, "%u");
-}
-
 unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
-	return iniparser_scan_int_at_position(ip, section, key, position, "%o");
+	char data[25];
+	unsigned int buffer=0;
+	memset(data, 0, 25);
+	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
+		return -1;
+	}
+	strip_string(data);	
+	sscanf(data, "%o", &buffer);
+	return buffer;
+
 }
 
+float iniparser_get_float_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
+	float ret = 1.0;
+	char data[25];
+	memset(data, 0, 25);
+	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
+		DEBUG_MSG("iniparser_get_float_at_position, no string found\n");
+		return 0.0;
+	}
+	strip_string(data);	
+	sscanf(data, "%f", &ret);
+	return ret;
+}
 /*
 int iniparser_value_len(Tiniparser *ip, const char *section, const char *key){
 	char ch;

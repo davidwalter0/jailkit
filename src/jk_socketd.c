@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -235,7 +235,7 @@ static void usage() {
 	printf(" --socket=/path/to/socket     do not read ini file, create specific socket\n");
 	printf(" --base=integer               message rate limit (in bytes) per interval\n");
 	printf(" --peek=integer               message rate limit peek (in bytes)\n");
-	printf(" --interval=integer           message rate limit interval\n\n");
+	printf(" --interval=float             message rate limit interval\n\n");
 }
 
 static unsigned short int have_socket(char *path, Tsocketlink **sl, unsigned int size) {
@@ -257,8 +257,8 @@ int main(int argc, char**argv) {
 	char *m_socket = NULL;
 	char *pidfile = NULL;
 	FILE *pidfilefd = NULL;
-	unsigned int m_base=511, m_peek=2048, m_interval=10;
-
+	unsigned int m_base=511, m_peek=2048;
+	float m_interval=10.0;
 /*	signal(SIGINT, sigterm_handler);
 	signal(SIGTERM, sigterm_handler);*/
 
@@ -298,7 +298,7 @@ int main(int argc, char**argv) {
 					m_base = atoi(optarg);
 					break;
 				case 5:
-					m_interval = atoi(optarg);
+					m_interval = (float)atof(optarg);
 					break;
 				case 6:
 					m_peek = atoi(optarg);
@@ -352,16 +352,14 @@ int main(int argc, char**argv) {
 				prevpos = iniparser_get_position(ip);
 				secpos = prevpos - strlen(tmp)-4;
 				DEBUG_MSG("secpos=%ld, prevpos=%ld\n",secpos,prevpos);
-				base = iniparser_get_int(ip, tmp, "base");
+				base = iniparser_get_int_at_position(ip, tmp, "base", secpos);
+				peek = iniparser_get_int_at_position(ip, tmp, "peek", secpos);
+				interval = iniparser_get_float_at_position(ip, tmp, "interval", secpos);
 				iniparser_set_position(ip, secpos);
-				peek = iniparser_get_int(ip, tmp, "peek");
-				iniparser_set_position(ip, secpos);
-				interval = iniparser_get_int(ip, tmp, "interval");
-				iniparser_set_position(ip, secpos);
-				if (10 > base || base >  10000) base = 511;
-				if (100 > peek || peek > 100000 || peek < base) peek = 2048;
-				if (1 > interval || interval > 60) interval = 10;
-				sl[numsockets] = new_socketlink(outsocket, tmp, base, peek, interval*1000000, nodetach);
+				if (10 > base || base >  1000000) base = 511;
+				if (100 > peek || peek > 10000000 || peek < base) peek = 2048;
+				if (0.01 > interval || interval > 60.0) interval = 5.0;
+				sl[numsockets] = new_socketlink(outsocket, tmp, base, peek, (int)(interval*1000000.0), nodetach);
 				if (sl[numsockets]) {
 					syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%d",tmp,base,peek,interval);
 					if (nodetach) printf("listening on socket %s with rates [%d:%d]/%d\n",tmp,base,peek,interval);
@@ -379,14 +377,15 @@ int main(int argc, char**argv) {
 	}
 	else
 	{
-		unsigned int base=m_base, peek=m_peek, interval=m_interval;
-		if (10 > base || base >  10000) base = 511;
-		if (100 > peek || peek > 100000 || peek < base) peek = 2048;
-		if (1 > interval || m_interval > 60) interval = 10;
-		sl[numsockets] = new_socketlink(outsocket, m_socket, base, peek, interval*1000000, nodetach);
+		unsigned int base=m_base, peek=m_peek;
+		float interval=m_interval;
+		if (10 > base || base >  1000000) base = 511;
+		if (100 > peek || peek > 10000000 || peek < base) peek = 2048;
+		if (0.01 > interval || m_interval > 60.0) interval = 5.0;
+		sl[numsockets] = new_socketlink(outsocket, m_socket, base, peek, (int)(interval*1000000.0), nodetach);
 		if (sl[numsockets]) {
-			syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%d",m_socket,base,peek,interval);
-			if (nodetach) printf("listening on socket %s with rates [%d:%d]/%d\n",m_socket,base,peek,interval);
+			syslog(LOG_NOTICE, "listening on socket %s with rates [%d:%d]/%f",m_socket,base,peek,interval);
+			if (nodetach) printf("listening on socket %s with rates [%d:%d]/%f\n",m_socket,base,peek,interval);
 			numsockets++;
 		} else {
 			if (nodetach) printf("failed to create socket %s\n",m_socket);
@@ -394,8 +393,8 @@ int main(int argc, char**argv) {
 	}
 	
 	if (numsockets == 0) {
-		printf("refusing to run without any sockets, aborting...\n");
-		syslog(LOG_ERR,"refusing to run without any sockets, aborting...");
+		printf("no sockets specified in configfile or on commandline, nothing to do, exiting...\n");
+		syslog(LOG_ERR,"no sockets specified in configfile or on commandline, nothing to do, exiting...");
 		exit(1);
 	}
 

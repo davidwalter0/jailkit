@@ -54,7 +54,8 @@ int main (int argc, char **argv) {
 		printf(" %d ",iniparser_get_int(parser, "myitem", "key5")); /* 9 */
 		printf(" %d ",iniparser_get_int(parser, "alsoitem", "key10")); /* 10 */
 		printf("\n");		 /* 1 */
-
+		printf(" %f ",iniparser_get_float_at_position(parser, "alsoitem", "keyfloat", 0)); /* 0.1 */
+		printf("\n");		 /* 1 */
 	} else {
 		printf("no testfile found\n");
 	}
