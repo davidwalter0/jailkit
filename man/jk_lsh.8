@@ -13,11 +13,17 @@ The jailkit limited shell jk_lsh will allow only configured commands to be execu
 
 The allowed actions are read from 
 .I /etc/jailkit/jk_lsh.ini
-If you run jk_lsh inside a changed root, make sure jk_lsh.ini is present inside that changed root.
+If you run jk_lsh inside a changed root jail, make sure jk_lsh.ini is present inside that chroot jail.
 
 .SH LIMITATIONS
 
-Some shells can do logical tests, like command1 && command2. The limited shell jk_lsh cannot do any of these tests, another shell should be used if you want enable such features. It is not planned to include this in any future version.
+Some shells can process complex commandlines, such as command1 && command2, or kill `ps |grep foo`. The limited shell jk_lsh cannot do anything like that, another shell should be used if you want enable such features. It is not planned to include this in any future version.
+
+.SH OPTIONS
+
+jk_lsh can do word expansion such as *.txt expanding to each file that ends with .txt. This is very useful when running rsync or scp with jk_lsh. Option allow_word_expansion should be set to 1 in order to allow this.
+
+jk_lsh can also set environment variables. This is a comma separated list with key=value pairs.
 
 .SH EXAMPLE
 
@@ -39,6 +45,7 @@ umask = 002
 executables = /usr/bin/rsync
 paths = /usr/bin/
 allow_word_expansion = 1
+environment=TERM=linux,FOO=bar
 .fi
 
 If user test is in group test, however, he can not execute rsync in the above example. First the user is checked, and only if no user section is found the group section is looked for, and only if no group section is found, the DEFAULT section is looked for. If no section is found, jk_lsh aborts.

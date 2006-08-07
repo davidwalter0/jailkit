@@ -15,11 +15,11 @@ test:x:10000:10000::/home/testchroot/./home/test:/usr/sbin/jk_chrootsh
 
 In this example the user will be chroot-ed into /home/testchroot
 
-Inside the chroot-ed directory, it will look for /etc/passwd and it will execute the shell for the user from that file. For the above example that file should have an entry like
+Inside the chroot-ed directory, it will look for /etc/passwd and it will execute the shell for the user from that file. For the above example the /etc/passwd file inside the jail should have an entry like
 
 test:x:10000:10000::/home/test:/usr/sbin/jk_lsh
 
-Notice that the home directory and the shell are here local inside the chroot
+Notice that the home directory and the shell are local inside the chroot
 
 jk_chrootsh needs root access to make the 
 .BR chroot(2)
@@ -46,6 +46,16 @@ env = TERM, PATH
 .fi
 
 If user bill is in group jail, however, he will not get the TERM variable in the above example. Neither will any user in group jail get relaxed requirements for the group of the home directory. First the user is checked, and only if no user section is found the group section is looked for, and if no group section is found, the DEFAULT section is used.
+
+jk_chrootsh can be configured not to read the final shell from the /etc/passwd file in the jail. An example configfile
+is shown below.
+
+.nf
+.sp
+[group jail2]
+skip_injail_passwd_check=1
+injail_shell=/bin/bash
+.fi
 
 .SH FILES
 
