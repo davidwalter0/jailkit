@@ -71,8 +71,8 @@ is a utility to start a daemon that cannot do a
 .BR chroot(2) 
 call itself in a jail. It can change the user and group id after jailing the process, and before executing the daemon.
 
-.BR jk_addjailuser
-is a script to add a user both in the real /etc/passwd as in the JAIL/etc/passwd
+.BR jk_jailuser
+is a script to move a user into a jail
 
 .BR jk_procmailwrapper
 is a wrapper for procmail, it will run the .procmailrc from jailed users inside the jail, the .procmailrc from regular users on the normal system.

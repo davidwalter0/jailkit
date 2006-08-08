@@ -204,6 +204,18 @@ def copy_with_permissions(src, dst, be_verbose=0):
 	except IOError:
 		print 'could not read source file '+src
 
+def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
+	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
+	print 'copy directory '+dir
+	for root, dirs, files in os.walk(dir):
+		files2 = ()
+		for name in files:
+			files2 += os.path.join(root, name),
+		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, handledfiles)
+		for name in dirs:
+			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, handledfiles)
+	return handledfiles
+
 def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
@@ -223,9 +235,12 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		else:
 			if (os.path.exists(chroot+file)):
 				if (force_overwrite):
-					if (be_verbose):
-						print 'destination file '+chroot+file+' exists, deleting'
-					os.unlink(chroot+file)
+					if (os.path.isfile(chroot+file)):
+						if (be_verbose):
+							print 'destination file '+chroot+file+' exists, deleting'
+						os.unlink(chroot+file)
+					elif (os.path.isdir(chroot+file)):
+						print 'destination dir '+chroot+file+' exists'
 				else:
 					if (be_verbose):
 						print 'source file '+chroot+file+' exists already'
@@ -244,12 +259,18 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (realfile[0] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, handledfiles)
+			elif (os.path.isdir(file)):
+				handledfiles = copy_dir_recursive(chroot,os.path.dirname(file),force_overwrite, be_verbose, check_libs, handledfiles)
 			else:
 				if (be_verbose):
 					print 'copying '+file+' to '+chroot+file
 				copy_with_permissions(file,chroot+file,be_verbose)
 				handledfiles.append(file)
-			if (check_libs):
+			sbuf = os.stat(file)
+#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
+#	mode = stat.S_IMODE(sbuf.st_mode)
+			mode = stat.S_IMODE(sbuf[stat.ST_MODE])
+			if (check_libs and (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))):
 				libs = lddlist_libraries(file)
 				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, handledfiles)
 	return handledfiles
