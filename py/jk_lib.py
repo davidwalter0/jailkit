@@ -206,7 +206,6 @@ def copy_with_permissions(src, dst, be_verbose=0):
 
 def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
 	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
-	print 'copy directory '+dir
 	for root, dirs, files in os.walk(dir):
 		files2 = ()
 		for name in files:
@@ -260,7 +259,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 					realfile = os.path.dirname(file)+'/'+realfile
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, handledfiles)
 			elif (os.path.isdir(file)):
-				handledfiles = copy_dir_recursive(chroot,os.path.dirname(file),force_overwrite, be_verbose, check_libs, handledfiles)
+				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, handledfiles)
 			else:
 				if (be_verbose):
 					print 'copying '+file+' to '+chroot+file
