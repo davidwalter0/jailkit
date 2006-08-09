@@ -270,7 +270,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
 			mode = stat.S_IMODE(sbuf[stat.ST_MODE])
-			if (check_libs and (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))):
+			if (check_libs and (string.find(file, '/lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
 				libs = lddlist_libraries(file)
 				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, handledfiles)
 	return handledfiles
