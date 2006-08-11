@@ -192,6 +192,10 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, failed to get user information for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
 		exit(13);
 	}
+	if (!pw->pw_name || strlen(pw->pw_name)==0) {
+		syslog(LOG_ERR, "abort, got an empty username for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
+		exit(13);
+	}
 	DEBUG_MSG("got user %s\nget group info\n",pw->pw_name);
 	gr = getgrgid(getgid());
 	if (!gr) {
@@ -265,13 +269,17 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, the group ID from /etc/passwd (%d) does not match the group ID we run with (%d)", pw->pw_gid, getgid());
 		exit(15);
 	}
-	if (!pw->pw_dir || strlen(pw->pw_dir) ==0 || strstr(pw->pw_dir, "/./") == NULL) {
-		syslog(LOG_ERR, "abort, the homedir in /etc/passwd does not contain the jail <jail>/./<home>");
+	if (!pw->pw_dir || strlen(pw->pw_dir) ==0) {
+		syslog(LOG_ERR, "abort, got an empty home directory for user %s (%d)", pw->pw_name, getuid());
+		exit(16);
+	}
+	if (strstr(pw->pw_dir, "/./") == NULL) {
+		syslog(LOG_ERR, "abort, homedir '%s' for user %s (%d) does not contain the jail separator <jail>/./<home>", pw->pw_dir, pw->pw_name, getuid());
 		exit(17);
 	}
 	DEBUG_MSG("get jaildir\n");
 	if (!getjaildir(pw->pw_dir, &jaildir, &newhome)) {
-		syslog(LOG_ERR, "abort, failed to read the jail and the home from %s",pw->pw_dir);
+		syslog(LOG_ERR, "abort, failed to read the jail and the home from %s for user %s (%d)",pw->pw_dir, pw->pw_name, getuid());
 		exit(17);
 	}
 	DEBUG_MSG("dir=%s,jaildir=%s,newhome=%s\n",pw->pw_dir, jaildir, newhome);
