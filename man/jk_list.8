@@ -19,6 +19,10 @@ jk_list will show all processes that are running in a chroot jail, which jail th
 .BR \-w
 Show wide listing (does not abbreviate commandline options)
 
+.SH BUGS
+
+Currently jk_list needs a /proc filesystem to function, and is therefore unlikely to function on operating systems that do not have a /proc filesystem
+
 .SH "SEE ALSO"
 
 .BR jailkit(8)
