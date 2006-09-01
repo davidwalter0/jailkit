@@ -224,9 +224,10 @@ int main (int argc, char **argv) {
 				{"user", required_argument, NULL, 'u'},
 				{"group", required_argument, NULL, 'g'},
 				{"help", no_argument, NULL, 'h'},
+				{"version", no_argument, NULL, 'V'},
 				{NULL, 0, NULL, 0}
 			};
-		 	c = getopt_long(argc, argv, "j:p:u:g:x:h",long_options, &option_index);
+		 	c = getopt_long(argc, argv, "j:p:u:g:x:hv",long_options, &option_index);
 			switch (c) {
 			case 'j':
 				jail = ending_slash(optarg);
@@ -244,6 +245,7 @@ int main (int argc, char **argv) {
 				texec = strdup(optarg);
 				break;
 			case 'h':
+			case 'V':
 				print_usage();
 				exit(1);
 			}
