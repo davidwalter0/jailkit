@@ -213,6 +213,10 @@ def testjail(jail):
 
 def getjail(jail, config):
 	while (1):
+		if (jail[0] != '/'):
+			tmp = os.getcwd()+'/'+jail
+			if (os.path.exists(tmp)):
+				jail = tmp
 		test = testjail(jail)
 		if (test):
 			return jail
