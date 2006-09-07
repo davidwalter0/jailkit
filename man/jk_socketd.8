@@ -1,4 +1,4 @@
-.TH jk_socketd 8 10-05-2004 JAILKIT jk_socketd
+.TH jk_socketd 8 07-09-2006 JAILKIT jk_socketd
 
 .SH NAME
 jk_socketd \- a daemon to safely create /dev/log inside a chroot
@@ -23,7 +23,9 @@ and writes all data eventually to syslog using the real
 .I /dev/log
 Programs like jk_lsh and also many daemons need a /dev/log socket to do logging to syslog.
 
-Why not have syslog create the socket inside your jail? jk_socketd can limit the number of bytes written trough the socket. The rate limiting is done based on three parameters, the base, the peek and the interval. The interval is the number of seconds that jk_socketd will use to count up to the number of bytes. The base and peek are both a number in bytes.
+Why not have syslog create the socket inside your jail? Potentially an attacker can disrupt normal system operation by filling your logs through the socket. jk_socketd can limit the number of bytes written trough the socket. The rate limiting is done based on three parameters, the base, the peek and the interval. The interval is the number of seconds that jk_socketd will use to count up to the number of bytes. The base and peek are both a number in bytes.
+
+If the logging is limited by jk_socketd, processes that run inside the jail will be slowed down if they try to use the logging service. If you expect a high logging rate in a jail, it is recommended to use syslog to create the socket in the jail instead of jk_socketd. 
 
 A socket is normally only allowed to have base bytes going trough per interval seconds. Only if in the previous interval the number of bytes has been lower than base, peek number of bytes is allowed. So a peek can only happen if the previous interval has been lower than base.
 
@@ -83,6 +85,7 @@ otherwise run jk_socketd -n and it will not detach from the terminal, and it wil
 .BR jk_chrootsh(8)
 .BR jk_cp(8)
 .BR jk_init(8)
+.BR jk_list(8)
 .BR jk_lsh(8)
 .BR jk_procmailwrapper(8)
 .BR syslogd(8)
