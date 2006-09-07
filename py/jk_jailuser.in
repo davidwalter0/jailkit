@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Copyright (c) 2003, 2004, 2005, Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006, Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -198,7 +198,7 @@ def usage():
 	print ' -h | --help           : this message'
 	print
 
-def testjail(jail):
+def testjail(jail, shell):
 	if (jail == None):
 		return 0
 	if (jail[-1:] == '/'):
@@ -207,7 +207,13 @@ def testjail(jail):
 		print jail+' does not exist'
 		return 0
 	if (not os.path.exists(jail+'/etc/passwd')):
-		print jail+'/etc/passwd does not exist'
+		print 'invalid jail, '+jail+'/etc/passwd does not exist'
+		return 0
+	if (not os.path.exists(jail+shell)):
+		print 'invalid shell, '+jail+shell+' does not exist'
+		return 0
+	if (not os.access(jail+shell,X_OK)):
+		print 'invalid shell, '+jail+shell+' is not executable'
 		return 0
 	return 1
 
@@ -217,7 +223,7 @@ def getjail(jail, config):
 			tmp = os.getcwd()+'/'+jail
 			if (os.path.exists(tmp)):
 				jail = tmp
-		test = testjail(jail)
+		test = testjail(jail, config['shell'])
 		if (test):
 			return jail
 		else:
