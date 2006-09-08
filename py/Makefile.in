@@ -1,4 +1,4 @@
-#Copyright (c) 2003, 2004, 2005, Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006, Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ jk_cp: jk_cp.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_cp.in > jk_cp
 
 jk_list: jk_list.in
-        sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_list.in > jk_list
+	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_list.in > jk_list
 
 jk_addjailuser: jk_addjailuser.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_addjailuser.in > jk_addjailuser
@@ -56,7 +56,7 @@ jk_addjailuser: jk_addjailuser.in
 jk_jailuser: jk_jailuser.in
 	sed -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_jailuser.in > jk_jailuser
 
-jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser
+jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser jk_list 
 
 all: jailkit
 
