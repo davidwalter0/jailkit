@@ -115,6 +115,7 @@ def moduser(user, home, shell='/usr/sbin/jk_chrootsh'):
 	else:
 		print 'please report that user modding on platform '+sys.platform+' is not yet handled'
 		print 'to the jailkit developers, and suggest which command is needed to modify users'
+		return 0
 	if (os.system(command)!=0):
 		print 'failed to execute '+command
 		return 0
