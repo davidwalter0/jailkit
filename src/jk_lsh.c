@@ -132,7 +132,7 @@ static int executable_is_allowed(Tiniparser *parser, const char *section, const 
 	} else {
 		syslog(LOG_ERR, "section %s does not have a key executables", section);
 		exit(5);
-	}
+	}		
 }
 
 static int file_exists(const char *path) {
@@ -205,12 +205,17 @@ int main (int argc, char **argv) {
 
 	DEBUG_MSG(PROGRAMNAME" log started\n");
 
-	gr = getgrgid(getgid());
 	pw = getpwuid(getuid());
-	if (!pw || !gr) {
-		syslog(LOG_ERR, "uid %d or gid %d does not have a name", getuid(), getgid());
-		DEBUG_MSG(PROGRAMNAME" cannot get user or group info for %d:%d\n", getuid(),getgid());
+	if (!pw) {
+		syslog(LOG_ERR, "cannot find user name for uid %d: %s", getuid(), strerror(errno));
+		DEBUG_MSG(PROGRAMNAME" cannot find user name for uid %d: %s", getuid(), strerror(errno));
 		exit(2);
+	}
+	gr = getgrgid(getgid());
+	if (!gr) {
+		syslog(LOG_ERR, "cannot find group name for gid %d: %s", getuid(), strerror(errno));
+		DEBUG_MSG(PROGRAMNAME" cannot find group name for uid %d: %s", getuid(), strerror(errno));
+		exit(3);
 	}
 	
 	/* the last argument should be the commandstring, and the one before should be -c
