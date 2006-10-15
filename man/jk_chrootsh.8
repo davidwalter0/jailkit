@@ -45,7 +45,7 @@ relax_home_other_permissions=1
 env = TERM, PATH
 .fi
 
-If user bill is in group jail, however, he will not get the TERM variable in the above example. Neither will any user in group jail get relaxed requirements for the group of the home directory. First the user is checked, and only if no user section is found the group section is looked for, and if no group section is found, the DEFAULT section is used.
+If user bill is in group jail, however, he will not get the TERM variable in the above example. Neither will any user with primary group jail get relaxed requirements for the group of the home directory. First the user is checked, and only if no user section is found the primary group section is looked for, and if no group section is found, the DEFAULT section is used.
 
 jk_chrootsh can be configured not to read the final shell from the /etc/passwd file in the jail. An example configfile
 is shown below.
