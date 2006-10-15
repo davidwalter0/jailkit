@@ -245,7 +245,7 @@ int main (int argc, char **argv) {
 	} else if (iniparser_has_section(parser, "DEFAULT")) {
 		section = "DEFAULT";
 	} else {
-		syslog(LOG_ERR, "both the user %s and the group %s have no section in the configfile "CONFIGFILE, pw->pw_name, gr->gr_name);
+		syslog(LOG_ERR, "did neither find a section '%s', nor 'group %s' nor 'DEFAULT' in configfile "CONFIGFILE, pw->pw_name, gr->gr_name);
 		exit(3);
 	}
 	section_pos = iniparser_get_position(parser) - strlen(section) - 2;

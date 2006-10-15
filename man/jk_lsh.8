@@ -25,6 +25,8 @@ jk_lsh can do word expansion such as *.txt expanding to each file that ends with
 
 jk_lsh can also set environment variables. This is a comma separated list with key=value pairs.
 
+Options can be set for a specific user, for the primary group of a user, or for all users in section DEFAULT.
+
 .SH EXAMPLE
 
 An example config file for user test or group test is shown below
@@ -48,7 +50,7 @@ allow_word_expansion = 1
 environment=TERM=linux,FOO=bar
 .fi
 
-If user test is in group test, however, he can not execute rsync in the above example. First the user is checked, and only if no user section is found the group section is looked for, and only if no group section is found, the DEFAULT section is looked for. If no section is found, jk_lsh aborts.
+If user test has primary group test, however, he can not execute rsync in the above example. First the user section is checked, and only if no user section is found the primary group section is looked for, and only if no group section is found, the DEFAULT section is looked for. If no section is found, jk_lsh aborts.
 
 The 
 .B executables
