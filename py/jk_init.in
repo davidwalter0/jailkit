@@ -70,33 +70,6 @@ def proc_mount(config, chroot):
 def add_jk_socketd_entry(config, chroot):
 	print 'not yet implemented'
 
-def init_device(config, chroot, path):
-	jk_lib.create_full_path(chroot+os.path.dirname(path), config['verbose'])
-	if (os.path.exists(chroot+path)):
-		if (config['verbose']):
-			print 'device '+chroot+path+' does exist already'
-		return
-	sb = os.stat(path)
-	try:
-		major = sb.st_rdev / 256  #major = st_rdev divided by 256
-		minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
-		if (stat.S_ISCHR(sb.st_mode)): 
-			mode = 'c'
-		elif (stat.S_ISBLK(sb.st_mode)): 
-			mode = 'b'
-		else:
-			print 'WARNING, '+path+' is not a character or block device'
-			return 1
-		if (config['verbose']):
-			print 'creating device '+chroot+path
-		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
-		jk_lib.copy_permissions(path, chroot+path, 0, 0)
-	except:
-		print 'failed to create device '+path+', this is a know problem with python 2.1'
-		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
-		print 'use "mknod '+path+' mode major minor" to create the device'
-		print 'use chmod and chown to correct the permissions as found by ls -l'
-
 def init_files(config,chroot,files):
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
@@ -168,7 +141,8 @@ def handle_cfg_section(config,chroot,cfg,section):
 			logsocket(config,chroot)
 	devices = jk_lib.config_get_option_as_list(cfg,section,'devices')
 	for tmp in devices:
-		init_device(config,chroot,tmp)
+		jk_lib.create_full_path(chroot+os.path.dirname(tmp), config['verbose'])
+		jk_lib.copy_device(chroot,tmp,config['verbose'])
 
 def activateConfig(config, args):
 	cfg = ConfigParser.ConfigParser()

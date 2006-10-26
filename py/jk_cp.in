@@ -96,7 +96,7 @@ def testargs(args):
 		usage()
 		sys.exit(3)
 	for file in args[1:]:
-		if (not os.path.isfile(file)):
+		if (not os.path.exists(file)):
 			print "ERROR: "+file+" does not exist"
 			print ""
 			usage()

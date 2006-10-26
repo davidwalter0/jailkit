@@ -101,13 +101,17 @@ def lddlist_libraries_linux(executable):
 		if (len(subl)>0):
 			if (subl[0] == 'statically' and subl[1] == 'linked'):
 				return retval
+			elif (subl[0] == 'not' and subl[2] == 'dynamic' and subl[3] == 'executable'):
+				return retval
 			elif (subl[0] == 'linux-gate.so.1'):
+				pass
+			elif (len(subl)==4 and subl[2] == 'not' and subl[3] == 'found'):
 				pass
 			elif (len(subl)>=3):
 				if (os.path.exists(subl[2])):
 					retval += [subl[2]]
 				else:
-					print 'ldd returns non existing library '+subl[2]
+					print 'ldd returns non existing library '+subl[2]+' for '+executable
 			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
 			elif (len(subl)>=1 and subl[0][0] == '/'):
 				if (os.path.exists(subl[0])):
@@ -204,6 +208,34 @@ def copy_with_permissions(src, dst, be_verbose=0):
 	except IOError:
 		print 'could not read source file '+src
 
+def copy_device(chroot, path, be_verbose=1):
+	# perhaps the calling function should make sure the basedir exists	
+	create_full_path(chroot+os.path.dirname(path), be_verbose)
+	if (os.path.exists(chroot+path)):
+		if (be_verbose==1):
+			print 'device '+chroot+path+' does exist already'
+		return
+	sb = os.stat(path)
+	try:
+		major = sb.st_rdev / 256 #major = st_rdev divided by 256
+		minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
+		if (stat.S_ISCHR(sb.st_mode)): 
+			mode = 'c'
+		elif (stat.S_ISBLK(sb.st_mode)): 
+			mode = 'b'
+		else:
+			print 'WARNING, '+path+' is not a character or block device'
+			return 1
+		if (be_verbose==1):
+			print 'creating device '+chroot+path
+		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
+		copy_permissions(path, chroot+path, 0, 0)
+	except:
+		print 'failed to create device '+path+', this is a know problem with python 2.1'
+		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
+		print 'use "mknod '+path+' mode major minor" to create the device'
+		print 'use chmod and chown to set the permissions as found by ls -l'
+
 def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
 	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
 	for root, dirs, files in os.walk(dir):
@@ -224,13 +256,18 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 #			print 'handled '+file+' already'
 			continue
 #		print 'file',file,'is not in',handledfiles
-		if (not os.path.exists(file)):
+		try:
+			sb = os.lstat(file)
+		except OSError, e:
 			if (be_verbose):
-				print 'source file '+file+' does not exist'
+				if (e.errno == 2):
+					print 'source file '+file+' does not exist'
+				else:
+					print 'failed to investigate source file '+file+': '+e.strerror
 			continue
-		if ((force_overwrite == 0) and os.path.isfile(chroot+file)):
+		if ((force_overwrite == 0) and os.path.exists(chroot+file)):
 			if (be_verbose):
-				print ''+chroot+file+' exists'
+				print ''+chroot+file+' exists, specify --force to overwrite'
 		else:
 			if (os.path.exists(chroot+file)):
 				if (force_overwrite):
@@ -242,10 +279,10 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						print 'destination dir '+chroot+file+' exists'
 				else:
 					if (be_verbose):
-						print 'source file '+chroot+file+' exists already'
+						print 'destination file '+chroot+file+' exists already'
 					continue
 			create_full_path(chroot+os.path.dirname(file),be_verbose)
-			if (os.path.islink(file)):
+			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
 				if (be_verbose):
 					print 'creating symlink '+chroot+file+' to '+realfile
@@ -258,17 +295,20 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (realfile[0] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, handledfiles)
-			elif (os.path.isdir(file)):
+			elif (stat.S_ISDIR(sb.st_mode)):
 				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, handledfiles)
-			else:
+			elif (stat.S_ISREG(sb.st_mode)):
 				if (be_verbose):
 					print 'copying '+file+' to '+chroot+file
 				copy_with_permissions(file,chroot+file,be_verbose)
 				handledfiles.append(file)
-			sbuf = os.stat(file)
+			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
+				copy_device(chroot, file, be_verbose)
+			else:
+				print 'failed to find how to copy '+file
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
-			mode = stat.S_IMODE(sbuf[stat.ST_MODE])
+			mode = stat.S_IMODE(sb[stat.ST_MODE])
 			if (check_libs and (string.find(file, '/lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
 				libs = lddlist_libraries(file)
 				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, handledfiles)
