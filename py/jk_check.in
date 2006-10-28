@@ -202,9 +202,9 @@ def testrealpasswd():
 		rpw = string.split(rline, ':')
 		if (len(rpw)>=6):
 			# test if the entry has any jail characteristics
-			jaildot = string.find(rpw[5], '.')
+			jaildot = string.find(rpw[5], '/./')
 			if (jaildot != -1):
-				chroot = rpw[5][:jaildot]
+				chroot = rpw[5][:jaildot+1]
 				retval += [chroot]
 				# test if the user actually exists in the chroot
 				if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
