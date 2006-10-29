@@ -112,15 +112,16 @@ def runList(verbose,jail):
 	# open /proc/
 	results = []
 	dirlist = os.listdir('/proc')
-	for entry in dirlist:
-		if (entry.isdigit()):
-			# we have a process, now read the link root
-			try:
-				ret = os.readlink('/proc/'+entry+'/root')
-				if (ret != '/'):
-					results.append(ListResult(entry))
-			except OSError:
-				pass
+	try:
+		for entry in dirlist:
+			if (entry.isdigit()):
+				# we have a process, now read the link root
+					ret = os.readlink('/proc/'+entry+'/root')
+					if (ret != '/'):
+						results.append(ListResult(entry))
+	except OSError, e:
+		if (e.errno == 13):
+			print 'Permission denied'
 	return results
 
 def printusage():
