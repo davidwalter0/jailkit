@@ -149,12 +149,35 @@ def lddlist_libraries_openbsd(executable):
 		line = pd[1].readline()
 	return retval
 
+def lddlist_libraries_freebsd(executable):
+	"""returns a list of libraries that the executable depends on """
+	retval = []
+	pd = os.popen3('ldd '+executable)
+	line = pd[1].readline()
+	while (len(line)>0):
+		subl = string.split(line)
+		if (len(subl)>0):
+			if (subl[0] == executable+':'):
+				pass
+			elif (len(subl)>=4):
+				if (os.path.exists(subl[2])):
+					retval += [subl[2]]
+				else:
+					print 'ldd returns non existing library '+subl[2]
+			else:
+				print 'WARNING: failed to parse ldd output '+line[:-1]
+		else:
+			print 'WARNING: failed to parse ldd output '+line[:-1]
+		line = pd[1].readline()
+	return retval
 
 def lddlist_libraries(executable):
 	if (sys.platform[:5] == 'linux'):
 		return lddlist_libraries_linux(executable)
 	elif (sys.platform[:7] == 'openbsd'):
 		return lddlist_libraries_openbsd(executable)
+	elif (sys.platform[:7] == 'freebsd'):
+		return lddlist_libraries_freebsd(executable)
 	else:
 		retval = lddlist_libraries_linux(executable)
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
