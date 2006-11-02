@@ -58,9 +58,15 @@ def path_is_safe(path, failquiet=0):
 	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
 		print "ERROR: "+path+" is not a directory!"
 		return -2
-	if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != 0):
-		print "ERROR: "+path+" is not owned by root:root!"
-		return -3
+	if (sys.platform[:3] == 'bsd'):
+		# on freebsd root is in group wheel
+		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != grp.getgrnam('wheel').gr_gid):
+			print "ERROR: "+path+" is not owned by root:wheel!"
+			return -3
+	else:
+		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != 0):
+			print "ERROR: "+path+" is not owned by root:root!"
+			return -3
 	if (statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP):
 		print "ERROR: "+path+" is writable by group or others!"
 		return -4
@@ -68,6 +74,7 @@ def path_is_safe(path, failquiet=0):
 
 def chroot_is_safe(path, failquiet=0):
 	"""tests if path is a safe jail, not writable, no writable /etc/ and /lib, return 1 if all is OK"""
+	path = os.path.abspath(path)
 	retval = path_is_safe(path,failquiet)
 	if (retval < -1):
 		return retval
@@ -159,6 +166,8 @@ def lddlist_libraries_freebsd(executable):
 		if (len(subl)>0):
 			if (subl[0] == executable+':'):
 				pass
+			if (subl[2] == 'not' and subl[4] == 'dynamic'):
+				return retval
 			elif (len(subl)>=4):
 				if (os.path.exists(subl[2])):
 					retval += [subl[2]]
