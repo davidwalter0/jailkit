@@ -29,6 +29,7 @@
 #
 INSTALL = @INSTALL@
 prefix = @prefix@
+sysconfdir = @sysconfdir@
 iniprefix =/etc/jailkit/
 PACKAGE = @PACKAGE@
 
