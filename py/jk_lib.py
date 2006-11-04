@@ -56,7 +56,10 @@ def path_is_safe(path, failquiet=0):
 			print "ERROR: cannot lstat() "+path+" !"
 		return -1
 	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
-		print "ERROR: "+path+" is not a directory!"
+		if (stat.S_ISLNK(statbuf[stat.ST_MODE])):
+			print 'ERROR: '+path+" is a symlink, please point to the real directory"
+		else:
+			print "ERROR: "+path+" is not a directory!"
 		return -2
 	if (sys.platform[:3] == 'bsd'):
 		# on freebsd root is in group wheel
