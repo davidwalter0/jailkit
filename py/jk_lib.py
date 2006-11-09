@@ -177,11 +177,11 @@ def lddlist_libraries_freebsd(executable):
 				else:
 					print 'ldd returns non existing library '+subl[2]
 			else:
-				print 'WARNING: failed to parse ldd output "'+line[:-1]+'"'
+				print 'WARNING: failed to parse ldd output "'+line[:-1]+'", len subl='+str(len(subl))+''
 		elif (line[:len(executable)+1] == executable+':'):
 			pass
 		else:
-			print 'WARNING: failed to parse ldd output "'+line[:-1]+'"'
+			print 'WARNING: failed to parse ldd output "'+line[:-1]+'", compared "'+line[:len(executable)+1]+'" and "'+executable+':'+'"'
 		line = pd[1].readline()
 	return retval
 
