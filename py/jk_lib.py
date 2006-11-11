@@ -169,7 +169,7 @@ def lddlist_libraries_freebsd(executable):
 		if (len(subl)>0):
 			if (len(subl)==1 and subl[0][:len(executable)+1] == executable+':'):
 				pass
-			if (len(subl)>=6 and subl[2] == 'not' and subl[4] == 'dynamic'):
+			elif (len(subl)>=6 and subl[2] == 'not' and subl[4] == 'dynamic'):
 				return retval
 			elif (len(subl)>=4):
 				if (os.path.exists(subl[2])):
