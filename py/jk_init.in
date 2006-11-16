@@ -46,15 +46,15 @@ import jk_lib
 def logsocket(config,chroot):
 	if (not os.path.exists(chroot+'/dev')):
 		os.mkdir(chroot+'/dev')
-	fd = open('/etc/jailkit/jk_socketd.ini', 'r')
+	fd = open(INIPREFIX+'/jk_socketd.ini', 'r')
 	line = fd.readline()
 	while (line):
 		if (line == '['+chroot+'/dev/log]'):
 			if (config['verbose']):
-				print 'we already have '+chroot+'/dev/log in /etc/jailkit/jk_socketd.ini'
+				print 'we already have '+chroot+'/dev/log in '+INIPREFIX+'/jk_socketd.ini'
 			return
 		line = fd.readline()
-	fd = open('/etc/jailkit/jk_socketd.ini', 'a')
+	fd = open(INIPREFIX+'/jk_socketd.ini', 'a')
 	fd.write('\n['+chroot+'/dev/log]\nbase=512\npeek=2048\ninterval=10\n')
 	fd.close()
 
@@ -193,7 +193,7 @@ def main():
 		usage()
 		sys.exit(1)
 	config = {}
-	config['file'] = '/etc/jailkit/jk_init.ini'
+	config['file'] = INIPREFIX+'/jk_init.ini'
 	config['verbose'] = 0
 	config['force'] = 0
 	list = 0
