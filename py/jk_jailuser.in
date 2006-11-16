@@ -38,6 +38,7 @@ import getopt
 import string
 import shutil
 
+INIPREFIX='/etc/jailkit'
 LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib

@@ -1,4 +1,4 @@
-#Copyright (c) 2003-2005, Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 INSTALL = @INSTALL@
 prefix = @prefix@
 sysconfdir = @sysconfdir@
-iniprefix =/etc/jailkit/
+iniprefix = ${sysconfdir}/jailkit
 PACKAGE = @PACKAGE@
 
 INIFILES = jk_check.ini jk_init.ini jk_lsh.ini jk_socketd.ini jk_chrootsh.ini
@@ -78,7 +78,7 @@ install:
 
 
 uninstall:
-	rm -f /etc/jailkit/*.ini
+	rm -f ${iniprefix}/*.ini
 	@cd py/ && $(MAKE) uninstall
 	@cd man/ && $(MAKE) uninstall
 	@cd src/ && $(MAKE) uninstall

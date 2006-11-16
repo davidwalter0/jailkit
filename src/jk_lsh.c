@@ -2,7 +2,7 @@
 Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 All rights reserved.
 
-This file is available under two licences, at your opinion
+This file is available under two licences, at your own choice
 
 --------
 Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ char **libc_argv;
 #endif
 
 #define PROGRAMNAME "jk_lsh"
-#define CONFIGFILE "/etc/jailkit/jk_lsh.ini"
+#define CONFIGFILE INIPREFIX"/jk_lsh.ini"
 
 /* #define DEBUG */
 

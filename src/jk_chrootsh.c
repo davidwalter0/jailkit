@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define PROGRAMNAME "jk_chrootsh"
-#define CONFIGFILE "/etc/jailkit/jk_chrootsh.ini"
+#define CONFIGFILE INIPREFIX"/jk_chrootsh.ini"
 
 #include "jk_lib.h"
 #include "utils.h"

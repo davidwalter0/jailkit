@@ -6,7 +6,7 @@
  *
  * this will probably extended in the near future
  *
-Copyright (c) 2003, 2004, 2005, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

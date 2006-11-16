@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Copyright (c) 2003, 2004, 2005, Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ import os
 import getopt
 import string
 
+INIPREFIX='/etc/jailkit'
 LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib

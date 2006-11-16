@@ -34,6 +34,10 @@
 
 AC_INIT
 AC_PREFIX_DEFAULT(/usr)
+if test "$prefix" = "NONE"; then
+	sysconfdir="/etc"
+	echo "config files will be in /etc/jailkit/"
+fi
 AC_CONFIG_SRCDIR(src/jk_socketd.c)
 AC_CONFIG_HEADER(src/config.h)
 
@@ -43,6 +47,7 @@ AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_DEFINE_UNQUOTED(INIPREFIX, "${sysconfdir}/etc/")
 
 AC_GNU_SOURCE
 

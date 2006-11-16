@@ -1669,6 +1669,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+if test "$prefix" = "NONE"; then
+	sysconfdir="/etc"
+	echo "config files will be in /etc/jailkit/"
+fi
 
 ac_config_headers="$ac_config_headers src/config.h"
 
@@ -1683,6 +1687,10 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define VERSION "$VERSION"
+_ACEOF
+
+cat >>confdefs.h <<_ACEOF
+#define INIPREFIX "${sysconfdir}/etc/"
 _ACEOF
 
 

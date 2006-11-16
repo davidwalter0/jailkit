@@ -57,7 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h> /* chmod() */
 
 #define PROGRAMNAME "jk_socketd"
-#define CONFIGFILE "/etc/jailkit/jk_socketd.ini"
+#define CONFIGFILE INIPREFIX"/jk_socketd.ini"
 
 #define MAX_SOCKETS 32
 #define CHECKTIME 100000 /* 0.1 seconds */
