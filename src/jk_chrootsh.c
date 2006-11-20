@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <grp.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <syslog.h>
 #include <limits.h>
 /* #define DEBUG */
@@ -224,7 +224,7 @@ int main (int argc, char **argv) {
 	parser = new_iniparser(CONFIGFILE);
 	
 	if (parser) {
-		char *groupsec, *section=NULL, buffer[1024];
+		char *groupsec, *section=NULL, buffer[1024]; /* openbsd complains if this is <1024 */
 		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
 		if (iniparser_has_section(parser, pw->pw_name)) {
 			section = strdup(pw->pw_name);
@@ -288,9 +288,9 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, chdir(%s) failed: %s, check the permissions for %s",jaildir,strerror(errno),jaildir);
 		exit(19);
 	} else {
-		char test[255];
+		char test[1024];
 		/* test if it really succeeded */
-		getcwd(test, 255);
+		getcwd(test, 1024);
 		if (strcmp(jaildir, test) != 0) {
 			syslog(LOG_ERR, "abort, the current dir does not equal %s after chdir(%s)",jaildir,jaildir);
 			exit(21);

@@ -46,7 +46,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <syslog.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
