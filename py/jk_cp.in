@@ -104,6 +104,9 @@ def testargs(args):
 			sys.exit(4)
 
 def main():
+	if (os.getuid()!=0):
+		print 'cannot run without root privileges'
+		sys.exit(5)
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], 'fhv', ['help', 'verbose', 'force'])
 	except getopt.GetoptError:
@@ -122,7 +125,8 @@ def main():
 			config['force'] = 1
 	testargs(args)
 	if (args[0][-1] != '/'): args[0] = args[0]+'/'
-	jk_lib.chroot_is_safe(args[0])
+	if (jk_lib.chroot_is_safe(args[0])!=1):
+		sys.exit(6)
 	startcopy(config, args[0], args[1:])
 
 if __name__ == "__main__":

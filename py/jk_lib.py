@@ -138,6 +138,7 @@ def lddlist_libraries_linux(executable):
 def lddlist_libraries_openbsd(executable):
 	"""returns a list of libraries that the executable depends on """
 	retval = []
+	mode = 3 # openbsd 4 has new ldd output
 	pd = os.popen3('ldd '+executable)
 	line = pd[1].readline()
 	while (len(line)>0):
@@ -146,12 +147,22 @@ def lddlist_libraries_openbsd(executable):
 			if (subl[0] == executable+':'):
 				pass
 			elif (subl[0] == 'Start'):
+				if (len(subl)==7 and subl[6] == 'Name'):
+					mode = 4
 				pass
 			elif (len(subl)>=5):
-				if (os.path.exists(subl[4])):
-					retval += [subl[4]]
+				if (mode == 3):
+					if (os.path.exists(subl[4])):
+						retval += [subl[4]]
+					else:
+						print 'ldd returns non existing library '+subl[4]
+				elif (mode == 4):
+					if (os.path.exists(subl[6])):
+						retval += [subl[6]]
+					else:
+						print 'ldd returns non existing library '+subl[6]
 				else:
-					print 'ldd returns non existing library '+subl[2]
+					print 'unknown mode, please report this bug in jk_lib.py'
 			else:
 				print 'WARNING: failed to parse ldd output '+line[:-1]
 		else:
