@@ -1,0 +1,147 @@
+#!/usr/bin/python
+#
+#Copyright (c) 2006 Olivier Sessink
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without
+#modification, are permitted provided that the following conditions 
+#are met:
+#  * Redistributions of source code must retain the above copyright 
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above 
+#    copyright notice, this list of conditions and the following 
+#    disclaimer in the documentation and/or other materials provided 
+#    with the distribution.
+#  * The names of its contributors may not be used to endorse or 
+#    promote products derived from this software without specific 
+#    prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+#"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+#LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+#FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+#COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+#INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+#BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+#LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+#CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+#LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+#ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+#POSSIBILITY OF SUCH DAMAGE.
+#
+
+import ConfigParser
+import sys
+import os
+import string
+from stat import *
+import getopt
+import stat
+
+INIPREFIX='/etc/jailkit'
+LIBDIR='/usr/share/jailkit'
+sys.path.append(LIBDIR)
+import jk_lib
+
+def comparecontent(fileA, fileB):
+	try:
+		fA=open(fileA, 'rb')
+		fB=open(fileB, 'rb')
+		cont = 1
+		retval = 1
+		while (cont==1 and retval==1):
+			bufA = fA.read(4096)
+			bufB = fB.read(4096)
+			if (bufA != bufB):
+				retval = 0
+			if (len(bufA)==0):
+				cont = 0
+		fA.close()
+		fB.close()
+		return retval
+	except IOError:
+		return 0
+
+def comparemetadata(fileA, fileB, onlyifAisnewer=1):
+	sbA = os.lstat(fileA)
+	sbB = os.lstat(fileB)
+	if (sbA[stat.ST_MTIME] > sbB[stat.ST_MTIME]): 
+		if (sbA[stat.ST_SIZE] != sbB[stat.ST_SIZE]):
+			return 0
+		if (stat.S_ISLNK(sbA[stat.ST_MODE]) != stat.S_ISLNK(sbB[stat.ST_MODE])):
+			return 0
+		if (stat.S_ISLNK(sbA[stat.ST_MODE])):
+			if (os.readlink(fileA) != os.readlink(fileB)):
+				return 0
+	return 1
+
+def need_update(original, injail):
+	try :
+		if (comparemetadata(original, injail)==1):
+			if (comparecontent(original, injail)==1):
+				return 0
+		return 1
+	except OSError:
+		# files that do not have an original obviously do not need to be updated
+		return 0
+
+def find2update(jail, dir, config, files2update=[]):
+	for file in os.listdir(jail+dir):
+		if (os.path.isdir(dir+file)):
+			files2update = find2update(jail, dir+file+'/', config, files2update)
+		elif (os.path.isfile(dir+file)):
+			if (config['verbose']):
+				print 'checking '+jail+dir+file+''
+			if (need_update(dir+file, jail+dir+file)):
+				files2update.append(dir+file)
+	return files2update
+
+def updatejail(jail, dirs, config):
+	allfiles = []
+	for dir in dirs:
+		files = []
+		if (config['verbose']):
+			print 'reading dir '+dir
+		if (dir[-1:] != '/'):
+			dir += '/'
+		try:
+			files = find2update(jail, dir, config, [])
+		except:
+			pass
+		for file in files:
+			if (config['verbose']):
+				print 'removing outdated file '+jail+file
+			try:
+				os.unlink(jail+file)
+				allfiles.append(file)
+			except:
+				print "ERROR: failed to remove outdated file "+jail+file
+	jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'])
+
+def usage():
+	print '-j|--jail '
+	print '-h|--help '
+	print '-v|--verbose '
+
+def main():
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], 'hvj:', ['help', 'verbose', 'jail='])
+	except getopt.GetoptError:
+		usage()
+		sys.exit(1)
+	config = {}
+	config['verbose'] = 0
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			usage()
+			sys.exit()
+		if o in ("-v", "--verbose"):
+			config['verbose'] = 1
+		if o in ("-j", "--jail"):
+			jail = a
+	if (jail[-1:]=='/'):
+		jail = jail[:-1]
+	updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], config)
+
+if __name__ == "__main__":
+    main()

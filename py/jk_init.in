@@ -99,7 +99,7 @@ def init_directory(config,chroot,dirs):
 #				if (config['verbose']):
 #					print 'creating dir '+chroot+tree
 				jk_lib.create_full_path(chroot+tree, config['verbose'])
-				jk_lib.copy_permissions(tree, chroot+tree, config['verbose'])
+				jk_lib.copy_time_and_permissions(tree, chroot+tree, config['verbose'])
 			ldir = os.listdir(tree)
 			for entry in ldir:
 				if (os.path.isdir(tree+'/'+entry)):

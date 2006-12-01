@@ -229,7 +229,7 @@ def create_full_path(directory, be_verbose=0):
 		print 'creating directory '+directory
 	os.mkdir(directory, 0755)
 
-def copy_permissions(src, dst, be_verbose=0, allow_suid=0):
+def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0):
 	try:
 		sbuf = os.stat(src)
 	#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
@@ -244,17 +244,26 @@ def copy_permissions(src, dst, be_verbose=0, allow_suid=0):
 	#			print 'setuid!!! after mode='+str(mode)
 	#		print 'mode='+str(mode)
 		os.chmod(dst, mode)
+		os.utime(dst, (sbuf[stat.ST_ATIME], sbuf[stat.ST_MTIME]))
 	except OSError:
 		if (be_verbose):
 			print 'source '+src+' does not exist'
 
-def copy_with_permissions(src, dst, be_verbose=0):
-	"""copies the file and the permissions, except any setuid or setgid bits"""
-	try:
-		shutil.copyfile(src,dst)
-		copy_permissions(src, dst, be_verbose, 0)
-	except IOError:
-		print 'could not read source file '+src
+def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
+	"""copies/links the file and the permissions, except any setuid or setgid bits"""
+	do_normal_copy = 1
+	if (try_hardlink==1):
+		try:
+			os.link(src,dst)
+			do_normal_copy = 0
+		except:
+			pass
+	if (do_normal_copy == 1):
+		try:
+			shutil.copyfile(src,dst)
+			copy_time_and_permissions(src, dst, be_verbose, 0)
+		except IOError:
+			print 'could not read source file '+src
 
 def copy_device(chroot, path, be_verbose=1):
 	# perhaps the calling function should make sure the basedir exists	
@@ -277,7 +286,7 @@ def copy_device(chroot, path, be_verbose=1):
 		if (be_verbose==1):
 			print 'creating device '+chroot+path
 		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
-		copy_permissions(path, chroot+path, 0, 0)
+		copy_time_and_permissions(path, chroot+path, 0, 0)
 	except:
 		print 'failed to create device '+path+', this is a know problem with python 2.1'
 		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
