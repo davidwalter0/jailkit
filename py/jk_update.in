@@ -96,22 +96,25 @@ def find2update(jail, dir, config, files2update=[]):
 				files2update.append(dir+file)
 	return files2update
 
-def updatejail(jail, dirs, config):
+def updatejail(jail, dirs, skips, config):
 	allfiles = []
 	for dir in dirs:
 		files = []
 		if (config['verbose']):
-			print 'reading dir '+dir
+			print 'reading dir '+jail+dir
 		if (dir[-1:] != '/'):
 			dir += '/'
 		try:
 			files = find2update(jail, dir, config, [])
 		except:
 			pass
-		if (config['dry-run']):
-			allfiles.extend(files)
-		else:
-			for file in files:
+		for file in files:
+			if ((file in skips) or (jail+file in skips)):
+				if (config['verbose']):
+					print 'skip update of file '+jail+file
+			elif (config['dry-run']):
+				allfiles.append(file)
+			else:
 				print 'removing outdated file '+jail+file
 				try:
 					os.unlink(jail+file)
@@ -130,17 +133,18 @@ def usage():
 	print '-v|--verbose   : give verbose output'
 	print '-j|--jail=     : the jail to update'
 	print '-d|--dry-run   : show what will be done'
+	print '-s|--skip=     : skip file, can be used multiple times'
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:', ['help', 'verbose', '--dry-run', 'jail='])
+		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:', ['help', 'verbose', '--dry-run', 'jail=', 'skip='])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
 	config = {}
 	config['verbose'] = 0
 	config['dry-run'] = 0
-	skip = []
+	skips = []
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
@@ -149,13 +153,13 @@ def main():
 			config['verbose'] = 1
 		elif o in ("-d", "--dry-run"):
 			config['dry-run'] = 1
-#		elif o in ("-s", "--skip"):
-#			skip.append(a)
+		elif o in ("-s", "--skip"):
+			skips.append(a)
 		elif o in ("-j", "--jail"):
 			jail = a
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]
-	updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], config)
+	updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], skips, config)
 
 if __name__ == "__main__":
     main()
