@@ -341,8 +341,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			create_full_path(chroot+os.path.dirname(file),be_verbose)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
-				if (be_verbose):
-					print 'creating symlink '+chroot+file+' to '+realfile
+				print 'creating symlink '+chroot+file+' to '+realfile
 				try:
 					os.symlink(realfile, chroot+file)
 				except OSError:
@@ -355,8 +354,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			elif (stat.S_ISDIR(sb.st_mode)):
 				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
-				if (be_verbose):
-					print 'copying '+file+' to '+chroot+file
+				print 'copying/linking '+file+' to '+chroot+file
 				copy_with_permissions(file,chroot+file,be_verbose)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):

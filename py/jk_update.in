@@ -108,36 +108,50 @@ def updatejail(jail, dirs, config):
 			files = find2update(jail, dir, config, [])
 		except:
 			pass
-		for file in files:
-			if (config['verbose']):
+		if (config['dry-run']):
+			allfiles.extend(files)
+		else:
+			for file in files:
 				print 'removing outdated file '+jail+file
-			try:
-				os.unlink(jail+file)
-				allfiles.append(file)
-			except:
-				print "ERROR: failed to remove outdated file "+jail+file
-	jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'])
+				try:
+					os.unlink(jail+file)
+					allfiles.append(file)
+				except:
+					print "ERROR: failed to remove outdated file "+jail+file
+	if (config['dry-run']):
+		for file in allfiles:
+			print 'will update '+jail+file
+	else:
+		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'])
 
 def usage():
-	print '-j|--jail '
-	print '-h|--help '
-	print '-v|--verbose '
+	print "Usage: "+sys.argv[0]+" [OPTIONS]"
+	print '-h|--help      : this message'
+	print '-v|--verbose   : give verbose output'
+	print '-j|--jail=     : the jail to update'
+	print '-d|--dry-run   : show what will be done'
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'hvj:', ['help', 'verbose', 'jail='])
+		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:', ['help', 'verbose', '--dry-run', 'jail='])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
 	config = {}
 	config['verbose'] = 0
+	config['dry-run'] = 0
+	skip = []
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
 			sys.exit()
-		if o in ("-v", "--verbose"):
+		elif o in ("-v", "--verbose"):
 			config['verbose'] = 1
-		if o in ("-j", "--jail"):
+		elif o in ("-d", "--dry-run"):
+			config['dry-run'] = 1
+#		elif o in ("-s", "--skip"):
+#			skip.append(a)
+		elif o in ("-j", "--jail"):
 			jail = a
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]

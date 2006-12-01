@@ -58,7 +58,11 @@ jk_addjailuser: jk_addjailuser.in
 jk_jailuser: jk_jailuser.in
 	sed -e "s!INIPREFIX='/etc/jailkit'!INIPREFIX='${INIPREFIX}'!" -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_jailuser.in > jk_jailuser
 
-jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser jk_list 
+jk_update: jk_update.in
+	sed -e "s!INIPREFIX='/etc/jailkit'!INIPREFIX='${INIPREFIX}'!" -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONPATH):" < jk_update.in > jk_update
+
+
+jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser jk_list jk_update 
 
 all: jailkit
 
@@ -73,6 +77,7 @@ install: jailkit
 	${INSTALL} -g 0 -o root -m 0755 jk_addjailuser ${prefix}/sbin
 	${INSTALL} -g 0 -o root -m 0755 jk_jailuser ${prefix}/sbin
 	${INSTALL} -g 0 -o root -m 0755 jk_list ${prefix}/sbin
+	${INSTALL} -g 0 -o root -m 0755 jk_update ${prefix}/sbin
 
 uninstall:
 	rm -f ${prefix}/sbin/jk_cp
@@ -81,12 +86,13 @@ uninstall:
 	rm -f ${prefix}/sbin/jk_addjailuser
 	rm -f ${prefix}/sbin/jk_jailuser
 	rm -f ${prefix}/sbin/jk_list
+	rm -f ${prefix}/sbin/jk_update
 	rm -f ${PYLIBDIR}/jk_lib.*
 	- rmdir --ignore-fail-on-non-empty ${PYLIBDIR}
 
 clean:
 	rm -f *~
-	rm -f jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser jk_list
+	rm -f jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser jk_list jk_update
 
 distclean: clean
 	rm -f Makefile

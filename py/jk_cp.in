@@ -42,40 +42,8 @@ LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib
 
-def listlibraries(config,file):
-	return jk_lib.lddlist_libraries(file)
-	
-
-def if_nexists_create_dir(config, dst):
-	if (not os.path.exists(dst)):
-		if (config['verbose']):
-			print 'creating directory '+dst
-		os.mkdir(dst)
-
-#def copyfileanddirectory(config,src,dst):
-#	dstbase = os.path.dirname(dst)
-#	if (not os.path.exists(dstbase)):
-#		indx = string.find(dstbase,'/',1)
-#		while (indx != -1):
-#			if_nexists_create_dir(config,dstbase[:indx])
-#			indx = string.find(dstbase,'/',indx+1)
-#		if_nexists_create_dir(config,dstbase)
-#	if (config['verbose']):
-#		print 'copying '+src+' to '+dst
-#	jk_lib.copy_with_permissions(src,dst,config['verbose'])
-#	shutil.copyfile(src,dst)
-
 def startcopy(config, chroot, filestocopy, checklibs=1):
-#	for file in filestocopy:
-#		if ((config['force'] == 0) and os.path.isfile(chroot+file)):
-#			if (config['verbose']):
-#				print ''+chroot+file+' exists'
-#		else:
 	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'])
-#			copyfileanddirectory(config,file, chroot+file)
-#			if (checklibs):
-#				libs = listlibraries(config,file)
-#				startcopy(config,chroot,libs,0)
 
 def usage():
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
