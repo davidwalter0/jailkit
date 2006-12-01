@@ -128,12 +128,14 @@ def updatejail(jail, dirs, skips, config):
 		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'])
 
 def usage():
+	print ''
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
 	print '-h|--help      : this message'
 	print '-v|--verbose   : give verbose output'
 	print '-j|--jail=     : the jail to update'
 	print '-d|--dry-run   : show what will be done'
 	print '-s|--skip=     : skip file, can be used multiple times'
+	print ''
 
 def main():
 	try:
@@ -145,6 +147,7 @@ def main():
 	config['verbose'] = 0
 	config['dry-run'] = 0
 	skips = []
+	jail = None
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
@@ -157,6 +160,11 @@ def main():
 			skips.append(a)
 		elif o in ("-j", "--jail"):
 			jail = a
+	if (jail == None):
+		print ''
+		print 'must at least specify a jail using -j or --jail'
+		print ''
+		sys.exit(1)
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]
 	updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], skips, config)
