@@ -61,7 +61,7 @@ def path_is_safe(path, failquiet=0):
 		else:
 			print "ERROR: "+path+" is not a directory!"
 		return -2
-	if (sys.platform[:3] == 'bsd'):
+	if (sys.platform[-3:] == 'bsd'):
 		# on freebsd root is in group wheel
 		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != grp.getgrnam('wheel').gr_gid):
 			print "ERROR: "+path+" is not owned by root:wheel!"
