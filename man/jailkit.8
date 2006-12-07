@@ -1,4 +1,4 @@
-.TH jailkit 8 07-09-2006 JAILKIT jailkit
+.TH jailkit 8 07-12-2006 JAILKIT jailkit
 
 .SH NAME
 jailkit \- utilities for jailing a user or process
@@ -77,9 +77,11 @@ is a script to move an existing user account into a jail
 .BR jk_list
 lists all jailed processes on a system, with the PID, UID, and their jail
 
-
 .BR jk_procmailwrapper
 is a wrapper for procmail, it will run the .procmailrc from jailed users inside the jail, the .procmailrc from regular users on the normal system.
+
+.BR jk_update
+is a utility to update a jail according to updates on the real system.
 
 .SH EXAMPLE
 
@@ -123,6 +125,7 @@ The jailkit config files are all located in
 .BR jk_lsh(8)
 .BR jk_procmailwrapper(8)
 .BR jk_socketd(8)
+.BR jk_update(8)
 .BR chroot(2)
 
 .SH COPYRIGHT

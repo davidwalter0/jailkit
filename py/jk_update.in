@@ -82,12 +82,14 @@ def need_update(original, injail):
 				return 0
 		return 1
 	except OSError:
-		# files that do not have an original obviously do not need to be updated
+		# files that do not have an original file obviously cannot be updated
 		return 0
 
-def find2update(jail, dir, config, files2update=[]):
+def find2update(jail, dir, skips, config, files2update=[]):
 	for file in os.listdir(jail+dir):
-		if (os.path.isdir(dir+file)):
+		if ((dir+file in skips) or (jail+dir+file in skips)):
+			print 'skip '+jail+dir+file
+		elif (os.path.isdir(dir+file)):
 			files2update = find2update(jail, dir+file+'/', config, files2update)
 		elif (os.path.isfile(dir+file)):
 			if (config['verbose']):
@@ -98,29 +100,33 @@ def find2update(jail, dir, config, files2update=[]):
 
 def updatejail(jail, dirs, skips, config):
 	allfiles = []
+	jaillen = len(jail)
 	for dir in dirs:
 		files = []
-		if (config['verbose']):
-			print 'reading dir '+jail+dir
+		if (dir[:jaillen] == jail):
+			dir = dir[jaillen:]
 		if (dir[-1:] != '/'):
 			dir += '/'
-		try:
-			files = find2update(jail, dir, config, [])
-		except:
-			pass
-		for file in files:
-			if ((file in skips) or (jail+file in skips)):
+		if ((dir in skips) or (jail+dir in skips)):
+			print 'skip '+jail+dir
+		else:
+			if (config['verbose']):
+				print 'scannign dir '+jail+dir+' for outdated files'
+			try:
+				files = find2update(jail, dir, skips, config, [])
+			except:
 				if (config['verbose']):
-					print 'skip update of file '+jail+file
-			elif (config['dry-run']):
-				allfiles.append(file)
-			else:
-				print 'removing outdated file '+jail+file
-				try:
-					os.unlink(jail+file)
+					print 'error while scannign dir '+jail+dir
+			for file in files:
+				if (config['dry-run']):
 					allfiles.append(file)
-				except:
-					print "ERROR: failed to remove outdated file "+jail+file
+				else:
+					print 'removing outdated file '+jail+file
+					try:
+						os.unlink(jail+file)
+						allfiles.append(file)
+					except:
+						print "ERROR: failed to remove outdated file "+jail+file
 	if (config['dry-run']):
 		for file in allfiles:
 			print 'will update '+jail+file
@@ -129,12 +135,14 @@ def updatejail(jail, dirs, skips, config):
 
 def usage():
 	print ''
-	print "Usage: "+sys.argv[0]+" [OPTIONS]"
+	print "Usage: "+sys.argv[0]+" [OPTIONS] [DIRECTORIES]"
 	print '-h|--help      : this message'
 	print '-v|--verbose   : give verbose output'
 	print '-j|--jail=     : the jail to update'
 	print '-d|--dry-run   : show what will be done'
-	print '-s|--skip=     : skip file, can be used multiple times'
+	print '-s|--skip=     : skip file, option can be used multiple times'
+	print ''
+	print 'if no directories are specified, jk_update will scan /bin /usr /lib and /opt'
 	print ''
 
 def main():
@@ -157,7 +165,11 @@ def main():
 		elif o in ("-d", "--dry-run"):
 			config['dry-run'] = 1
 		elif o in ("-s", "--skip"):
-			skips.append(a)
+			if (os.path.isdir(a) and (a[-1:] != '/')):
+				tmp = a+'/'
+			else:
+				tmp = a
+			skips.append(tmp)
 		elif o in ("-j", "--jail"):
 			jail = a
 	if (jail == None):
@@ -167,7 +179,10 @@ def main():
 		sys.exit(1)
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]
-	updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], skips, config)
+	if (len(args)>0):
+		updatejail(jail, args, skips, config)
+	else:
+		updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], skips, config)
 
 if __name__ == "__main__":
     main()
