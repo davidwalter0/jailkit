@@ -1,3 +1,48 @@
+jailkit (2.2-1) unstable; urgency=low
+
+  * Jailkit 2.2 released with a new utility jk_update to keep jails up-to-date
+    and various improvements on *BSD operating systems
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Fri, 8 Dec 2006 00:00:00 +0200
+
+jailkit (2.1-2) unstable; urgency=low
+
+  * tarballs are uploaded again, there was a Makefile issue
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Fri, 8 Sep 2006 00:00:00
+
+jailkit (2.1-1) unstable; urgency=low
+
+  * improved logging
+  * allowed sub-second intervals for jk_socketd
+  * improved various checks in jk_jailuser
+  * improved handling of recursive directories in jk_cp
+  * new utility jk_list to list all jailed processes
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Thu, 7 Sep 2006 00:00:00
+
+jailkit (2.0-1) unstable; urgency=low
+
+  * fixes to allow jk_chrootsh to function on systems that use a name service
+    caching daemon, or ldap authentication and others
+  * some options for jk_chrootsh to relax some strict checks
+  * replaced jk_addjailuser with jk_jailuser, which should work on more
+    platforms
+  * added the DEFAULT section to jk_lsh.ini and jk_chrootsh.ini to allow
+    easier configuration
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Wed, 9 Aug 2006 00:00:00
+
+jailkit (1.3-1) unstable; urgency=low
+
+  * fixes some issues with Gentoo Linux
+  * fixes some FreeBSD issues
+  * fixes option --force for jk_init
+  * better defaults in jk_init.ini
+  * much more verbose error reporting by jk_lsh and jk_chrootsh
+
+ -- Olivier Sessink <olivier@lx.student.wau.nl>  Thu,  5 Aug 2004 19:22:41
+
 jailkit (1.2-1) unstable; urgency=low
 
   * new upstream 1.2 release
