@@ -90,7 +90,7 @@ def find2update(jail, dir, skips, config, files2update=[]):
 		if ((dir+file in skips) or (jail+dir+file in skips)):
 			print 'skip '+jail+dir+file
 		elif (os.path.isdir(dir+file)):
-			files2update = find2update(jail, dir+file+'/', config, files2update)
+			files2update = find2update(jail, dir+file+'/', skips, config, files2update)
 		elif (os.path.isfile(dir+file)):
 			if (config['verbose']):
 				print 'checking '+jail+dir+file+''
@@ -114,9 +114,9 @@ def updatejail(jail, dirs, skips, config):
 				print 'scannign dir '+jail+dir+' for outdated files'
 			try:
 				files = find2update(jail, dir, skips, config, [])
-			except:
+			except OSError, (errno,strerror):
 				if (config['verbose']):
-					print 'error while scannign dir '+jail+dir
+					print 'error while scannign dir '+jail+dir+': '+strerror
 			for file in files:
 				if (config['dry-run']):
 					allfiles.append(file)
