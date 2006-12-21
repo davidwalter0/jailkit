@@ -62,9 +62,11 @@ def comparecontent(fileA, fileB):
 	except IOError:
 		return 0
 
-def comparemetadata(fileA, fileB, onlyifAisnewer=1):
-	sbA = os.lstat(fileA)
-	sbB = os.lstat(fileB)
+def comparemetadata(fileA, fileB, onlyifAisnewer=1, sbA=None, sbB=None):
+	if (sbA==None):
+		sbA = os.lstat(fileA)
+	if (sbB==None):
+		sbB = os.lstat(fileB)
 	if (sbA[stat.ST_MTIME] > sbB[stat.ST_MTIME]): 
 		if (sbA[stat.ST_SIZE] != sbB[stat.ST_SIZE]):
 			return 0
@@ -75,9 +77,9 @@ def comparemetadata(fileA, fileB, onlyifAisnewer=1):
 				return 0
 	return 1
 
-def need_update(original, injail):
+def need_update(original, injail, origstatbuf=None):
 	try :
-		if (comparemetadata(original, injail)==1):
+		if (comparemetadata(original, injail,sbA=origstatbuf)==1):
 			if (comparecontent(original, injail)==1):
 				return 0
 		return 1
@@ -87,15 +89,22 @@ def need_update(original, injail):
 
 def find2update(jail, dir, skips, config, files2update=[]):
 	for file in os.listdir(jail+dir):
+#		print 'test if '+dir+file+' or '+jail+dir+file+' exists in ',skips
 		if ((dir+file in skips) or (jail+dir+file in skips)):
 			print 'skip '+jail+dir+file
-		elif (os.path.isdir(dir+file)):
-			files2update = find2update(jail, dir+file+'/', skips, config, files2update)
-		elif (os.path.isfile(dir+file)):
-			if (config['verbose']):
-				print 'checking '+jail+dir+file+''
-			if (need_update(dir+file, jail+dir+file)):
-				files2update.append(dir+file)
+		else:
+			try:
+				sbuf = os.lstat(dir+file)
+				if (stat.S_ISDIR(sbuf[stat.ST_MODE])):
+					files2update = find2update(jail, dir+file+'/', skips, config, files2update)
+				elif (stat.S_ISREG(sbuf[stat.ST_MODE])):
+					if (config['verbose']):
+						print 'checking '+jail+dir+file+''
+					ret = need_update(dir+file, jail+dir+file, origstatbuf=sbuf)
+					if (ret == 1):
+						files2update.append(dir+file)
+			except OSError, (errno,strerror):
+				print jail+dir+file+' exists, but cannot stat file '+dir+file+': '+strerror
 	return files2update
 
 def updatejail(jail, dirs, skips, config):
@@ -107,7 +116,9 @@ def updatejail(jail, dirs, skips, config):
 			dir = dir[jaillen:]
 		if (dir[-1:] != '/'):
 			dir += '/'
-		if ((dir in skips) or (jail+dir in skips)):
+		dirnoslash = dir[:-1]
+#		print 'test if '+dirnoslash+' or '+jail+dirnoslash+' exists in ',skips
+		if ((dirnoslash in skips) or (jail+dirnoslash in skips)):
 			print 'skip '+jail+dir
 		else:
 			if (config['verbose']):
@@ -147,7 +158,7 @@ def usage():
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:', ['help', 'verbose', '--dry-run', 'jail=', 'skip='])
+		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:', ['help', 'verbose', 'dry-run', 'jail=', 'skip='])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
@@ -165,8 +176,9 @@ def main():
 		elif o in ("-d", "--dry-run"):
 			config['dry-run'] = 1
 		elif o in ("-s", "--skip"):
-			if (os.path.isdir(a) and (a[-1:] != '/')):
-				tmp = a+'/'
+		# the name in skips will never have a slash, whether it is a file or a dir
+			if (os.path.isdir(a) and (a[-1:] == '/')):
+				tmp = a[:-1]
 			else:
 				tmp = a
 			skips.append(tmp)
