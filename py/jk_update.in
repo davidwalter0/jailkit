@@ -142,7 +142,7 @@ def updatejail(jail, dirs, skips, config):
 		for file in allfiles:
 			print 'will update '+jail+file
 	else:
-		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'])
+		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'], try_hardlink=config['hardlink'])
 
 def usage():
 	print ''
@@ -152,19 +152,21 @@ def usage():
 	print '-j|--jail=     : the jail to update'
 	print '-d|--dry-run   : show what will be done'
 	print '-s|--skip=     : skip file, option can be used multiple times'
+	print '-k|--hardlink  : use hardlinks if possible'
 	print ''
 	print 'if no directories are specified, jk_update will scan /bin /usr /lib and /opt'
 	print ''
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:', ['help', 'verbose', 'dry-run', 'jail=', 'skip='])
+		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:k', ['help', 'verbose', 'dry-run', 'jail=', 'skip=', 'hardlink'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
 	config = {}
 	config['verbose'] = 0
 	config['dry-run'] = 0
+	config['hardlink'] = 0
 	skips = []
 	jail = None
 	for o, a in opts:
@@ -184,6 +186,8 @@ def main():
 			skips.append(tmp)
 		elif o in ("-j", "--jail"):
 			jail = a
+		elif o in ("-k", "--hardlink"):
+			config['hardlink'] = 1
 	if (jail == None):
 		print ''
 		print 'must at least specify a jail using -j or --jail'

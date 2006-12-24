@@ -293,18 +293,18 @@ def copy_device(chroot, path, be_verbose=1):
 		print 'use "mknod '+path+' mode major minor" to create the device'
 		print 'use chmod and chown to set the permissions as found by ls -l'
 
-def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
+def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, handledfiles=[]):
 	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
 	for root, dirs, files in os.walk(dir):
 		files2 = ()
 		for name in files:
 			files2 += os.path.join(root, name),
-		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, handledfiles)
+		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
 		for name in dirs:
-			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, handledfiles)
+			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
 	return handledfiles
 
-def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, handledfiles=[]):
+def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
@@ -350,12 +350,12 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				handledfiles.append(file)
 				if (realfile[0] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
-				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, handledfiles)
+				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
 			elif (stat.S_ISDIR(sb.st_mode)):
-				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, handledfiles)
+				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
 				print 'copying/linking '+file+' to '+chroot+file
-				copy_with_permissions(file,chroot+file,be_verbose)
+				copy_with_permissions(file,chroot+file,be_verbose, try_hardlink)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
 				copy_device(chroot, file, be_verbose)
@@ -366,7 +366,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			mode = stat.S_IMODE(sb[stat.ST_MODE])
 			if (check_libs and (string.find(file, '/lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
 				libs = lddlist_libraries(file)
-				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, handledfiles)
+				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, try_hardlink, handledfiles)
 	return handledfiles
 
 def config_get_option_as_list(cfgparser, sectionname, optionname):

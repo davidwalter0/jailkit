@@ -83,7 +83,7 @@ def init_files(config,chroot,files):
 				print 'copying '+file+' to '+chroot+file
 #			shutil.copyfile(file,chroot+file)
 #			if (not jk_lib.test_suid_sgid(file)):
-			jk_lib.copy_with_permissions(file,chroot+file,config['verbose'])
+			jk_lib.copy_with_permissions(file,chroot+file,config['verbose'], try_hardlink=config['hardlink'])
 #			else:
 #				print 'WARNING: did not copy setuid or setgid permissions for '+file
 		else:
@@ -118,9 +118,9 @@ def handle_cfg_section(config,chroot,cfg,section):
 	for tmp in sections:
 		handle_cfg_section(config,chroot,cfg,tmp)
 	libs = jk_lib.config_get_option_as_list(cfg,section,'libraries')
-	jk_lib.copy_binaries_and_libs(chroot, libs, config['force'], config['verbose'], 1)
+	jk_lib.copy_binaries_and_libs(chroot, libs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
  	execs = jk_lib.config_get_option_as_list(cfg,section,'executables')
-	jk_lib.copy_binaries_and_libs(chroot, execs, config['force'], config['verbose'], 1)
+	jk_lib.copy_binaries_and_libs(chroot, execs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
  	regulars = jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
 	init_files(config,chroot,regulars)
 	dirs = jk_lib.config_get_option_as_list(cfg,section,'directories')
@@ -163,6 +163,7 @@ def usage():
 	print '-l, --list             : list all available sections in the configfile'
 	print "-v, --verbose          : show what is being done"
 	print "-f, --force            : force overwriting of existing files"
+	print "-k, --hardlink         : use hardlinks if possible"
 	print ''
 
 def listsections(file):
@@ -191,7 +192,7 @@ def main():
 		print 'cannot run without root privileges'
 		sys.exit(5)
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "vhflc:", ["help", "configfile=", "verbose", "force", 'list'])
+		opts, args = getopt.getopt(sys.argv[1:], "vhflc:k", ["help", "configfile=", "verbose", "force", 'list', 'hardlink'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
@@ -199,6 +200,7 @@ def main():
 	config['file'] = INIPREFIX+'/jk_init.ini'
 	config['verbose'] = 0
 	config['force'] = 0
+	config['hardlink'] = 0
 	list = 0
 	for o, a in opts:
 		if o in ("-h", "--help"):
@@ -212,6 +214,8 @@ def main():
 			config['verbose'] = 1
 		if o in ("-f", "--force"):
 			config['force'] = 1
+		if o in ("-k", "--hardlink"):
+			config['hardlink'] = 1
 	if (list ==1):
 		listsections(config['file'])
 		sys.exit()

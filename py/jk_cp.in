@@ -43,7 +43,7 @@ sys.path.append(LIBDIR)
 import jk_lib
 
 def startcopy(config, chroot, filestocopy, checklibs=1):
-	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'])
+	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'])
 
 def usage():
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
@@ -51,6 +51,7 @@ def usage():
 	print "-h --help              : this help screen"
 	print "-v, --verbose          : show what is being copied"
 	print "-f, --force            : overwrite existing files"
+	print "-k, --hardlink         : use hardlinks if possible"
 	print ""
 
 def testargs(args):
@@ -76,13 +77,14 @@ def main():
 		print 'cannot run without root privileges'
 		sys.exit(5)
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'fhv', ['help', 'verbose', 'force'])
+		opts, args = getopt.getopt(sys.argv[1:], 'fhvk', ['help', 'verbose', 'force', 'hardlink'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
 	config = {}
 	config['verbose'] = 0
 	config['force'] = 0
+	config['hardlink'] = 0
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
@@ -91,6 +93,8 @@ def main():
 			config['verbose'] = 1
 		if o in ("-f", "--force"):
 			config['force'] = 1
+		if o in ("-k", "--hardlink"):
+			config['hardlink'] = 1
 	testargs(args)
 	if (args[0][-1] != '/'): args[0] = args[0]+'/'
 	if (jk_lib.chroot_is_safe(args[0])!=1):
