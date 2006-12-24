@@ -1,4 +1,6 @@
 #QUICK INSTALL
+#
+# use --prefix for different install locations
 
 ./configure
 make

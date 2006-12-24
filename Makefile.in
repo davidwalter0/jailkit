@@ -82,6 +82,6 @@ uninstall:
 	@cd py/ && $(MAKE) uninstall
 	@cd man/ && $(MAKE) uninstall
 	@cd src/ && $(MAKE) uninstall
-	- rmdir --ignore-fail-on-non-empty /etc/jailkit
+	- rmdir --ignore-fail-on-non-empty ${iniprefix}
 	@echo "You must manually remove jk_chrootsh from /etc/shells"
 # remove jk_chrootsh from /etc/shells
