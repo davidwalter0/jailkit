@@ -7,7 +7,7 @@ jk_init \- a utility to quicky create functional jail directories
 
 .B jk_init jail section
 
-.B jk_init -v -f jail section
+.B jk_init -v -f -k jail section
 
 .SH DESCRIPTION
 
@@ -31,6 +31,9 @@ Force overwriting of existing files
 .TP
 .BR \-v\ \-\-verbose
 Will give verbose output
+.TP
+.BR \-k\ \-\-hardlink
+Try to create hardlinks instead of copying the files
 .TP
 .BR \-c\ configfile\ \-\-configfile=configfile
 Use alternative configfile

@@ -7,7 +7,7 @@ jk_cp \- a utility to copy files including permissions and libraries into a jail
 
 .B jk_cp jail source
 
-.B jk_cp -v jail source
+.B jk_cp -v -k -f jail source
 
 .SH DESCRIPTION
 
@@ -20,13 +20,16 @@ will copy /usr/bin/cvs to /home/testchroot/usr/bin/cvs, and it will copy the lib
 .SH OPTIONS
 
 .TP
-.BR \-f
+.BR \-f\ \-\-force
 Force overwriting of existing files
 .TP
-.BR \-v
+.BR \-k\ \-\-hardlink
+Try to create hardlinks instead of copying the files
+.TP
+.BR \-v\ \-\-verbose
 Will give verbose output
 .TP
-.BR \-h
+.BR \-h\ \-\-help
 The help screen
 
 .SH "SEE ALSO"

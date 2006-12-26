@@ -7,9 +7,9 @@ jk_update \- a utility to update a jail according to changes on the real system
 
 .B jk_update -j <jail>
 
-.B jk_update -v -d -j <jail> -s <file to skip> <dir to scan for updates>
+.B jk_update -v -d -k -j <jail> -s <file to skip> <dir to scan for updates>
 
-.B jk_update --verbose --dry-run --jail=<jail> --skip=<file to skip> <dir to scan for updates>
+.B jk_update --verbose --dry-run --hardlink --jail=<jail> --skip=<file to skip> <dir to scan for updates>
 
 .SH DESCRIPTION
 
@@ -35,11 +35,14 @@ Will give verbose output
 .BR \-h\ \-\-help
 The help screen
 .TP
-.BR \-j\ <jail>\ \-\-jail\ <jail>
+.BR \-j\ <jail>\ \-\-jail=<jail>
 The jail to update
 .TP
 .BR \-d\ \-\-dry\-run
 Do a "dry run". Show what will be done but don't do anything.
+.TP
+.BR \-k\ \-\-hardlink
+Try to create hardlinks instead of copying the files when updating
 .TP
 .BR \-s\ <file\ to\ skip>\ \-\-skip\ <file\ to\ skip>
 Do not update this file. The argument can either be the path in the jail or the path on the real system. In order to skip multiple files, use this option multiple times. 
