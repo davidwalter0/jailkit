@@ -132,11 +132,11 @@ AC_CHECK_FUNCS([getopt_long],,
 )
 
 
-AC_PATH_PROG(PYTHONPATH, python, no)
-if test "x$PYTHONPATH" == "xno" ; then
+AC_PATH_PROG(PYTHONINTERPRETER, python, no)
+if test "x$PYTHONINTERPRETER" == "xno" ; then
 	AC_MSG_ERROR(python not found please install python)
 fi
-AC_SUBST(PYTHONPATH)
+AC_SUBST(PYTHONINTERPRETER)
 echo -n "checking for up to date python... "
 if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
 	echo "ok"
