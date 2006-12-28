@@ -33,6 +33,7 @@ PACKAGE = @PACKAGE@
 prefix = @prefix@
 sysconfdir = @sysconfdir@
 INIPREFIX = ${sysconfdir}/jailkit
+PREFIX = ${prefix}
 PYTHONINTERPRETER = @PYTHONINTERPRETER@
 
 PYLIBDIR=${prefix}/share/${PACKAGE}
@@ -56,7 +57,7 @@ jk_addjailuser: jk_addjailuser.in
 	sed -e "s!INIPREFIX='/etc/jailkit'!INIPREFIX='${INIPREFIX}'!" -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONINTERPRETER):" < jk_addjailuser.in > jk_addjailuser
 
 jk_jailuser: jk_jailuser.in
-	sed -e "s!INIPREFIX='/etc/jailkit'!INIPREFIX='${INIPREFIX}'!" -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONINTERPRETER):" < jk_jailuser.in > jk_jailuser
+	sed -e "s!PREFIX='/usr'!PREFIX='${PREFIX}'!" -e "s!INIPREFIX='/etc/jailkit'!INIPREFIX='${INIPREFIX}'!" -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONINTERPRETER):" < jk_jailuser.in > jk_jailuser
 
 jk_update: jk_update.in
 	sed -e "s!INIPREFIX='/etc/jailkit'!INIPREFIX='${INIPREFIX}'!" -e "s!LIBDIR='[a-z/]*'!LIBDIR='${PYLIBDIR}'!" -e "s:#!/usr/bin/python:#!$(PYTHONINTERPRETER):" < jk_update.in > jk_update

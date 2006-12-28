@@ -38,6 +38,7 @@ import getopt
 import string
 import shutil
 
+PREFIX='/usr'
 INIPREFIX='/etc/jailkit'
 LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
@@ -108,7 +109,7 @@ def addusertojail(jail, user, shell, config):
 			return 0
 	return 1
 
-def moduser(user, home, shell='/usr/sbin/jk_chrootsh'):
+def moduser(user, home, shell=PREFIX+'/sbin/jk_chrootsh'):
 	if (sys.platform[:7] == 'freebsd'):
 		command = 'pw usermod '+user+' -d '+home+' -s '+shell
 	elif (sys.platform[:5] == 'linux') or (sys.platform[:7] == 'openbsd') or (sys.platform[:5] == 'sunos5'):
@@ -150,10 +151,10 @@ def jailuser(jail, user, movehome, config):
 		newhome = jail+'.'+pw[5]
 	newhome = striptrailingslash(newhome)
 	oldhome = striptrailingslash(pw[5])
-	if (oldhome != newhome or pw[6] != '/usr/sbin/jk_chrootsh'):
+	if (oldhome != newhome or pw[6] != PREFIX+'/sbin/jk_chrootsh'):
 		if (config['verbose'] == 1):
-			print 'modify user '+user+'; dir '+newhome+' and shell /usr/sbin/jk_chrootsh'
-		if (not moduser(user,newhome,'/usr/sbin/jk_chrootsh')):
+			print 'modify user '+user+'; dir '+newhome+' and shell '+PREFIX+'/sbin/jk_chrootsh'
+		if (not moduser(user,newhome,PREFIX+'/sbin/jk_chrootsh')):
 			print 'failed to modify user '+user
 	else:
 		if (config['verbose'] == 1):
@@ -195,7 +196,7 @@ def usage():
 	print ' -j | --jail= jaildir   : jail directory'
 	print ' -v | --verbose        : verbose output'
 	print ' -n | --noninteractive : no user interaction'
-	print ' -s | --shell= shell    : set shell inside jail (/usr/sbin/jk_lsh default)'
+	print ' -s | --shell= shell    : set shell inside jail ('+PREFIX+'/sbin/jk_lsh default)'
 	print ' -m | --move           : move home if home outside jail'
 	print ' -h | --help           : this message'
 	print
@@ -257,7 +258,7 @@ def main():
 	config['verbose'] = 0
 	config['interactive'] = 1
 	config['movehome'] = -1 # -1 = interactive
-	config['shell'] = '/usr/sbin/jk_lsh' # default shell
+	config['shell'] = PREFIX+'/sbin/jk_lsh' # default shell
 	jail = None
 	for o, a in opts:
 		if o in ("-h", "-?", "--help"):
