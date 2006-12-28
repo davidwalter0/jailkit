@@ -1,3 +1,11 @@
+jailkit (2.3-1) unstable; urgency=low
+
+  * various small fixes for the new jk_update utility
+  * added a -k option to jk_cp, jk_init and jk_update to use hardlinks instead of copying
+  * various fixes to install jailkit in a different location
+
+ -- Olivier Sessink <olivier@aria.fakenet>  Thu, 28 Dec 2006 13:51:00 +0100
+
 jailkit (2.2-1) unstable; urgency=low
 
   * Jailkit 2.2 released with a new utility jk_update to keep jails up-to-date
