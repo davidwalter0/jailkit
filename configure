@@ -1678,7 +1678,7 @@ ac_config_headers="$ac_config_headers src/config.h"
 
 
 PACKAGE=jailkit
-VERSION=2.2
+VERSION=2.3
 
 
 cat >>confdefs.h <<_ACEOF
