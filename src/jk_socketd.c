@@ -394,8 +394,8 @@ int main(int argc, char**argv) {
 	}
 	
 	if (numsockets == 0) {
-		printf("version "VERSION",no sockets specified in configfile or on commandline, nothing to do, exiting...\n");
-		syslog(LOG_ERR,"version "VERSION",no sockets specified in configfile or on commandline, nothing to do, exiting...");
+		printf("version "VERSION", no sockets specified in configfile "CONFIGFILE" or on commandline, nothing to do, exiting...\n");
+		syslog(LOG_ERR,"version "VERSION", no sockets specified in configfile "CONFIGFILE" or on commandline, nothing to do, exiting...");
 		exit(1);
 	}
 
