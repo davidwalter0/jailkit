@@ -406,7 +406,7 @@ int main(int argc, char**argv) {
 	{
 		struct passwd *pw = getpwnam("nobody");
 		int ret;
-		char *path = "/etc/jailkit";
+		char *path = INIPREFIX;
 		if (!pw) {
 			syslog(LOG_ERR, "cannot get UID and GID for user nobody");
 			if (nodetach) printf("cannot get UID and GID for user nobody");
@@ -418,8 +418,8 @@ int main(int argc, char**argv) {
 		}
 		
 		if (!(chdir(path)==0 && chroot(path)==0)) {
-			syslog(LOG_ERR, "failed to chroot to /etc/jailkit");
-			if (nodetach) printf("failed to chroot to /etc/jailkit");
+			syslog(LOG_ERR, "failed to chroot to "INIPREFIX);
+			if (nodetach) printf("failed to chroot to "INIPREFIX);
 		}
 		if (pw) {
 			if (setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
