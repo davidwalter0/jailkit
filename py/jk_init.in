@@ -55,7 +55,7 @@ def logsocket(config,chroot):
 			return
 		line = fd.readline()
 	fd = open(INIPREFIX+'/jk_socketd.ini', 'a')
-	fd.write('\n['+chroot+'/dev/log]\nbase=512\npeek=2048\ninterval=10\n')
+	fd.write('\n['+chroot+'/dev/log]\nbase=512\npeak=2048\ninterval=10\n')
 	fd.close()
 
 def proc_mount(config, chroot):

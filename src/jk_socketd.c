@@ -73,13 +73,13 @@ typedef struct {
 	char *outpath;
 	char *inpath;
 	unsigned int normrate;
-	unsigned int peekrate;
+	unsigned int peakrate;
 	unsigned int roundtime;
 
 	int outsocket;
 	int insocket;
 
-	unsigned short int lastwaspeek; /* the previous round was a peekround */
+	unsigned short int lastwaspeak; /* the previous round was a peakround */
 	struct timeval lasttime; /* last time the socket was checked */
 	struct timeval lastreset; /* last time that lastsize was set to zero */
 	unsigned int lastsize; /* bytes since lastreset */
@@ -102,7 +102,7 @@ static void close_socketlink(Tsocketlink *sl) {
 	}
 }*/
 
-static Tsocketlink *new_socketlink(int outsocket, char *inpath, int normrate, int peekrate, int roundtime, int nodetach) {
+static Tsocketlink *new_socketlink(int outsocket, char *inpath, int normrate, int peakrate, int roundtime, int nodetach) {
 	Tsocketlink *sl;
 /*	int flags;*/
 	int ret;
@@ -112,7 +112,7 @@ static Tsocketlink *new_socketlink(int outsocket, char *inpath, int normrate, in
 	sl->outsocket = outsocket;
 	sl->inpath = strdup(inpath);
 	sl->normrate = normrate;
-	sl->peekrate = peekrate;
+	sl->peakrate = peakrate;
 	sl->roundtime = roundtime;
 
 	sl->insocket = socket(PF_UNIX, SOCK_DGRAM, 0);
@@ -172,45 +172,45 @@ static void socketlink_handle(Tsocketlink *sl) {
 			gettimeofday(&sl->lasttime,NULL);
 			sl->lastsize += numbytes;
 			DEBUG_MSG("lastsize=%d\n",sl->lastsize);
-			if (sl->lastsize > sl->peekrate) {
-				/* size is over the peekrate, mark this round as peek, and sleep the rest of the second */
-				DEBUG_MSG("sleep, we're over peekrate!! (size=%d)\n",sl->lastsize);
-				syslog(LOG_WARNING, "device %s is over the peek limit (%d bytes/s)", sl->inpath, (unsigned int)((unsigned long)sl->peekrate * (unsigned long)1000000 / (unsigned long)sl->roundtime));
+			if (sl->lastsize > sl->peakrate) {
+				/* size is over the peakrate, mark this round as peak, and sleep the rest of the second */
+				DEBUG_MSG("sleep, we're over peakrate!! (size=%d)\n",sl->lastsize);
+				syslog(LOG_WARNING, "device %s is over the peak limit (%d bytes/s)", sl->inpath, (unsigned int)((unsigned long)sl->peakrate * (unsigned long)1000000 / (unsigned long)sl->roundtime));
 				sleepround(sl->roundtime - timediff(sl->lastreset, sl->lasttime),1);
 				sl->lastsize = 0;
 				gettimeofday(&sl->lastreset,NULL);
-				sl->lastwaspeek = 1;
-				DEBUG_MSG("reset all to zero, peek=1\n");
+				sl->lastwaspeak = 1;
+				DEBUG_MSG("reset all to zero, peak=1\n");
 			} else if (sl->lastsize > sl->normrate) {
 				/* size is over the normal size, check if the time is also over the normal time */
 				if (timediff(sl->lastreset, sl->lasttime) > sl->roundtime) {
 					/* we will reset, the time is over a second */
-					DEBUG_MSG("time is over a second (timediff=%ld), reset all to zero, peek=1\n", timediff(sl->lastreset, sl->lasttime));
+					DEBUG_MSG("time is over a second (timediff=%ld), reset all to zero, peak=1\n", timediff(sl->lastreset, sl->lasttime));
 					sl->lastsize = 0;
 					gettimeofday(&sl->lastreset,NULL);
-					sl->lastwaspeek = 1;
+					sl->lastwaspeak = 1;
 				} else {
 					DEBUG_MSG("timediff = %ld\n",timediff(sl->lastreset, sl->lasttime));
-					/* it is under a second, this is a peek, what to do now? */
-					if (sl->lastwaspeek) {
-						/* lastround was a peek, so this one is not allowed to be a peek, sleeping!! */
-						DEBUG_MSG("sleep, previous was a peek and we're over the normal rate (size=%d)!\n", sl->lastsize);
-						syslog(LOG_WARNING, "device %s is over the normal limit (%d bytes/s), directly after a peek", sl->inpath, (sl->normrate * 1000000 / sl->roundtime));
+					/* it is under a second, this is a peak, what to do now? */
+					if (sl->lastwaspeak) {
+						/* lastround was a peak, so this one is not allowed to be a peak, sleeping!! */
+						DEBUG_MSG("sleep, previous was a peak and we're over the normal rate (size=%d)!\n", sl->lastsize);
+						syslog(LOG_WARNING, "device %s is over the normal limit (%d bytes/s), directly after a peak", sl->inpath, (sl->normrate * 1000000 / sl->roundtime));
 						sleepround(sl->roundtime - timediff(sl->lastreset, sl->lasttime),1);
 						sl->lastsize = 0;
 						gettimeofday(&sl->lastreset,NULL);
-						sl->lastwaspeek = 1;
-						DEBUG_MSG("reset all to zero, peek=1\n");
+						sl->lastwaspeak = 1;
+						DEBUG_MSG("reset all to zero, peak=1\n");
 					} else {
-						/* lastround was not a peek, so this round is allowed to be a peek */
-						DEBUG_MSG("detected a new peek (size=%d)!\n", sl->lastsize);
+						/* lastround was not a peak, so this round is allowed to be a peak */
+						DEBUG_MSG("detected a new peak (size=%d)!\n", sl->lastsize);
 					}
 				}
 			} else if (timediff(sl->lastreset, sl->lasttime) > sl->roundtime) {
-				DEBUG_MSG("time is over a second (timediff=%ld), reset all to zero, peek=0\n", timediff(sl->lastreset, sl->lasttime));
+				DEBUG_MSG("time is over a second (timediff=%ld), reset all to zero, peak=0\n", timediff(sl->lastreset, sl->lasttime));
 				sl->lastsize = 0;
 				gettimeofday(&sl->lastreset,NULL);
-				sl->lastwaspeek = 0;
+				sl->lastwaspeak = 0;
 			}
 		}
 	}
@@ -228,14 +228,14 @@ static void sigterm_handler(int signal) {
 
 static void usage() {
 	printf(PROGRAMNAME" version "VERSION", usage:\n\n");
-	printf(" -n|--nodetach                do not detach from the terminal, useful for debugging\n");
-	printf(" -p pidfile|--pidfile=pidfile write PID to file pidfile\n");
-	printf(" -h|--help                    this help screen\n\n");
-	printf(" -h|--help                    this help screen\n\n");
-	printf(" --socket=/path/to/socket     do not read ini file, create specific socket\n");
-	printf(" --base=integer               message rate limit (in bytes) per interval\n");
-	printf(" --peek=integer               message rate limit peek (in bytes)\n");
-	printf(" --interval=float             message rate limit interval\n\n");
+	printf(" -n|--nodetach                 do not detach from the terminal, useful for debugging\n");
+	printf(" -p pidfile|--pidfile=pidfile  write PID to file pidfile\n");
+	printf(" -h|--help                     this help screen\n\n");
+	printf(" --socket=/path/to/socket      do not read ini file, create specific socket\n");
+	printf(" --base=integer                message rate limit (in bytes) per interval\n");
+	printf(" --peak=integer                message rate limit peak (in bytes)\n");
+	printf("                               (--peek supported for backwards compatibility)");
+	printf(" --interval=float              message rate limit interval\n\n");
 }
 
 static unsigned short int have_socket(char *path, Tsocketlink **sl, unsigned int size) {
@@ -257,7 +257,7 @@ int main(int argc, char**argv) {
 	char *m_socket = NULL;
 	char *pidfile = NULL;
 	FILE *pidfilefd = NULL;
-	unsigned int m_base=511, m_peek=2048;
+	unsigned int m_base=511, m_peak=2048;
 	float m_interval=10.0;
 /*	signal(SIGINT, sigterm_handler);
 	signal(SIGTERM, sigterm_handler);*/
@@ -273,6 +273,7 @@ int main(int argc, char**argv) {
 				{"socket", required_argument, NULL, 0},
 				{"base", required_argument, NULL, 0},
 				{"interval", required_argument, NULL, 0},
+				{"peak", required_argument, NULL, 0},
 				{"peek", required_argument, NULL, 0},
 				{NULL, 0, NULL, 0}
 			};
@@ -301,7 +302,10 @@ int main(int argc, char**argv) {
 					m_interval = (float)atof(optarg);
 					break;
 				case 6:
-					m_peek = atoi(optarg);
+					m_peak = atoi(optarg);
+					break;
+				case 7: /* for backwards compatibility */
+					m_peak = atoi(optarg);
 					break;
 				}
 				break;
@@ -347,23 +351,29 @@ int main(int argc, char**argv) {
 		}
 		while ((tmp = iniparser_next_section(ip, buf, 1024))) {
 			if (!have_socket(tmp, sl, numsockets)) {
-				unsigned int base=511, peek=2048;
+				unsigned int base=511, peak=2048;
 				float interval=5.0;
 				long prevpos, secpos;
 				prevpos = iniparser_get_position(ip);
 				secpos = prevpos - strlen(tmp)-4;
 				DEBUG_MSG("secpos=%ld, prevpos=%ld\n",secpos,prevpos);
 				base = iniparser_get_int_at_position(ip, tmp, "base", secpos);
-				peek = iniparser_get_int_at_position(ip, tmp, "peek", secpos);
+				peak = iniparser_get_int_at_position(ip, tmp, "peak", secpos);
 				interval = iniparser_get_float_at_position(ip, tmp, "interval", secpos);
 				iniparser_set_position(ip, secpos);
 				if (10 > base || base >  1000000) base = 511;
-				if (100 > peek || peek > 10000000 || peek < base) peek = 2048;
+				if (100 > peak || peak > 10000000 || peak < base) {
+					/* for backwards compatibility we check 'peek' */
+					peak = iniparser_get_int_at_position(ip, tmp, "peek", secpos);
+					if (100 > peak || peak > 10000000 || peak < base) {
+						peak = 2048;
+					}
+				}
 				if (0.01 > interval || interval > 60.0) interval = 5.0;
-				sl[numsockets] = new_socketlink(outsocket, tmp, base, peek, (int)(interval*1000000.0), nodetach);
+				sl[numsockets] = new_socketlink(outsocket, tmp, base, peak, (int)(interval*1000000.0), nodetach);
 				if (sl[numsockets]) {
-					syslog(LOG_NOTICE, "version "VERSION", listening on socket %s with rates [%d:%d]/%f",tmp,base,peek,interval);
-					if (nodetach) printf("version "VERSION", listening on socket %s with rates [%d:%d]/%f\n",tmp,base,peek,interval);
+					syslog(LOG_NOTICE, "version "VERSION", listening on socket %s with rates [%d:%d]/%f",tmp,base,peak,interval);
+					if (nodetach) printf("version "VERSION", listening on socket %s with rates [%d:%d]/%f\n",tmp,base,peak,interval);
 					numsockets++;
 				} else {
 					if (nodetach) printf("version "VERSION", failed to create socket %s\n",tmp);
@@ -378,15 +388,15 @@ int main(int argc, char**argv) {
 	}
 	else
 	{
-		unsigned int base=m_base, peek=m_peek;
+		unsigned int base=m_base, peak=m_peak;
 		float interval=m_interval;
 		if (10 > base || base >  1000000) base = 511;
-		if (100 > peek || peek > 10000000 || peek < base) peek = 2048;
+		if (100 > peak || peak > 10000000 || peak < base) peak = 2048;
 		if (0.01 > interval || m_interval > 60.0) interval = 5.0;
-		sl[numsockets] = new_socketlink(outsocket, m_socket, base, peek, (int)(interval*1000000.0), nodetach);
+		sl[numsockets] = new_socketlink(outsocket, m_socket, base, peak, (int)(interval*1000000.0), nodetach);
 		if (sl[numsockets]) {
-			syslog(LOG_NOTICE, "version "VERSION", listening on socket %s with rates [%d:%d]/%f",m_socket,base,peek,interval);
-			if (nodetach) printf("version "VERSION", listening on socket %s with rates [%d:%d]/%f\n",m_socket,base,peek,interval);
+			syslog(LOG_NOTICE, "version "VERSION", listening on socket %s with rates [%d:%d]/%f",m_socket,base,peak,interval);
+			if (nodetach) printf("version "VERSION", listening on socket %s with rates [%d:%d]/%f\n",m_socket,base,peak,interval);
 			numsockets++;
 		} else {
 			if (nodetach) printf("version "VERSION",failed to create socket %s\n",m_socket);

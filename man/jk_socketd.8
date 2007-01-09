@@ -23,11 +23,11 @@ and writes all data eventually to syslog using the real
 .I /dev/log
 Programs like jk_lsh and also many daemons need a /dev/log socket to do logging to syslog.
 
-Why not have syslog create the socket inside your jail? Potentially an attacker can disrupt normal system operation by filling your logs through the socket. jk_socketd can limit the number of bytes written trough the socket. The rate limiting is done based on three parameters, the base, the peek and the interval. The interval is the number of seconds that jk_socketd will use to count up to the number of bytes. The base and peek are both a number in bytes.
+Why not have syslog create the socket inside your jail? Potentially an attacker can disrupt normal system operation by filling your logs through the socket. jk_socketd can limit the number of bytes written trough the socket. The rate limiting is done based on three parameters, the base, the peak and the interval. The interval is the number of seconds that jk_socketd will use to count up to the number of bytes. The base and peak are both a number in bytes.
 
 If the logging is limited by jk_socketd, processes that run inside the jail will be slowed down if they try to use the logging service. If you expect a high logging rate in a jail, it is recommended to use syslog to create the socket in the jail instead of jk_socketd. 
 
-A socket is normally only allowed to have base bytes going trough per interval seconds. Only if in the previous interval the number of bytes has been lower than base, peek number of bytes is allowed. So a peek can only happen if the previous interval has been lower than base.
+A socket is normally only allowed to have base bytes going trough per interval seconds. Only if in the previous interval the number of bytes has been lower than base, peak number of bytes is allowed. So a peak can only happen if the previous interval has been lower than base.
 
 The config file consists of several entries where each entry looks like this:
 
@@ -35,7 +35,7 @@ The config file consists of several entries where each entry looks like this:
 .sp
 [/home/testchroot/dev/log]
 base = 512
-peek = 2048
+peak = 2048
 interval = 5.0
 .fi
 
@@ -61,8 +61,8 @@ do not read ini file, create specific socket
 .BR \-\-base=integer
 message rate limit (in bytes) per interval for socket specified by --socket
 .TP
-.BR \-\-peek=integer
-message rate limit peek (in bytes) for socket specified by --socket
+.BR \-\-peak=integer
+message rate limit peak (in bytes) for socket specified by --socket
 .TP
 .BR \-\-interval=float
 message rate limit interval in seconds for socket specified by --socket
