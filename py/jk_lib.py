@@ -334,7 +334,10 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						try:
 							os.unlink(chroot+file)
 						except OSError, e:
-							print 'failed to delete '+chroot+file+': '+e.strerror
+							print 'ERROR: failed to delete '+chroot+file+': '+e.strerror
+							print 'cannot overwrite '+chroot+file
+							# BUG: perhaps we can fix the permissions so we can really delete the file?
+							# but what permissions cause this error?
 					elif (os.path.isdir(chroot+file)):
 						print 'destination dir '+chroot+file+' exists'
 				else:
