@@ -331,7 +331,10 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 					if (os.path.isfile(chroot+file)):
 						if (be_verbose):
 							print 'destination file '+chroot+file+' exists, deleting'
-						os.unlink(chroot+file)
+						try:
+							os.unlink(chroot+file)
+						except OSError, e:
+							print 'failed to delete '+chroot+file+': '+e.strerror
 					elif (os.path.isdir(chroot+file)):
 						print 'destination dir '+chroot+file+' exists'
 				else:
@@ -345,7 +348,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				try:
 					os.symlink(realfile, chroot+file)
 				except OSError:
-					# if the gile exists already
+					# if the file exists already
 					pass
 				handledfiles.append(file)
 				if (realfile[0] != '/'):
