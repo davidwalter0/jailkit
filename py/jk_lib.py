@@ -252,6 +252,8 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	# used to move home directories into the jail
 	#create directory dstdir
 	try:
+		if (be_verbose):
+			print 'Creating '+dstdir
 		os.mkdir(dstdir)
 		copy_time_and_permissions(srcdir, dstdir, be_verbose, 0, 1)
 	except IOError, (errno,strerror):
@@ -259,6 +261,8 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 		return 0
 	for root, dirs, files in os.walk(srcdir):
 		for name in files:
+			if (be_verbose):
+				print 'Copying '+root+'/'+name+' to '+dstdir+'/'+name
 			try:
 				shutil.copyfile(root+'/'+name,dstdir+'/'+name)
 				copy_time_and_permissions(root+'/'+name, dstdir+'/'+name, be_verbose, 0, 1)
@@ -273,10 +277,12 @@ def move_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	retval = copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose)
 	if (retval == 1):
 		# remove the source directory
+		if (be_verbose==1):
+			print 'Removing original home directory '+srcdir
 		try:
 			shutil.rmtree(srcdir)
 		except (OSError,IOError), (errno,strerror):
-			print 'failed to remove '+srcdir+': '+strerror
+			print 'Failed to remove '+srcdir+': '+strerror
 	else:
 		print 'Not everything was copied to '+dstdir+', keeping the old directory '+srcdir
 
