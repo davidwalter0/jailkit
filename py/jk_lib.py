@@ -229,25 +229,56 @@ def create_full_path(directory, be_verbose=0):
 		print 'creating directory '+directory
 	os.mkdir(directory, 0755)
 
-def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0):
+def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownership=0):
+	# the caller should catch any exceptions!
+# similar to shutil.copymode(src, dst) but we do not copy any SUID bits
+	sbuf = os.stat(src)
+#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
+#	mode = stat.S_IMODE(sbuf.st_mode)
+	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
+	if (not allow_suid):
+		if (mode & (stat.S_ISUID | stat.S_ISGID)):
+			print 'removing setuid and setgid permissions from '+dst
+#			print 'setuid!!! mode='+str(mode)
+			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
+#			print 'setuid!!! after mode='+str(mode)
+#		print 'mode='+str(mode)
+	os.chmod(dst, mode)
+	os.utime(dst, (sbuf[stat.ST_ATIME], sbuf[stat.ST_MTIME]))
+	if (copy_ownership):
+		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
+
+def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
+	# used to move home directories into the jail
+	#create directory dstdir
 	try:
-		sbuf = os.stat(src)
-	#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
-	#	mode = stat.S_IMODE(sbuf.st_mode)
-		mode = stat.S_IMODE(sbuf[stat.ST_MODE])
-		if (not allow_suid):
-			if (mode & (stat.S_ISUID | stat.S_ISGID)):
-				if (be_verbose):
-					print 'removing setuid and setgid permissions from '+dst
-	#			print 'setuid!!! mode='+str(mode)
-				mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
-	#			print 'setuid!!! after mode='+str(mode)
-	#		print 'mode='+str(mode)
-		os.chmod(dst, mode)
-		os.utime(dst, (sbuf[stat.ST_ATIME], sbuf[stat.ST_MTIME]))
-	except OSError:
-		if (be_verbose):
-			print 'source '+src+' does not exist'
+		os.mkdir(dstdir)
+		copy_time_and_permissions(srcdir, dstdir, be_verbose, 0, 1)
+	except IOError, (errno,strerror):
+		print 'Error copying directory and permissions '+srcdir+' to '+dstdir+': '+strerror
+		return 0
+	for root, dirs, files in os.walk(srcdir):
+		for name in files:
+			try:
+				shutil.copyfile(root+'/'+name,dstdir+'/'+name)
+				copy_time_and_permissions(root+'/'+name, dstdir+'/'+name, be_verbose, 0, 1)
+			except (IOError,OSError), (errno,strerror):
+				print 'Error copying file and permissions '+root+'/'+name+' to '+dstdir+'/'+name+': '+strerror
+				return 0
+		for name in dirs:
+			move_dir_with_permissions_and_owner(root+'/'+name,dstdir+'/'+name,be_verbose)
+	return 1
+
+def move_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
+	retval = copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose)
+	if (retval == 1):
+		# remove the source directory
+		try:
+			shutil.rmtree(srcdir)
+		except (OSError,IOError), (errno,strerror):
+			print 'failed to remove '+srcdir+': '+strerror
+	else:
+		print 'Not everything was copied to '+dstdir+', keeping the old directory '+srcdir
 
 def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
 	"""copies/links the file and the permissions, except any setuid or setgid bits"""
@@ -262,8 +293,10 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
 		try:
 			shutil.copyfile(src,dst)
 			copy_time_and_permissions(src, dst, be_verbose, 0)
-		except IOError:
-			print 'could not read source file '+src
+		except IOError, (errno,strerror):
+			print 'Error copying file and permissions '+src+' to '+dst+': '+strerror
+		except OSError, (errno,strerror):
+			print 'Error copying file and permissions '+src+' to '+dst+': '+strerror
 
 def copy_device(chroot, path, be_verbose=1):
 	# perhaps the calling function should make sure the basedir exists	

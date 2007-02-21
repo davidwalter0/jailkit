@@ -172,14 +172,7 @@ def jailuser(jail, user, movehome, config):
 				jk_lib.create_full_path(tmp, (config['verbose'] == 1))
 				if (config['verbose'] == 1):
 					print 'moving files from '+oldhome+' to '+newhome
-				try:
-					os.rename(oldhome, newhome)
-				except OSError:
-					# if the destination is on a different device, you get: OSError: [Errno 18] Invalid cross-device link
-					try:
-						shutil.copy(oldhome, newhome)
-					except OSError:
-						print 'FAILED TO MOVE '+oldhome+' TO '+newhome+'. Possibly the target is full, or read-only, or the target directory already exists'
+				jk_lib.move_dir_with_permissions_and_owner(oldhome,newhome,config['verbose'])
 
 def user_exists(user):
 	try:
