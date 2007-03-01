@@ -153,6 +153,7 @@ def activateConfig(config, args):
 			handle_cfg_section(config,args[0],cfg,section)
 		else:
 			print 'WARNING: section '+section+' does not exist in '+config['file']
+	jk_lib.gen_library_cache(chroot)
 
 def usage():
 	print ''

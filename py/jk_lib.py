@@ -101,6 +101,11 @@ def test_suid_sgid(path):
 		return 1
 	return 0
 
+def gen_library_cache(jail):
+	if (sys.platform[:5] == 'linux'):
+		os.system('ldconfig -r '+jail)
+
+
 def lddlist_libraries_linux(executable):
 	"""returns a list of libraries that the executable depends on """
 	retval = []

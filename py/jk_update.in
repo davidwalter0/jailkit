@@ -143,6 +143,7 @@ def updatejail(jail, dirs, skips, config):
 			print 'will update '+jail+file
 	else:
 		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'], try_hardlink=config['hardlink'])
+	jk_lib.gen_library_cache(jail)
 
 def usage():
 	print ''

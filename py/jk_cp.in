@@ -44,6 +44,7 @@ import jk_lib
 
 def startcopy(config, chroot, filestocopy, checklibs=1):
 	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'])
+	jk_lib.gen_library_cache(chroot)
 
 def usage():
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
