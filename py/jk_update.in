@@ -83,11 +83,16 @@ def need_update(original, injail, origstatbuf=None):
 			if (comparecontent(original, injail)==1):
 				return 0
 		return 1
-	except OSError:
+	except OSError, (errno,strerror):
 		# files that do not have an original file obviously cannot be updated
+		# but they need cleaning
+		if (errno == 2):
+			return 2
 		return 0
 
-def find2update(jail, dir, skips, config, files2update=[]):
+def find2update(jail, dir, skips, config, files2update=[],files2clean=[]):
+	if (config['verbose'] == 1):
+		print 'scanning '+jail+dir
 	for file in os.listdir(jail+dir):
 #		print 'test if '+dir+file+' or '+jail+dir+file+' exists in ',skips
 		if ((dir+file in skips) or (jail+dir+file in skips)):
@@ -96,22 +101,27 @@ def find2update(jail, dir, skips, config, files2update=[]):
 			try:
 				sbuf = os.lstat(dir+file)
 				if (stat.S_ISDIR(sbuf[stat.ST_MODE])):
-					files2update = find2update(jail, dir+file+'/', skips, config, files2update)
+					files2update, files2clean = find2update(jail, dir+file+'/', skips, config, files2update, files2clean)
 				elif (stat.S_ISREG(sbuf[stat.ST_MODE])):
-					if (config['verbose']):
+					if (config['verbose'] == 1):
 						print 'checking '+jail+dir+file+''
 					ret = need_update(dir+file, jail+dir+file, origstatbuf=sbuf)
 					if (ret == 1):
 						files2update.append(dir+file)
+					elif (ret == 2):
+						files2clean.append(dir+file) 
 			except OSError, (errno,strerror):
-				print jail+dir+file+' exists, but cannot stat file '+dir+file+': '+strerror
-	return files2update
+				if (errno == 2):
+					files2clean.append(dir+file)
+				else:
+					print 'error checking if '+jail+dir+file+' needs to be updated: '+strerror
+	return files2update,files2clean
 
 def updatejail(jail, dirs, skips, config):
-	allfiles = []
 	jaillen = len(jail)
+	allfiles = []
+	allcleans = []
 	for dir in dirs:
-		files = []
 		if (dir[:jaillen] == jail):
 			dir = dir[jaillen:]
 		if (dir[-1:] != '/'):
@@ -121,15 +131,14 @@ def updatejail(jail, dirs, skips, config):
 		if ((dirnoslash in skips) or (jail+dirnoslash in skips)):
 			print 'skip '+jail+dir
 		else:
-			if (config['verbose']):
-				print 'scannign dir '+jail+dir+' for outdated files'
+			files = []
+			cleans = []
 			try:
-				files = find2update(jail, dir, skips, config, [])
+				files,cleans = find2update(jail, dir, skips, config, [],[])
 			except OSError, (errno,strerror):
-				if (config['verbose']):
-					print 'error while scannign dir '+jail+dir+': '+strerror
+				print 'error while scannign dir '+jail+dir+': '+strerror
 			for file in files:
-				if (config['dry-run']):
+				if (config['dry-run'] == 1):
 					allfiles.append(file)
 				else:
 					print 'removing outdated file '+jail+file
@@ -138,9 +147,21 @@ def updatejail(jail, dirs, skips, config):
 						allfiles.append(file)
 					except:
 						print "ERROR: failed to remove outdated file "+jail+file
-	if (config['dry-run']):
+			for file in cleans:
+				if (config['dry-run'] == 1):
+					allcleans.append(file)
+				else:
+					print 'removing deprecated file '+jail+file
+					try:
+						os.unlink(jail+file)
+						allcleans.append(file)
+					except:
+						print "ERROR: failed to remove deprecated file "+jail+file
+	if (config['dry-run'] == 1):
 		for file in allfiles:
-			print 'will update '+jail+file
+			print 'will update outdated file '+jail+file
+		for file in allcleans:
+			print 'will remove deprecated file '+jail+file
 	else:
 		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'], try_hardlink=config['hardlink'])
 	jk_lib.gen_library_cache(jail)
