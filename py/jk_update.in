@@ -181,17 +181,20 @@ def usage():
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:k', ['help', 'verbose', 'dry-run', 'jail=', 'skip=', 'hardlink'])
+		opts, args = getopt.getopt(sys.argv[1:], 'hvdj:s:kc:', ['help', 'verbose', 'dry-run', 'jail=', 'skip=', 'hardlink', 'configsection='])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
 	config = {}
 	config['verbose'] = 0
 	config['dry-run'] = 0
-	config['hardlink'] = 0
-	skips = []
 	jail = None
+	configsection = None
+	dirs = []
+	skips = []
 	for o, a in opts:
+		if o in ("-c", "--configsection"):
+			configsection = a
 		if o in ("-h", "--help"):
 			usage()
 			sys.exit()
@@ -210,17 +213,55 @@ def main():
 			jail = a
 		elif o in ("-k", "--hardlink"):
 			config['hardlink'] = 1
-	if (jail == None):
+	if (jail != None and configsection != None):
+		print 'Error: cannot specify both a jail and a configsection'
+		sys.exit(21)
+	if (jail == None and configsection == None):
 		print ''
-		print 'must at least specify a jail using -j or --jail'
+		print 'Error: must at least specify a jail or a configsection using'
+		print ' -j or --jail or -c or --configsection'
 		print ''
 		sys.exit(1)
+	if (len(args)>0):
+		dirs = args
+	
+	if (configsection != None):
+		cfile = INIPREFIX+'/jk_update.ini'
+		jail = configsection
+		cfg = ConfigParser.ConfigParser()
+		cfg.read(cfile)
+		if (not cfg.has_section(configsection)):
+			print 'Error: configfile '+cfile+' does not have a section called '+configsection
+			sys.exit(1)
+		tmp = jk_lib.config_get_option_as_list(cfg,configsection,'skips')
+		for entry in tmp:
+			skips.append(entry)
+		if (not config.has_key('hardlink') and cfg.has_option(configsection,'hardlink')):
+			try:
+				tmp = int(cfg.get(section,'hardlink'))
+				config['hardlink'] = tmp
+			except:
+				pass
+		tmp = jk_lib.config_get_option_as_list(cfg,configsection,'directories')
+		for entry in tmp:
+			dirs.append(entry)
+	if (not config.has_key('hardlink')):
+		config['hardlink'] = 0
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]
-	if (len(args)>0):
-		updatejail(jail, args, skips, config)
-	else:
-		updatejail(jail, ['/bin/', '/lib/', '/usr/', '/opt/'], skips, config)
+	if (dirs == None):
+		dirs = ['/bin/', '/lib/', '/usr/', '/opt/']
+	
+	# all directories in 'skips' should be without slash
+	newskips = []
+	for entry in skips:
+		if (entry[-1] == '/'):
+			newskips.append(entry[:-1])
+		else:
+			newskips.append(entry)
+	skips = newskips
+	
+	updatejail(jail, dirs, skips, config)
 
 if __name__ == "__main__":
     main()
