@@ -195,7 +195,7 @@ def usage():
 	print
 
 def testjail(jail, shell):
-	if (jail == None):
+	if (type(jail) != str):
 		return 0
 	if (jail[-1:] == '/'):
 		jail = jail[:-1]
@@ -215,12 +215,12 @@ def testjail(jail, shell):
 
 def getjail(jail, config):
 	while (1):
-		if (jail[0] != '/'):
+		if (type(test) == str and jail[0] != '/'):
 			tmp = os.getcwd()+'/'+jail
 			if (os.path.exists(tmp)):
 				jail = tmp
 		test = testjail(jail, config['shell'])
-		if (test):
+		if (test == 1):
 			return jail
 		else:
 			if (not test):
