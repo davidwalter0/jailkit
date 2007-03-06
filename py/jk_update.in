@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Copyright (c) 2006 Olivier Sessink
+#Copyright (c) 2006, 2007, Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -169,12 +169,13 @@ def updatejail(jail, dirs, skips, config):
 def usage():
 	print ''
 	print "Usage: "+sys.argv[0]+" [OPTIONS] [DIRECTORIES]"
-	print '-h|--help      : this message'
-	print '-v|--verbose   : give verbose output'
-	print '-j|--jail=     : the jail to update'
-	print '-d|--dry-run   : show what will be done'
-	print '-s|--skip=     : skip file, option can be used multiple times'
-	print '-k|--hardlink  : use hardlinks if possible'
+	print '-h|--help          : this message'
+	print '-v|--verbose       : give verbose output'
+	print '-c|--configsection=: use options specified in section of config file'
+	print '-j|--jail=         : the jail to update'
+	print '-d|--dry-run       : show what will be done'
+	print '-s|--skip=         : skip file, option can be used multiple times'
+	print '-k|--hardlink      : use hardlinks if possible'
 	print ''
 	print 'if no directories are specified, jk_update will scan /bin /usr /lib and /opt'
 	print ''

@@ -1,4 +1,4 @@
-.TH jk_check 8 07-09-2006 JAILKIT jk_check
+.TH jk_check 8 06-03-2007 JAILKIT jk_check
 
 .SH NAME
 jk_check \- a utility that will check a jail for security problems
@@ -26,6 +26,8 @@ It will test directories based on the config file
 but also based on jail patterns (dir/./dir) found in the home directories in 
 .I /etc/passwd
 
+.SH EXAMPLE
+
 .SS "Minimal configfile"
 The most minimal configuration looks like:
 
@@ -52,31 +54,31 @@ ignoresetuidexecuteforgroup = /home/testchroot/usr/bin/smbmnt
 ignoresetuidexecuteforothers =
 .fi
 
-ignorepatheverywhere
+.B ignorepatheverywhere
 .RS
 no single test is performed in these directories. You should not use this option unless you what you are doing.
 .RE
-ignorepathoncompare
+.B ignorepathoncompare
 .RS
 files in listed directories are not compared with their non-jail counterparts. Useful for directories like /etc/ and /home/ where you know you'll have different files inside the jail and outside the jail
 .RE
-ignorewritableforgroup
+.B ignorewritableforgroup
 .RS
 listed directories that are writable for the group are not reported
 .RE
-ignorewritableforothers
+.B ignorewritableforothers
 .RS
 listed directories that are writable for others are not reported
 .RE
-ignoresetuidexecuteforuser
+.B ignoresetuidexecuteforuser
 .RS
 ignore the setuid bit on a file that is executable for a user, a file with -rws------ permissions that is. Use with care! Remember that user root can break out of a jail, therefore any program running with root priviledges is theoretically capable of breaking out of the jail!
 .RE
-ignoresetuidexecuteforgroup
+.B ignoresetuidexecuteforgroup
 .RS
 ignore the setuid bit for a file that is executable for the group, a file with -rws--x--- permissions that is.
 .RE
-ignoresetuidexecuteforothers
+.B ignoresetuidexecuteforothers
 .RS
 ignore the setuid bit for a file that is executable for others, a file with -rws--x--x permissions that is
 .RE
@@ -110,7 +112,7 @@ The help screen
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
