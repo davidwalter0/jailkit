@@ -49,7 +49,7 @@ def striptrailingslash(dir):
 		return dir[:-1]
 	return dir
 
-def addgrouptojail(jail, group_id, config):
+def addgrouptojail(jail, group_id, user, config):
 	jail = striptrailingslash(jail)
 	gr = grp.getgrgid(group_id)
 	if (not jk_lib.test_group_exist(gr.gr_name, jail+'/etc/group')):
@@ -57,14 +57,55 @@ def addgrouptojail(jail, group_id, config):
 		if (config['verbose'] == 1):
 			print 'adding group '+gr[0]+' to '+file
 		try:
+			tmp = gr[0]+':x:'+str(gr[2])+':'
+			if (type(user)==str and len(user)>0):
+				tmp = tmp + user
+			tmp = tmp + '\n'
 			fd = open(file, 'a')
-			fd.write(gr[0]+':x:'+str(gr[2])+':'+string.join(gr[3],',')+'\n')
+			fd.write(tmp)
 			fd.close()
 		except IOError:
-			print 'failed to write to '+file+''
+			print 'Error: failed to write group '+gr[0]+' to '+file+''
 			return 0
 	return 1
 
+def addusertogroupinjail(jail, group_id, user, config):
+	ret = addgrouptojail(jail, group_id, user, config)
+	if (ret == 0):
+		return 0
+	try:
+		file = jail+'/etc/group'
+		fd = open(file, 'r+')
+		line = fd.readline()
+		while (len(line)>0):
+			splitted = line.split(':')
+			if (len(splitted)==4 and int(splitted[2]) == group_id):
+				users = splitted[3][:-1].split(',')
+				if (user in users):
+					fd.close()
+					return 1
+				else :
+					if (config['verbose']):
+						print 'Adding user '+user+' to group '+splitted[0]
+					pos = fd.tell()
+					buf = fd.read()
+					fd.seek(pos-len(line))
+					if (len(users)==1 and users[0] == ''):
+						users = [user]
+					else:
+						users.append(user)
+					tmp = splitted[0]+':x:'+splitted[2]+':'
+					tmp2 = ','.join(users)
+					tmp += tmp2+'\n'+buf
+					fd.write(tmp)
+					fd.close()
+					return 1
+			line = fd.readline()
+	except IOError:
+		print 'Error: failed to add user '+user+' to group '+str(group_id)+' in '+file+''
+		return 0
+	return 0
+	
 def addusertojail(jail, user, shell, config):
 	jail = striptrailingslash(jail)
 	if (jk_lib.test_user_exist(user, jail+'/etc/passwd')):
@@ -131,13 +172,13 @@ def jailuser(jail, user, movehome, config):
 	if (not addusertojail(jail, user, config['shell'], config)):
 		sys.exit(2)
 	# lookup the primary group and make sure it also exists in the jail
-	if not addgrouptojail(jail, pw[3], config):
+	if not addgrouptojail(jail, pw[3], None, config):
 		return 0
 	# look up all other groups
 	groups = grp.getgrall()
 	for gr in groups:
 		if (user in gr.gr_mem):
-			ret = addgrouptojail(jail, gr.gr_gid, config)
+			ret = addusertogroupinjail(jail, gr.gr_gid, user, config)
 			if not ret:
 				return 0
 	# change the shell and the homedir
@@ -215,7 +256,7 @@ def testjail(jail, shell):
 
 def getjail(jail, config):
 	while (1):
-		if (type(test) == str and jail[0] != '/'):
+		if (type(jail) == str and jail[0] != '/'):
 			tmp = os.getcwd()+'/'+jail
 			if (os.path.exists(tmp)):
 				jail = tmp
