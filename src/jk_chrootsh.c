@@ -413,6 +413,7 @@ int main (int argc, char **argv) {
 	/* prepare the new environment */
 	setenv("HOME",newhome,1);
 	setenv("USER",pw->pw_name,1);
+	setenv("SHELL",shell,1);
 	if (chdir(newhome) != 0) {
 		syslog(LOG_ERR, "abort, chdir(%s) failed inside the jail %s: %s, check the permissions for %s/%s",newhome,jaildir,strerror(errno),jaildir,newhome);
 		exit(41);
