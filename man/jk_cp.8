@@ -1,4 +1,4 @@
-.TH jk_cp 8 07-09-2006 JAILKIT jk_cp
+.TH jk_cp 8 21-03-2007 JAILKIT jk_cp
 
 .SH NAME
 jk_cp \- a utility to copy files including permissions and libraries into a jail
@@ -11,11 +11,17 @@ jk_cp \- a utility to copy files including permissions and libraries into a jail
 
 .SH DESCRIPTION
 
-jk_cp will copy any file into a jail on the identical location, with identical permissions and (if required) including any required libraries. It will not copy set user id (setuid) or set group id (setgid) permissions.
+jk_cp will copy any file into a jail on the identical location, with identical permissions and (if required) including any required libraries. It will remove any set user id (setuid) or set group id (setgid) permissions from all files and directories copied.
+
+.SH EXAMPLE
 
 jk_cp /home/testchroot /usr/bin/cvs
 
 will copy /usr/bin/cvs to /home/testchroot/usr/bin/cvs, and it will copy the libraries used by cvs also to the jail.
+
+jk_cp -k /svr/testjail /usr/bin/firefox /usr/share/firefox
+
+will hardlink /usr/bin/firefox and all files in /usr/share/firefox into jail /svr/testjail 
 
 .SH OPTIONS
 
@@ -46,7 +52,7 @@ The help screen
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,4 +1,4 @@
-.TH jk_init 8 06-03-2007 JAILKIT jk_init
+.TH jk_init 8 20-03-2007 JAILKIT jk_init
 
 .SH NAME
 jk_init \- a utility to quicky create functional jail directories
@@ -11,17 +11,62 @@ jk_init \- a utility to quicky create functional jail directories
 
 .SH DESCRIPTION
 
-It is not an easy task to setup a jail (a changed root) in a functional way. If you want the user to be able to run cvs for example, it will not work to simply copy the cvs binary into the users jail. You will find that cvs needs libraries as well. Using
-.B ldd /usr/bin/cvs
-you can see all the libraries needed by cvs. Many of those libraries are actually symlinks, so you you have to copy both the library files and create new symlinks. Also cvs needs the /dev/null device. Finally you need to start cvs: you need a shell too. And the shell might need files like /etc/passwd and /etc/nsswitch.conf.
+It is not an easy task to setup a jail (a changed root) in a functional way. If you want the user to be able to run cvs for example, it will not work to simply copy the cvs binary into the users jail. You will find that cvs needs libraries as well. cvs also needs the /dev/null device. Finally you need something to start cvs: you need a shell too. And the shell might need files like /etc/passwd and /etc/nsswitch.conf.
 
-jk_init can do most of these things for you. There are many predefined sections in the configfile
+With jk_init you can automate these tasks. You can create a section in the configfile 
 .I /etc/jailkit/jk_init.ini
-where you can simply choose one, and jk_init can copy all required files.
+that has all the files, directories and devices, anbd you can use jk_init to setup such a jail with a single command. The default configfile has examples for cvs, sftp, scp, rsync and more. 
+
+.SH EXAMPLE
+An example configfile might look like this:
+
+.nf
+.sp
+[jk_lsh]
+comment = Jailkit limited shell
+executables = /usr/sbin/jk_lsh
+regularfiles = /etc/jailkit/jk_lsh.ini
+users = root
+groups = root
+need_logsocket = 1
+includesections = uidbasics
+
+[sftp]
+comment = ssh secure ftp with Jailkit limited shell
+executables = /usr/lib/sftp-server
+includesections = netbasics, uidbasics, jk_lsh
+devices = /dev/urandom, /dev/null
+emptydirs = /svr
+.fi
+
+The 
+.B comment
+entry specifies the comment that is shown if option -l or --list is used. The 
+.B executables
+entry specifies which executables need to be copied into the jail. These files are checked for any required libraries, and these libraries are copied too. The
+.B regularfiles
+entry specifies which other files are needed, these files are not checked for required libraries. The
+.B users
+and
+.B groups
+entries specify which users and groups that need to be present in <jail>/etc/passwd. If the 
+.B need_logsocket
+entry is set to "1" the 
+.I jk_socketd.ini
+file is modified to include a 
+.I /dev/log
+socket in this jail. The
+.B devices
+entry specifies which devices are required in the jail. The
+.B includesections
+entry specifies which other sections need to be processed as well when processing the current section. In the above example, the jk_lsh section is automatically included if the sftp section is processed. Finally the
+.B emptydirs
+entry specifies which directories to create as empty directories.
+ 
 
 .SH LIMITATIONS
 
-Many unix like operating systems install files in different locations. jk_init has defaults taken from Debian and Ubuntu. It may not work on other platforms. Customizing jk_init.ini for your platform might be required.
+Many unix like operating systems install files in different locations. The defaulkt jk_init config file has defaults taken from Debian and Ubuntu. The default config file may not work on other platforms. You probably need to customise jk_init.ini for your platform and your applications.
 
 .SH OPTIONS
 
