@@ -103,6 +103,7 @@ def test_suid_sgid(path):
 
 def gen_library_cache(jail):
 	if (sys.platform[:5] == 'linux'):
+		create_full_path(jail+'/etc/')
 		os.system('ldconfig -r '+jail)
 
 
@@ -224,12 +225,18 @@ def create_full_path(directory, be_verbose=0):
 	while (not os.path.exists(tmp)):
 #		print 'DEBUG A: '+tmp+' does not exist'
 		tmp = os.path.dirname(tmp)
-	indx = string.find(directory,'/',len(tmp)+1)
+	oldindx = len(tmp) 
+	indx = string.find(directory,'/',oldindx+1)
 	while (indx != -1):
-		if (be_verbose):
-			print 'creating directory '+directory[:indx]
-		os.mkdir(directory[:indx], 0755)
-		indx = string.find(directory,'/',indx+1)
+		# avoid the /bla//bla pitfall
+		if (oldindx +1 == indx):
+			oldindx = indx
+		else: 
+			if (be_verbose):
+				print 'creating directory '+directory[:indx]
+			os.mkdir(directory[:indx], 0755)
+			oldindx = indx
+		indx = string.find(directory,'/',oldindx+1)
 	if (be_verbose):
 		print 'creating directory '+directory
 	os.mkdir(directory, 0755)
@@ -366,11 +373,19 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				else:
 					print 'failed to investigate source file '+file+': '+e.strerror
 			continue
-		if ((force_overwrite == 0) and os.path.exists(chroot+file)):
+		try:
+			chrootsb = os.lstat(chroot+file)
+			chrootfile_exists = 1
+		except OSError, e:
+			if (e.errno == 2):
+				chrootfile_exists = 0
+			else:
+				print 'ERROR: failed to investigate destination file '+chroot+file+': '+e.strerror
+		if ((force_overwrite == 0) and chrootfile_exists and not stat.S_ISDIR(chrootsb.st_mode)):
 			if (be_verbose):
 				print ''+chroot+file+' exists, specify --force to overwrite'
 		else:
-			if (os.path.exists(chroot+file)):
+			if (chrootfile_exists):
 				if (force_overwrite):
 					if (os.path.isfile(chroot+file)):
 						if (be_verbose):
@@ -385,9 +400,14 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 					elif (os.path.isdir(chroot+file)):
 						print 'destination dir '+chroot+file+' exists'
 				else:
-					if (be_verbose):
-						print 'destination file '+chroot+file+' exists already'
-					continue
+					if (os.path.isdir(chroot+file)):
+						pass
+						# for a directory we also should inspect all the contents, so we do not 
+						# skip to the next item of the loop
+					else:
+						if (be_verbose):
+							print 'destination file '+chroot+file+' exists already'
+						continue
 			create_full_path(chroot+os.path.dirname(file),be_verbose)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
