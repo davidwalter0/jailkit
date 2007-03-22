@@ -65,7 +65,7 @@ def addgrouptojail(jail, group_id, user, config):
 			fd.write(tmp)
 			fd.close()
 		except IOError:
-			print 'Error: failed to write group '+gr[0]+' to '+file+''
+			sys.stderr.write('ERROR: failed to write group '+gr[0]+' to '+file+'\n')
 			return 0
 	return 1
 
@@ -102,7 +102,7 @@ def addusertogroupinjail(jail, group_id, user, config):
 					return 1
 			line = fd.readline()
 	except IOError:
-		print 'Error: failed to add user '+user+' to group '+str(group_id)+' in '+file+''
+		sys.stderr.write('ERROR: failed to add user '+user+' to group '+str(group_id)+' in '+file+'\n')
 		return 0
 	return 0
 	

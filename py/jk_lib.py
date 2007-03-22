@@ -53,25 +53,25 @@ def path_is_safe(path, failquiet=0):
 		statbuf = os.lstat(path)
 	except OSError:
 		if (failquiet == 0):
-			print "ERROR: cannot lstat() "+path+" !"
+			sys.stderr.write('ERROR: cannot lstat() '+path+'\n')
 		return -1
 	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
 		if (stat.S_ISLNK(statbuf[stat.ST_MODE])):
-			print 'ERROR: '+path+" is a symlink, please point to the real directory"
+			sys.stderr.write('ERROR: '+path+' is a symlink, please point to the real directory\n')
 		else:
-			print "ERROR: "+path+" is not a directory!"
+			sys.stderr.write('ERROR: '+path+' is not a directory!\n')
 		return -2
 	if (sys.platform[-3:] == 'bsd'):
 		# on freebsd root is in group wheel
 		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != grp.getgrnam('wheel').gr_gid):
-			print "ERROR: "+path+" is not owned by root:wheel!"
+			sys.stderr.write('ERROR: '+path+' is not owned by root:wheel!\n')
 			return -3
 	else:
 		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != 0):
-			print "ERROR: "+path+" is not owned by root:root!"
+			sys.stderr.write('ERROR: '+path+' is not owned by root:root!\n')
 			return -3
 	if (statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP):
-		print "ERROR: "+path+" is writable by group or others!"
+		sys.stderr.write('ERROR: '+path+' is writable by group or others!')
 		return -4
 	return 1
 
@@ -269,7 +269,7 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 		os.mkdir(dstdir)
 		copy_time_and_permissions(srcdir, dstdir, be_verbose, 0, 1)
 	except IOError, (errno,strerror):
-		print 'Error copying directory and permissions '+srcdir+' to '+dstdir+': '+strerror
+		sys.stderr.write('ERROR: copying directory and permissions '+srcdir+' to '+dstdir+': '+strerror+'\n')
 		return 0
 	for root, dirs, files in os.walk(srcdir):
 		for name in files:
@@ -279,7 +279,7 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 				shutil.copyfile(root+'/'+name,dstdir+'/'+name)
 				copy_time_and_permissions(root+'/'+name, dstdir+'/'+name, be_verbose, 0, 1)
 			except (IOError,OSError), (errno,strerror):
-				print 'Error copying file and permissions '+root+'/'+name+' to '+dstdir+'/'+name+': '+strerror
+				sys.stderr.write('ERROR: copying file and permissions '+root+'/'+name+' to '+dstdir+'/'+name+': '+strerror+'\n')
 				return 0
 		for name in dirs:
 			move_dir_with_permissions_and_owner(root+'/'+name,dstdir+'/'+name,be_verbose)
@@ -294,7 +294,7 @@ def move_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 		try:
 			shutil.rmtree(srcdir)
 		except (OSError,IOError), (errno,strerror):
-			print 'Failed to remove '+srcdir+': '+strerror
+			sys.stderr.write('ERROR: failed to remove '+srcdir+': '+strerror+'\n')
 	else:
 		print 'Not everything was copied to '+dstdir+', keeping the old directory '+srcdir
 
@@ -312,9 +312,9 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
 			shutil.copyfile(src,dst)
 			copy_time_and_permissions(src, dst, be_verbose, 0)
 		except IOError, (errno,strerror):
-			print 'Error copying file and permissions '+src+' to '+dst+': '+strerror
+			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 		except OSError, (errno,strerror):
-			print 'Error copying file and permissions '+src+' to '+dst+': '+strerror
+			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 
 def copy_device(chroot, path, be_verbose=1):
 	# perhaps the calling function should make sure the basedir exists	
@@ -371,7 +371,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (e.errno == 2):
 					print 'source file '+file+' does not exist'
 				else:
-					print 'failed to investigate source file '+file+': '+e.strerror
+					sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
 		try:
 			chrootsb = os.lstat(chroot+file)
@@ -380,10 +380,10 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			if (e.errno == 2):
 				chrootfile_exists = 0
 			else:
-				print 'ERROR: failed to investigate destination file '+chroot+file+': '+e.strerror
+				sys.stderr.write('ERROR: failed to investigate destination file '+chroot+file+': '+e.strerror+'\n')
 		if ((force_overwrite == 0) and chrootfile_exists and not stat.S_ISDIR(chrootsb.st_mode)):
 			if (be_verbose):
-				print ''+chroot+file+' exists, specify --force to overwrite'
+				print ''+chroot+file+' already exists, will not touch it'
 		else:
 			if (chrootfile_exists):
 				if (force_overwrite):
@@ -393,8 +393,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						try:
 							os.unlink(chroot+file)
 						except OSError, e:
-							print 'ERROR: failed to delete '+chroot+file+': '+e.strerror
-							print 'cannot overwrite '+chroot+file
+							sys.stderr.write('ERROR: failed to delete '+chroot+file+': '+e.strerror+'\ncannot overwrite '+chroot+file+'\n')
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
 					elif (os.path.isdir(chroot+file)):

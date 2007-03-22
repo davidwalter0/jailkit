@@ -79,7 +79,7 @@ def testfilepermissions(config,path):
 	try:
 		statbuf = os.lstat(path)
 	except OSError:
-		print "ERROR: cannot lstat() "+path+" !"
+		sys.stderr.write('ERROR: cannot lstat() '+path+'\n')
 		return 1
 	if (config['verbose']):
 		print "testing file permissions for "+path
@@ -101,7 +101,7 @@ def testdirpermissions(config,path):
 	try:
 		statbuf = os.lstat(path)
 	except OSError:
-		print "ERROR: cannot lstat() "+path+" !"
+		sys.stderr.write('ERROR: cannot lstat() '+path+'\n')
 		return 1
 	if (config['verbose']):
 		print "testing directory permissions for "+path
@@ -119,7 +119,7 @@ def comparefiles(config,first, second):
 		sb1 = os.lstat(first)
 		sb2 = os.lstat(second)
 		if (sb1[stat.ST_SIZE] != sb2[stat.ST_SIZE]):
-			print 'ERROR: '+first+' and '+second+' have a different size!'
+			sys.stderr.write('ERROR: '+first+' and '+second+' have a different size!\n')
 			return
 		if (stat.S_ISLNK(sb1[stat.ST_MODE]) != stat.S_ISLNK(sb1[stat.ST_MODE])):
 			print 'ERROR: '+first+' and '+second+' are not both symlinks!'

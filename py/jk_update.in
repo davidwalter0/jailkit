@@ -114,7 +114,7 @@ def find2update(jail, dir, skips, config, files2update=[],files2clean=[]):
 				if (errno == 2):
 					files2clean.append(dir+file)
 				else:
-					print 'error checking if '+jail+dir+file+' needs to be updated: '+strerror
+					sys.stderr.write('ERROR: while checking if '+jail+dir+file+' needs to be updated: '+strerror+'\n')
 	return files2update,files2clean
 
 def updatejail(jail, dirs, skips, config):
@@ -127,7 +127,7 @@ def updatejail(jail, dirs, skips, config):
 		if (dir[-1:] != '/'):
 			dir += '/'
 		dirnoslash = dir[:-1]
-#		print 'test if '+dirnoslash+' or '+jail+dirnoslash+' exists in ',skips
+		#print 'test if '+dirnoslash+' or '+jail+dirnoslash+' exists in ',skips
 		if ((dirnoslash in skips) or (jail+dirnoslash in skips)):
 			print 'skip '+jail+dir
 		else:
@@ -136,7 +136,7 @@ def updatejail(jail, dirs, skips, config):
 			try:
 				files,cleans = find2update(jail, dir, skips, config, [],[])
 			except OSError, (errno,strerror):
-				print 'error while scannign dir '+jail+dir+': '+strerror
+				sys.stderr.write('ERROR:  while scannign dir '+jail+dir+': '+strerror+'\n')
 			for file in files:
 				if (config['dry-run'] == 1):
 					allfiles.append(file)
@@ -146,7 +146,7 @@ def updatejail(jail, dirs, skips, config):
 						os.unlink(jail+file)
 						allfiles.append(file)
 					except:
-						print "ERROR: failed to remove outdated file "+jail+file
+						sys.stderr.write('ERROR: failed to remove outdated file '+jail+file+'\n')
 			for file in cleans:
 				if (config['dry-run'] == 1):
 					allcleans.append(file)
@@ -156,15 +156,16 @@ def updatejail(jail, dirs, skips, config):
 						os.unlink(jail+file)
 						allcleans.append(file)
 					except:
-						print "ERROR: failed to remove deprecated file "+jail+file
+						sys.stderr.write('ERROR: failed to remove deprecated file '+jail+file+'\n')
 	if (config['dry-run'] == 1):
 		for file in allfiles:
 			print 'will update outdated file '+jail+file
 		for file in allcleans:
 			print 'will remove deprecated file '+jail+file
 	else:
-		jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'], try_hardlink=config['hardlink'])
-	jk_lib.gen_library_cache(jail)
+		handled = jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'], try_hardlink=config['hardlink'])
+		if (len(handled)>0):
+			jk_lib.gen_library_cache(jail)
 
 def usage():
 	print ''
@@ -215,13 +216,10 @@ def main():
 		elif o in ("-k", "--hardlink"):
 			config['hardlink'] = 1
 	if (jail != None and configsection != None):
-		print 'Error: cannot specify both a jail and a configsection'
+		sys.stderr.write('ERROR: cannot specify both a jail and a configsection\n')
 		sys.exit(21)
 	if (jail == None and configsection == None):
-		print ''
-		print 'Error: must at least specify a jail or a configsection using'
-		print ' -j or --jail or -c or --configsection'
-		print ''
+		sys.stderr.write('ERROR: must at least specify a jail or a configsection using\n -j or --jail or -c or --configsection\n\n')
 		sys.exit(1)
 	if (len(args)>0):
 		dirs = args
@@ -232,7 +230,7 @@ def main():
 		cfg = ConfigParser.ConfigParser()
 		cfg.read(cfile)
 		if (not cfg.has_section(configsection)):
-			print 'Error: configfile '+cfile+' does not have a section called '+configsection
+			sys.stderr.write('ERROR: configfile '+cfile+' does not have a section called '+configsection+'\n')
 			sys.exit(1)
 		tmp = jk_lib.config_get_option_as_list(cfg,configsection,'skips')
 		for entry in tmp:
@@ -250,9 +248,8 @@ def main():
 		config['hardlink'] = 0
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]
-	if (dirs == None):
+	if (dirs == None or len(dirs)==0):
 		dirs = ['/bin/', '/lib/', '/usr/', '/opt/']
-	
 	# all directories in 'skips' should be without slash
 	newskips = []
 	for entry in skips:

@@ -57,19 +57,17 @@ def usage():
 
 def testargs(args):
 	if (len(args) < 2):
-		print "ERROR: need at least a chroot directory and a file to copy"
-		print ""
+		sys.stderr.write('ERROR: need at least a chroot directory and a file to copy\n\n')
 		usage()
 		sys.exit(2)
 	if (not os.path.isdir(args[0])):
-		print "ERROR: "+args[0]+" is not a directory"
+		sys.stderr.write('ERROR: '+args[0]+' is not a directory\n')
 		print ""
 		usage()
 		sys.exit(3)
 	for file in args[1:]:
 		if (not os.path.exists(file)):
-			print "ERROR: "+file+" does not exist"
-			print ""
+			sys.stderr.write('ERROR: '+file+' does not exist\n\n')
 			usage()
 			sys.exit(4)
 
