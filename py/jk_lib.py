@@ -265,7 +265,11 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 		print 'Creating directory '+directory
 	os.mkdir(chroot+directory, 0755)
 	if (copy_permissions):
-		copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
+		try:
+			copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
+		except OSError, (errno,strerror):
+			sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chroot+directory[:indx]+': '+strerror+'\n')
+
 
 def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	# used to move home directories into the jail
