@@ -255,7 +255,10 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 				print 'Creating directory '+directory[:indx]
 			os.mkdir(chroot+directory[:indx], 0755)
 			if (copy_permissions):
-				copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
+				try:
+					copy_time_and_permissions(directory[:indx], chroot+directory[:indx], be_verbose, allow_suid, copy_ownership)
+				except OSError, (errno,strerror):
+					sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chroot+directory[:indx]+': '+strerror+'\n')
 			oldindx = indx
 		indx = string.find(directory,'/',oldindx+1)
 	if (be_verbose):
