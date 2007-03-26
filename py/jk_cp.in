@@ -77,7 +77,7 @@ def main():
 		print 'cannot run without root privileges'
 		sys.exit(5)
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'fhvk', ['help', 'verbose', 'force', 'hardlink'])
+		opts, args = getopt.getopt(sys.argv[1:], 'fhvko', ['help', 'verbose', 'force', 'hardlink', 'owner'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)

@@ -103,7 +103,7 @@ def test_suid_sgid(path):
 
 def gen_library_cache(jail):
 	if (sys.platform[:5] == 'linux'):
-		create_full_path(jail+'/etc/')
+		create_parent_path(jail,'/etc/', 0, copy_permissions=0, allow_suid=0, copy_ownership=0)
 		os.system('ldconfig -r '+jail)
 
 
@@ -233,15 +233,15 @@ def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownersh
 	if (copy_ownership):
 		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
 
-def create_full_path(directory, be_verbose=0):
-	"""creates the directory and all its parents id needed"""
-#	print 'create_full_path, started for directory '+directory
+def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_suid=0, copy_ownership=0):
+	"""creates the directory and all its parents id needed. copy_ownership can only be used if copy permissions is also used"""
+	directory =  path
 	if (directory[-1:] == '/'):
 		directory = directory[:-1]
-	if (os.path.exists(directory)):
+	if (os.path.exists(chroot+directory)):
 		return
 	tmp = directory
-	while (not os.path.exists(tmp)):
+	while (not os.path.exists(chroot+tmp)):
 #		print 'DEBUG A: '+tmp+' does not exist'
 		tmp = os.path.dirname(tmp)
 	oldindx = len(tmp) 
@@ -252,13 +252,17 @@ def create_full_path(directory, be_verbose=0):
 			oldindx = indx
 		else: 
 			if (be_verbose):
-				print 'creating directory '+directory[:indx]
-			os.mkdir(directory[:indx], 0755)
+				print 'Creating directory '+directory[:indx]
+			os.mkdir(chroot+directory[:indx], 0755)
+			if (copy_permissions):
+				copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
 			oldindx = indx
 		indx = string.find(directory,'/',oldindx+1)
 	if (be_verbose):
 		print 'creating directory '+directory
-	os.mkdir(directory, 0755)
+	os.mkdir(chroot+directory, 0755)
+	if (copy_permissions):
+		copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
 
 def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	# used to move home directories into the jail
@@ -315,8 +319,8 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0
 			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 
 def copy_device(chroot, path, be_verbose=1, retain_owner=0):
-	# perhaps the calling function should make sure the basedir exists	
-	create_full_path(chroot+os.path.dirname(path), be_verbose)
+	# perhaps the calling function should make sure the basedir exists
+	create_parent_path(chroot,os.path.dirname(path), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=0)	
 	if (os.path.exists(chroot+path)):
 		if (be_verbose==1):
 			print 'device '+chroot+path+' does exist already'
@@ -406,7 +410,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						if (be_verbose):
 							print 'destination file '+chroot+file+' exists already'
 						continue
-			create_full_path(chroot+os.path.dirname(file),be_verbose)
+			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
 				print 'creating symlink '+chroot+file+' to '+realfile
@@ -477,7 +481,7 @@ def test_group_exist(group, groupfile):
 def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
-	create_full_path(chroot+'/etc/', be_verbose)
+	reate_parent_path(chroot,'/etc/', be_verbose, copy_permissions=0, allow_suid=0, copy_ownership=0)
 	if (sys.platform[4:7] == 'bsd'):
 		open(chroot+'/etc/passwd','a').close()
 		open(chroot+'/etc/spwd.db','a').close()

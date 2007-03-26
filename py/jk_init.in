@@ -78,7 +78,8 @@ def init_files(config,chroot,files):
 	for file in files:
 #		print 'DEBUG: working on '+chroot+file
 		if (not os.path.isfile(chroot+file) or config['force']==1):
-			jk_lib.create_full_path(chroot+os.path.dirname(file), config['verbose'])
+#			jk_lib.create_full_path(chroot+os.path.dirname(file), config['verbose'])
+			jk_lib.create_parent_path(chroot,os.path.dirname(file), config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
 			if (config['verbose']):
 				print 'copying '+file+' to '+chroot+file
 #			shutil.copyfile(file,chroot+file)
@@ -98,8 +99,7 @@ def init_directory(config,chroot,dirs):
 			if (not os.path.isdir(chroot+tree)):
 #				if (config['verbose']):
 #					print 'creating dir '+chroot+tree
-				jk_lib.create_full_path(chroot+tree, config['verbose'])
-				jk_lib.copy_time_and_permissions(tree, chroot+tree, config['verbose'])
+				jk_lib.create_parent_path(chroot,tree, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
 			ldir = os.listdir(tree)
 			for entry in ldir:
 				if (os.path.isdir(tree+'/'+entry)):
@@ -128,7 +128,7 @@ def handle_cfg_section(config,chroot,cfg,section):
 	emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
 	for edir in emptydirs:
 #		print 'DEBUG emptydir='+edir
-		jk_lib.create_full_path(chroot+edir, config['verbose'])
+		jk_lib.create_parent_path(chroot,edir, config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
 	users = jk_lib.config_get_option_as_list(cfg,section,'users')
 	groups = jk_lib.config_get_option_as_list(cfg,section,'groups')
 	jk_lib.init_passwd_and_group(chroot,users,groups,config['verbose'])
@@ -142,7 +142,7 @@ def handle_cfg_section(config,chroot,cfg,section):
 			logsocket(config,chroot)
 	devices = jk_lib.config_get_option_as_list(cfg,section,'devices')
 	for tmp in devices:
-		jk_lib.create_full_path(chroot+os.path.dirname(tmp), config['verbose'])
+		jk_lib.create_parent_path(chroot,os.path.dirname(tmp), config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
 		jk_lib.copy_device(chroot,tmp,config['verbose'])
 
 def activateConfig(config, args):

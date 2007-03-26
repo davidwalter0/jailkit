@@ -209,8 +209,8 @@ def jailuser(jail, user, movehome, config):
 				print 'home directory '+oldhome+' does not exist, nothing moved'
 			else:
 				# test if the base directory for newhome exists
-				tmp = jk_lib.nextpathup(newhome)
-				jk_lib.create_full_path(tmp, (config['verbose'] == 1))
+				tmp = jk_lib.nextpathup(oldhome)
+				jk_lib.create_parent_path(jail,tmp, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
 				if (config['verbose'] == 1):
 					print 'Moving files from '+oldhome+' to '+newhome
 				jk_lib.move_dir_with_permissions_and_owner(oldhome,newhome,(config['verbose']==1))
