@@ -360,10 +360,7 @@ def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1,
 		for name in dirs:
 			tmp = os.path.join(root, name)
 			os.mkdir(chroot+tmp)
-			try:
-				copy_time_and_permissions(tmp, chroot+tmp, be_verbose, allow_suid=0, copy_ownership=retain_owner)
-			except OSError, (errno,strerror):
-				sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+tmp+' to '+chroot+tmp+': '+strerror+'\n')
+			create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)			
 			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 	return handledfiles
 
