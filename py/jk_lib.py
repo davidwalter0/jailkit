@@ -268,7 +268,7 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 			print 'Creating '+dstdir
 		os.mkdir(dstdir)
 		copy_time_and_permissions(srcdir, dstdir, be_verbose, 0, 1)
-	except IOError, (errno,strerror):
+	except (IOError, OSError), (errno,strerror):
 		sys.stderr.write('ERROR: copying directory and permissions '+srcdir+' to '+dstdir+': '+strerror+'\n')
 		return 0
 	for root, dirs, files in os.walk(srcdir):
@@ -311,9 +311,7 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
 		try:
 			shutil.copyfile(src,dst)
 			copy_time_and_permissions(src, dst, be_verbose, 0)
-		except IOError, (errno,strerror):
-			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
-		except OSError, (errno,strerror):
+		except (IOError, OSError), (errno,strerror):
 			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 
 def copy_device(chroot, path, be_verbose=1):
