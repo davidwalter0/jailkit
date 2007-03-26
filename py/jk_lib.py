@@ -262,7 +262,7 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 			oldindx = indx
 		indx = string.find(directory,'/',oldindx+1)
 	if (be_verbose):
-		print 'creating directory '+directory
+		print 'Creating directory '+directory
 	os.mkdir(chroot+directory, 0755)
 	if (copy_permissions):
 		copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
@@ -272,7 +272,7 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	#create directory dstdir
 	try:
 		if (be_verbose):
-			print 'Creating '+dstdir
+			print 'Creating directory'+dstdir
 		os.mkdir(dstdir)
 		copy_time_and_permissions(srcdir, dstdir, be_verbose, allow_suid=0, copy_ownership=1)
 	except (IOError, OSError), (errno,strerror):
@@ -313,6 +313,7 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0
 			os.link(src,dst)
 			do_normal_copy = 0
 		except:
+			print 'Failed to link '+src+' to '+dst+', will try to copy'
 			pass
 	if (do_normal_copy == 1):
 		try:
@@ -325,8 +326,7 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 	# perhaps the calling function should make sure the basedir exists
 	create_parent_path(chroot,os.path.dirname(path), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=0)	
 	if (os.path.exists(chroot+path)):
-		if (be_verbose==1):
-			print 'device '+chroot+path+' does exist already'
+		print 'Device '+chroot+path+' does exist already'
 		return
 	sb = os.stat(path)
 	try:
@@ -340,11 +340,11 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 			print 'WARNING, '+path+' is not a character or block device'
 			return 1
 		if (be_verbose==1):
-			print 'creating device '+chroot+path
+			print 'Creating device '+chroot+path
 		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
 		copy_time_and_permissions(path, chroot+path, allow_suid=0, copy_ownership=retain_owner)
 	except:
-		print 'failed to create device '+path+', this is a know problem with python 2.1'
+		print 'Failed to create device '+path+', this is a know problem with python 2.1'
 		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
 		print 'use "mknod '+path+' mode major minor" to create the device'
 		print 'use chmod and chown to set the permissions as found by ls -l'
@@ -375,7 +375,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		except OSError, e:
 			if (be_verbose):
 				if (e.errno == 2):
-					print 'source file '+file+' does not exist'
+					print 'Source file '+file+' does not exist'
 				else:
 					sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
@@ -395,7 +395,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (force_overwrite):
 					if (stat.S_ISREG(chrootsb.st_mode)):
 						if (be_verbose):
-							print 'destination file '+chroot+file+' exists, deleting'
+							print 'Destination file '+chroot+file+' exists, will delete to force update'
 						try:
 							os.unlink(chroot+file)
 						except OSError, e:
@@ -403,7 +403,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
 					elif (stat.S_ISDIR(chrootsb.st_mode)):
-						print 'destination dir '+chroot+file+' exists'
+						print 'Destination dir '+chroot+file+' exists'
 				else:
 					if (stat.S_ISDIR(chrootsb.st_mode)):
 						pass
@@ -411,12 +411,12 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						# skip to the next item of the loop
 					else:
 						if (be_verbose):
-							print 'destination file '+chroot+file+' exists already'
+							print 'Destination file '+chroot+file+' exists'
 						continue
 			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
-				print 'creating symlink '+chroot+file+' to '+realfile
+				print 'Creating symlink '+chroot+file+' to '+realfile
 				try:
 					os.symlink(realfile, chroot+file)
 				except OSError:
@@ -429,13 +429,16 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			elif (stat.S_ISDIR(sb.st_mode)):
 				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
-				print 'copying/linking '+file+' to '+chroot+file
+				if (try_hardlink):
+					print 'Trying to link '+file+' to '+chroot+file
+				else:
+					print 'Copying'+file+' to '+chroot+file
 				copy_with_permissions(file,chroot+file,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
 				copy_device(chroot, file, be_verbose, retain_owner)
 			else:
-				print 'failed to find how to copy '+file
+				sys.stderr.write('Failed to find how to copy '+file+' into a chroot jail, please report to the Jailkit developers\n')
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
 			mode = stat.S_IMODE(sb[stat.ST_MODE])
