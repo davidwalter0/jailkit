@@ -1,4 +1,4 @@
-.TH jk_cp 8 21-03-2007 JAILKIT jk_cp
+.TH jk_cp 8 26-03-2007 JAILKIT jk_cp
 
 .SH NAME
 jk_cp \- a utility to copy files including permissions and libraries into a jail
@@ -30,7 +30,10 @@ will hardlink /usr/bin/firefox and all files in /usr/share/firefox into jail /sv
 Force overwriting of existing files
 .TP
 .BR \-k\ \-\-hardlink
-Try to create hardlinks instead of copying the files
+Try to create hardlinks instead of copying the files. If linking fails it falls back to copying.
+.TP
+.BR \-o\ \-\-owner
+Retains the file ownership and group when copying files and directories.
 .TP
 .BR \-v\ \-\-verbose
 Will give verbose output
