@@ -43,16 +43,17 @@ sys.path.append(LIBDIR)
 import jk_lib
 
 def startcopy(config, chroot, filestocopy, checklibs=1):
-	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'])
+	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'], retain_owner=config['retainowner'])
 	jk_lib.gen_library_cache(chroot)
 
 def usage():
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
 	print ""
-	print "-h --help              : this help screen"
-	print "-v, --verbose          : show what is being copied"
-	print "-f, --force            : overwrite existing files"
-	print "-k, --hardlink         : use hardlinks if possible"
+	print "-h --help          : this help screen"
+	print "-v, --verbose      : show what is being copied"
+	print "-f, --force        : overwrite existing files"
+	print "-k, --hardlink     : use hardlinks if possible"
+	print "-o, --owner        : retain file ownership and group"
 	print ""
 
 def testargs(args):
@@ -84,6 +85,7 @@ def main():
 	config['verbose'] = 0
 	config['force'] = 0
 	config['hardlink'] = 0
+	config['retainowner'] = 0
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
@@ -94,6 +96,8 @@ def main():
 			config['force'] = 1
 		if o in ("-k", "--hardlink"):
 			config['hardlink'] = 1
+		if o in ("-o", "--owner"):
+			config['retainowner'] = 1
 	testargs(args)
 	if (args[0][-1] != '/'): args[0] = args[0]+'/'
 	if (jk_lib.chroot_is_safe(args[0])!=1):

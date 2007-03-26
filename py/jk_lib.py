@@ -214,6 +214,25 @@ def lddlist_libraries(executable):
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 		return retval
 
+def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownership=0):
+	# the caller should catch any exceptions!
+# similar to shutil.copymode(src, dst) but we do not copy any SUID bits
+	sbuf = os.stat(src)
+#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
+#	mode = stat.S_IMODE(sbuf.st_mode)
+	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
+	if (not allow_suid):
+		if (mode & (stat.S_ISUID | stat.S_ISGID)):
+			print 'removing setuid and setgid permissions from '+dst
+#			print 'setuid!!! mode='+str(mode)
+			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
+#			print 'setuid!!! after mode='+str(mode)
+#		print 'mode='+str(mode)
+	os.chmod(dst, mode)
+	os.utime(dst, (sbuf[stat.ST_ATIME], sbuf[stat.ST_MTIME]))
+	if (copy_ownership):
+		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
+
 def create_full_path(directory, be_verbose=0):
 	"""creates the directory and all its parents id needed"""
 #	print 'create_full_path, started for directory '+directory
@@ -241,25 +260,6 @@ def create_full_path(directory, be_verbose=0):
 		print 'creating directory '+directory
 	os.mkdir(directory, 0755)
 
-def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownership=0):
-	# the caller should catch any exceptions!
-# similar to shutil.copymode(src, dst) but we do not copy any SUID bits
-	sbuf = os.stat(src)
-#	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
-#	mode = stat.S_IMODE(sbuf.st_mode)
-	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
-	if (not allow_suid):
-		if (mode & (stat.S_ISUID | stat.S_ISGID)):
-			print 'removing setuid and setgid permissions from '+dst
-#			print 'setuid!!! mode='+str(mode)
-			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
-#			print 'setuid!!! after mode='+str(mode)
-#		print 'mode='+str(mode)
-	os.chmod(dst, mode)
-	os.utime(dst, (sbuf[stat.ST_ATIME], sbuf[stat.ST_MTIME]))
-	if (copy_ownership):
-		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
-
 def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	# used to move home directories into the jail
 	#create directory dstdir
@@ -267,7 +267,7 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 		if (be_verbose):
 			print 'Creating '+dstdir
 		os.mkdir(dstdir)
-		copy_time_and_permissions(srcdir, dstdir, be_verbose, 0, 1)
+		copy_time_and_permissions(srcdir, dstdir, be_verbose, allow_suid=0, copy_ownership=1)
 	except (IOError, OSError), (errno,strerror):
 		sys.stderr.write('ERROR: copying directory and permissions '+srcdir+' to '+dstdir+': '+strerror+'\n')
 		return 0
@@ -277,7 +277,7 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 				print 'Copying '+root+'/'+name+' to '+dstdir+'/'+name
 			try:
 				shutil.copyfile(root+'/'+name,dstdir+'/'+name)
-				copy_time_and_permissions(root+'/'+name, dstdir+'/'+name, be_verbose, 0, 1)
+				copy_time_and_permissions(root+'/'+name, dstdir+'/'+name, be_verbose, allow_suid=0, copy_ownership=1)
 			except (IOError,OSError), (errno,strerror):
 				sys.stderr.write('ERROR: copying file and permissions '+root+'/'+name+' to '+dstdir+'/'+name+': '+strerror+'\n')
 				return 0
@@ -298,7 +298,7 @@ def move_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	else:
 		print 'Not everything was copied to '+dstdir+', keeping the old directory '+srcdir
 
-def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
+def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0):
 	"""copies/links the file and the permissions, except any setuid or setgid bits"""
 	do_normal_copy = 1
 	if (try_hardlink==1):
@@ -310,11 +310,11 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1):
 	if (do_normal_copy == 1):
 		try:
 			shutil.copyfile(src,dst)
-			copy_time_and_permissions(src, dst, be_verbose, 0)
+			copy_time_and_permissions(src, dst, be_verbose, allow_suid=0, copy_ownership=retain_owner)
 		except (IOError, OSError), (errno,strerror):
 			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 
-def copy_device(chroot, path, be_verbose=1):
+def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 	# perhaps the calling function should make sure the basedir exists	
 	create_full_path(chroot+os.path.dirname(path), be_verbose)
 	if (os.path.exists(chroot+path)):
@@ -335,25 +335,26 @@ def copy_device(chroot, path, be_verbose=1):
 		if (be_verbose==1):
 			print 'creating device '+chroot+path
 		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
-		copy_time_and_permissions(path, chroot+path, 0, 0)
+		copy_time_and_permissions(path, chroot+path, allow_suid=0, copy_ownership=retain_owner)
 	except:
 		print 'failed to create device '+path+', this is a know problem with python 2.1'
 		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
 		print 'use "mknod '+path+' mode major minor" to create the device'
 		print 'use chmod and chown to set the permissions as found by ls -l'
 
-def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, handledfiles=[]):
+def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, handledfiles=[]):
 	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
+	
 	for root, dirs, files in os.walk(dir):
 		files2 = ()
 		for name in files:
 			files2 += os.path.join(root, name),
-		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
+		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 		for name in dirs:
-			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
+			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 	return handledfiles
 
-def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, handledfiles=[]):
+def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
@@ -385,7 +386,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		else:
 			if (chrootfile_exists):
 				if (force_overwrite):
-					if (os.path.isfile(chroot+file)):
+					if (stat.S_ISREG(chrootsb.st_mode)):
 						if (be_verbose):
 							print 'destination file '+chroot+file+' exists, deleting'
 						try:
@@ -394,10 +395,10 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 							sys.stderr.write('ERROR: failed to delete '+chroot+file+': '+e.strerror+'\ncannot overwrite '+chroot+file+'\n')
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
-					elif (os.path.isdir(chroot+file)):
+					elif (stat.S_ISDIR(chrootsb.st_mode)):
 						print 'destination dir '+chroot+file+' exists'
 				else:
-					if (os.path.isdir(chroot+file)):
+					if (stat.S_ISDIR(chrootsb.st_mode)):
 						pass
 						# for a directory we also should inspect all the contents, so we do not 
 						# skip to the next item of the loop
@@ -417,15 +418,15 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				handledfiles.append(file)
 				if (realfile[0] != '/'):
 					realfile = os.path.dirname(file)+'/'+realfile
-				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
+				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISDIR(sb.st_mode)):
-				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, handledfiles)
+				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
 				print 'copying/linking '+file+' to '+chroot+file
-				copy_with_permissions(file,chroot+file,be_verbose, try_hardlink)
+				copy_with_permissions(file,chroot+file,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
-				copy_device(chroot, file, be_verbose)
+				copy_device(chroot, file, be_verbose, retain_owner)
 			else:
 				print 'failed to find how to copy '+file
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
