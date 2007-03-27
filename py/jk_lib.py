@@ -493,7 +493,7 @@ def test_group_exist(group, groupfile):
 def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
-	reate_parent_path(chroot,'/etc/', be_verbose, copy_permissions=0, allow_suid=0, copy_ownership=0)
+	create_parent_path(chroot,'/etc/', be_verbose, copy_permissions=0, allow_suid=0, copy_ownership=0)
 	if (sys.platform[4:7] == 'bsd'):
 		open(chroot+'/etc/passwd','a').close()
 		open(chroot+'/etc/spwd.db','a').close()
