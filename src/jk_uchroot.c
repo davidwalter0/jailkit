@@ -51,7 +51,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <syslog.h>
 #include <limits.h>
-/* #define DEBUG */
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
+#ifdef HAVE_LIBERTY_H
+#include <liberty.h>
+#endif
+
+#define DEVELOPMENT
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_MSG printf
@@ -60,8 +68,8 @@ POSSIBILITY OF SUCH DAMAGE.
  /**/
 #endif
 
-#define PROGRAMNAME "jk_chrootsh"
-#define CONFIGFILE INIPREFIX"/jk_chrootsh.ini"
+#define PROGRAMNAME "jk_uchroot"
+#define CONFIGFILE INIPREFIX"/jk_uchrootsh.ini"
 
 #include "jk_lib.h"
 #include "utils.h"
@@ -70,376 +78,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* doesn't compile on FreeBSD without this */
 extern char **environ;
-
-/*
-typedef struct {
-	char *key;
-	char *value;
-} Tsavedenv;
-
-static Tsavedenv *savedenv_new(const char *key) {
-	Tsavedenv *savedenv;
-	char *val = getenv(key);
-	if (!val) return NULL;
-	savedenv = malloc(sizeof(Tsavedenv));
-	savedenv->key = strdup(key);
-	savedenv->value = strdup(val);
-	return savedenv;
-}
-
-static void savedenv_restore(Tsavedenv *savedenv) {
-	if (savedenv) {
-		setenv(savedenv->key, savedenv->value, 1);
-		DEBUG_MSG("restored %s=%s\n",savedenv->key, savedenv->value);
-	}
-}
-
-static void savedenv_free(Tsavedenv *savedenv) {
-	if (savedenv) {
-		free(savedenv->key);
-		free(savedenv->value);
-		free(savedenv);
-	}
-}
-*/
-
-static int in_array(char **haystack, char * needle) {
-	if (haystack && needle) {
-		char **tmp = haystack;
-		while (*tmp) {
-			if (strcmp(*tmp, needle)==0) return 1;
-			tmp++;
-		}
-	}
-	return 0;
-}
-
-static void unset_environ_except(char **except) {
-	char **tmp = environ;
-	while (*tmp) {
-		char* pos = strchr(*tmp, '=');
-		if (pos != NULL) {
-			char *key = strndup(*tmp, pos-*tmp);
-			if (in_array(except, key)) {
-				DEBUG_MSG("%s is in except, with value %s\n",key,getenv(key));
-			} else {
-				DEBUG_MSG("%s is NOT in except\n",key);
-				unsetenv(key);
-			}
-			free(key);
-		} else {
-			DEBUG_MSG("problem with %s\n",*tmp);
-		}
-		tmp++;
-	}
-}
-
-
-int main (int argc, char **argv) {
-	int i;
-	struct passwd *pw=NULL;
-	struct group *gr=NULL;
-	long ngroups_max=NGROUPS_MAX;
-	long ngroups=0;
-	gid_t *gids;
-	struct passwd *intpw=NULL; /* for internal_getpwuid() */
-	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
-	Tiniparser *parser=NULL;
-	char **envs=NULL;
-	int relax_home_group_permissions=0;
-	int relax_home_other_permissions=0;
-	int relax_home_group=0;
-	char *injail_shell=NULL;
-	int skip_injail_passwd_check=0;
-
-	DEBUG_MSG(PROGRAMNAME", started\n");
-	/* open the log facility */
-	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
-	
-	/* check if it us that the user wants */
-	{
-		char *tmp = strrchr(argv[0], '/');
-		if (!tmp) {
-			tmp = argv[0];
-		} else {
-			tmp++;
-		}
-		if (strcmp(tmp, PROGRAMNAME) && (tmp[0] != '-' || strcmp(&tmp[1], PROGRAMNAME))) {
-			DEBUG_MSG("wrong name, tmp=%s, &tmp[1]=%s\n", tmp, &tmp[1]);
-			syslog(LOG_ERR, "abort, "PROGRAMNAME" is called as %s", argv[0]);
-			exit(1);
-		}
-	}
-	DEBUG_MSG("close filedescriptors\n");
-	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
-	for (i=getdtablesize();i>3;i--) {
-		while (close(i) != 0 && errno == EINTR);
-	}
-
-	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
-	if (geteuid() != 0) {
-		syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
-		exit(11);
-	}
-	if (getuid() == 0) {
-		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense because user root can break out of a jail anyway");
-		exit(12);
-	}
-
-	DEBUG_MSG("get user info\n");
-	pw = getpwuid(getuid());
-	if (!pw) {
-		syslog(LOG_ERR, "abort, failed to get user information for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
-		exit(13);
-	}
-	if (!pw->pw_name || strlen(pw->pw_name)==0) {
-		syslog(LOG_ERR, "abort, got an empty username for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
-		exit(13);
-	}
-	DEBUG_MSG("got user %s\nget group info\n",pw->pw_name);
-	gr = getgrgid(getgid());
-	if (!gr) {
-		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
-		exit(13);
-	}
-	DEBUG_MSG("get additional groups\n");
-	/* ngroups_max = sysconf(_SC_NGROUPS_MAX);*/
-	gids = malloc(ngroups_max * sizeof(gid_t));
-	ngroups = getgroups(ngroups_max,gids);
-	if (ngroups == -1) {
-		syslog(LOG_ERR, "abort, failed to get additional group information: %s, check /etc/group", strerror(errno));
-		exit(13);
-	}
-#ifdef DEBUG
-	{
-		printf("got additional groups ");
-		for (i=0;i<ngroups;i++) {
-			printf("%d, ",gids[i]);
-		}
-		printf("\n");
-	}
-#endif
-
-	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
-	parser = new_iniparser(CONFIGFILE);
-	
-	if (parser) {
-		char *groupsec, *section=NULL, buffer[1024]; /* openbsd complains if this is <1024 */
-		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
-		if (iniparser_has_section(parser, pw->pw_name)) {
-			section = strdup(pw->pw_name);
-		} else if (iniparser_has_section(parser, groupsec)) {
-			section = groupsec;
-		} else if (iniparser_has_section(parser, "DEFAULT")) {
-			section = strdup("DEFAULT");
-		}
-		if (section != groupsec) free(groupsec);
-		if (section) {
-			unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
-			
-			if (iniparser_get_string_at_position(parser, section, "env", pos, buffer, 1024) > 0) {
-				envs = explode_string(buffer, ',');
-			}
-			relax_home_group_permissions = iniparser_get_int_at_position(parser, section, "relax_home_group_permissions", pos);
-			relax_home_other_permissions = iniparser_get_int_at_position(parser, section, "relax_home_other_permissions", pos);
-			relax_home_group = iniparser_get_int_at_position(parser, section, "relax_home_group", pos);
-			if (iniparser_get_string_at_position(parser, section, "injail_shell", pos, buffer, 1024) > 0) {
-				injail_shell = strdup(buffer);
-			}
-			if (injail_shell) {
-				skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
-			}
-			DEBUG_MSG("section %s: relax_home_group_permissions=%d, relax_home_other_permissions=%d, relax_home_group=%d, injail_shell=%s, skip_injail_passwd_check=%d\n",
-					section, relax_home_group_permissions, relax_home_other_permissions, 
-					relax_home_group, injail_shell, skip_injail_passwd_check);
-			free(section);
-		} else {
-			DEBUG_MSG("no relevant section found in configfile\n");
-		}
-	} else {
-		DEBUG_MSG("no configfile "CONFIGFILE" ??\n");
-	}
-	
-	unset_environ_except(envs);
-	if (envs) {
-		free_array(envs);
-	}
-	
-	if (pw->pw_gid != getgid()) {
-		syslog(LOG_ERR, "abort, the group ID from /etc/passwd (%d) does not match the group ID we run with (%d)", pw->pw_gid, getgid());
-		exit(15);
-	}
-	if (!pw->pw_dir || strlen(pw->pw_dir) ==0) {
-		syslog(LOG_ERR, "abort, got an empty home directory for user %s (%d)", pw->pw_name, getuid());
-		exit(16);
-	}
-	if (strstr(pw->pw_dir, "/./") == NULL) {
-		syslog(LOG_ERR, "abort, homedir '%s' for user %s (%d) does not contain the jail separator <jail>/./<home>", pw->pw_dir, pw->pw_name, getuid());
-		exit(17);
-	}
-	DEBUG_MSG("get jaildir\n");
-	if (!getjaildir(pw->pw_dir, &jaildir, &newhome)) {
-		syslog(LOG_ERR, "abort, failed to read the jail and the home from %s for user %s (%d)",pw->pw_dir, pw->pw_name, getuid());
-		exit(17);
-	}
-	DEBUG_MSG("dir=%s,jaildir=%s,newhome=%s\n",pw->pw_dir, jaildir, newhome);
-	DEBUG_MSG("get chdir()\n");
-	if (chdir(jaildir) != 0) {
-		syslog(LOG_ERR, "abort, chdir(%s) failed: %s, check the permissions for %s",jaildir,strerror(errno),jaildir);
-		exit(19);
-	} else {
-		char test[1024];
-		/* test if it really succeeded */
-		getcwd(test, 1024);
-		if (strcmp(jaildir, test) != 0) {
-			syslog(LOG_ERR, "abort, the current dir does not equal %s after chdir(%s)",jaildir,jaildir);
-			exit(21);
-		}
-	}		
-	
-	/* here do test the ownership of the jail and the homedir and such
-	the function testsafepath doe exit itself on any failure */
-	{ 
-		int ret;
-		DEBUG_MSG("test paths\n");
-		ret = testsafepath(jaildir,0,0);
-		if (ret != 0) {
-			syslog(LOG_ERR, "abort, path %s is not a safe jail, check ownership and permissions", jaildir);
-			exit(53);	
-		}
-		ret = testsafepath(pw->pw_dir, getuid(), getgid());
-		if ((ret & TESTPATH_NOREGPATH) ) {
-			syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
-			exit(53);	
-		}
-		if ((ret & TESTPATH_OWNER) ) {
-			syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
-			exit(53);
-		}
-		if (!relax_home_group && (ret & TESTPATH_GROUP)) {
-			syslog(LOG_ERR, "abort, path %s does not have group %d", pw->pw_dir,getgid());
-			exit(53);
-		}
-		if (!relax_home_group_permissions && (ret & TESTPATH_GROUPW)) {
-			syslog(LOG_ERR, "abort, path %s is group writable", pw->pw_dir);
-			exit(53);
-		}
-		if (!relax_home_other_permissions && (ret & TESTPATH_OTHERW)) {
-			syslog(LOG_ERR, "abort, path %s is writable for other", pw->pw_dir);
-			exit(53);
-		}
-	}
-	/* do a final log message */
-	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jaildir, pw->pw_name, getuid());
-	
-	DEBUG_MSG("chroot()\n");
-	/* do the chroot() call */
-	if (chroot(jaildir)) {
-		syslog(LOG_ERR, "abort, chroot(%s) failed: %s, check the permissions for %s", jaildir, strerror(errno), jaildir);
-		exit(33);
-	}
-	
-	/* drop all privileges, it seems that we first have to setgid(), 
-		then we have to call initgroups(), 
-		then we call setuid() */
-	if (setgid(getgid())) {
-		syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
-		exit(34);
-	}
-	if (setgroups(ngroups, gids)==-1) {
-		syslog(LOG_ERR, "abort, failed to set additional groups: %s", strerror(errno));
-		exit(35);
-	}
-	free(gids);
-/*	if (initgroups(pw->pw_name, getgid())) {
-		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/group", pw->pw_name,getuid(),jaildir);
-		exit(35);
-	}*/
-	if (setuid(getuid())) {
-		syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
-		exit(36);
-	}
-	
-	/* test for user and group info, is it the same? checks username, groupname and home */
-	if (!skip_injail_passwd_check){
-		char *oldpw_name,*oldgr_name;
-		oldpw_name = strdup(pw->pw_name);
-		oldgr_name = strdup(gr->gr_name);
-		
-		pw = getpwuid(getuid());
-		if (!pw) {
-			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jaildir);
-			exit(35);
-		}
-		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
-		gr = getgrgid(getgid());
-		if (!gr) {
-			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d: %s, check %s/etc/group",getgid(),strerror(errno),jaildir);
-			exit(35);
-		}
-		if (strcmp(pw->pw_name, oldpw_name)!=0) {
-			syslog(LOG_ERR, "abort, username %s differs from jail username %s for user ID %d, check /etc/passwd and %s/etc/passwd", oldpw_name, pw->pw_name, getuid(), jaildir);
-			exit(37);
-		}
-		if (strcmp(gr->gr_name, oldgr_name)!=0) {
-			syslog(LOG_ERR, "abort, groupname %s differs from jail groupname %s for group ID %d, check /etc/passwd and %s/etc/passwd", oldgr_name, gr->gr_name, getgid(), jaildir);
-			exit(37);
-		}
-		if (strcmp(pw->pw_dir, newhome)!=0) {
-			DEBUG_MSG("%s!=%s\n",pw->pw_dir, newhome);
-			/* if these are different, it could be that getpwuid() gets the real user info, 
-			and not the info inside the jail, lets test that, and if true, we should use the 
-			shell from the internal function as well*/
-			intpw = internal_getpwuid(getuid());
-			if (strcmp(intpw->pw_dir, newhome)!=0) {
-				DEBUG_MSG("%s!=%s\n",intpw->pw_dir, newhome);
-				syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
-				exit(39);
-			}
-		}
-		free(oldpw_name);
-		free(oldgr_name);
-	}
-	if (injail_shell) {
-		shell = injail_shell;
-	} else if (intpw) {
-		shell = intpw->pw_shell;
-	} else {
-		shell = pw->pw_shell;
-	}
-	/* test the shell in the jail, it is not allowed to be setuid() root */
-	testsafepath(shell,0,0);
-
-	/* prepare the new environment */
-	setenv("HOME",newhome,1);
-	setenv("USER",pw->pw_name,1);
-	setenv("SHELL",shell,1);
-	if (chdir(newhome) != 0) {
-		syslog(LOG_ERR, "abort, chdir(%s) failed inside the jail %s: %s, check the permissions for %s/%s",newhome,jaildir,strerror(errno),jaildir,newhome);
-		exit(41);
-	}
-
-	/* cleanup before execution */
-	free(newhome);
-	
-	/* now execute the jailed shell */
-	/*execl(pw->pw_shell, pw->pw_shell, NULL);*/
-	{
-		char **newargv;
-		int i;
-		newargv = malloc0((argc+1)*sizeof(char *));
-		newargv[0] = shell;
-		for (i=1;i<argc;i++) {
-			newargv[i] = argv[i];
-		}
-		execv(shell, newargv);
-	}
-	DEBUG_MSG(strerror(errno));
-	syslog(LOG_ERR, "ERROR: failed to execute shell %s for user %s (%d), check the permissions and libraries of %s/%s",shell,pw->pw_name,getuid(),jaildir,shell);
-
-	free(jaildir);
-	exit(111);
-}
 
 static void print_usage() {
 	printf(PACKAGE" "VERSION"\nUsage: "PROGRAMNAME" -j jaildir -x executable -- [executable options]\n");
@@ -460,6 +98,21 @@ static char *ending_slash(const char *src) {
 	}
 }
 
+/* this function can handle differences in ending slash */
+static int dirs_equal(const char *dir1, const char *dir2) {
+	int d1len, d2len;
+	d1len = strlen(dir1);
+	d2len = strlen(dir2);
+	if (d1len == d2len) {
+		return (strcmp(dir1,dir2)==0);
+	} else if (d1len == d2len-1 && dir1[d1len-1]!='/' && dir2[d2len-1]=='/') {
+		return (strncmp(dir1,dir2,d1len)==0);
+	} else if (d1len-1 == d2len && dir1[d1len-1]=='/' && dir2[d2len-1]!='/') {
+		return (strncmp(dir1,dir2,d2len)==0);
+	}
+	return 0;
+}
+
 /* check basics */
 /* parse arguments */
 /* parse configfile */
@@ -469,6 +122,9 @@ static char *ending_slash(const char *src) {
 int main(int argc, char **argv) {
 	char *jail = NULL;
 	char *executable = NULL;
+	struct passwd *pw=NULL;
+	struct group *gr=NULL;
+	Tiniparser *parser=NULL;
 	char **newargv=NULL;
 	char **allowed_jails = NULL;
 	char *injail_shell=NULL;
@@ -492,10 +148,12 @@ int main(int argc, char **argv) {
 	}
 	
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
+#ifndef DEVELOPMENT
 	if (geteuid() != 0) {
 		syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
 		exit(11);
 	}
+#endif
 	if (getuid() == 0) {
 		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense because user root can use the chroot utility");
 		exit(12);
@@ -511,6 +169,11 @@ int main(int argc, char **argv) {
 		syslog(LOG_ERR, "abort, got an empty username for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
 		exit(13);
 	}
+	gr = getgrgid(getgid());
+	if (!gr) {
+		syslog(LOG_ERR, "abort, failed to get group information for group ID %d: %s, check /etc/group", getgid(), strerror(errno));
+		exit(13);
+	}
 
 
 	{
@@ -524,13 +187,14 @@ int main(int argc, char **argv) {
 				{"version", no_argument, NULL, 'V'},
 				{NULL, 0, NULL, 0}
 			};
-		 	c = getopt_long(argc, argv, "j:hv",long_options, &option_index);
+		 	c = getopt_long(argc, argv, "j:x:hv",long_options, &option_index);
 			switch (c) {
 			case 'j':
 				jail = ending_slash(optarg);
 				break;
 			case 'x':
 				executable = strdup(optarg);
+				break;
 			case 'h':
 			case 'V':
 				print_usage();
@@ -546,7 +210,12 @@ int main(int argc, char **argv) {
 			c++;
 			optind++;
 		}
-
+		
+		if (jail == NULL) {
+			printf("ERROR: No jail path specified. Use -j or --jail\n");
+			print_usage();
+			exit(1);
+		}
 	}
 
 	parser = new_iniparser(CONFIGFILE);
@@ -580,6 +249,11 @@ int main(int argc, char **argv) {
 				skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
 			}
 			free(section);
+			
+			if (allowed_jails == NULL) {
+				syslog(LOG_ERR,"abort, no relevant section for user %s (%d) or group %s (%d) found in "CONFIGFILE, pw->pw_name,getuid(),gr->gr_name,getgid());
+				exit(1);
+			}
 		} else {
 			DEBUG_MSG("no relevant section found in configfile\n");
 		}
@@ -593,52 +267,18 @@ int main(int argc, char **argv) {
 		int allowed = 0;
 		int i;
 		/* 'jail' has an ending slash */
-		int jaillen = strlen(jail);
 		for (i=0;allowed_jails[i]!=NULL&&!allowed;i++) {
-			int ajlen = strlen(allowed_jails[i]);
-			if (ajlen == jaillen) {
-				allowed = (strcmp(jail,allowed_jails[i])==0);
-			} else if ((jaillen -1) == ajlen) {
-				allowed = (strncmp(jail,allowed_jails[i],jaillen-1));
-			}
+			allowed = dirs_equal(jail,allowed_jails[i]);
 		}
 		if (allowed!=1) {
-			syslog(LOG_ERR,"abort, user %s (%d) is not allowed in jail %s",user,uid,jail);
+			syslog(LOG_ERR,"abort, user %s (%d) is not allowed in jail %s",pw->pw_name, getuid(),jail);
 			exit(21);
 		}
 	}
 	/* test the jail */
-	{
-		char *tmp = malloc0(strlen(jail)+5);
-		if (testsafepath(jail,0,0) != 0) {
-			syslog(LOG_ERR, "abort, path %s is not a safe jail, check ownership and permissions", jail);
-			exit(53);
-		}
-		tmp = strcpy(tmp, jail);
-		tmp = strcat(tmp, "bin/");
-		if (testsafepath(tmp,0,0) != 0) {
-			syslog(LOG_ERR, "abort, path %s in jail %s is not safe, check ownership and permissions", tmp, jail);
-			exit(53);
-		}
-		tmp = strcpy(tmp, jail);
-		tmp = strcat(tmp, "lib/");
-		if (testsafepath(tmp,0,0) != 0) {
-			syslog(LOG_ERR, "abort, path %s in jail %s is not safe, check ownership and permissions", tmp, jail);
-			exit(53);
-		}
-		tmp = strcpy(tmp, jail);
-		tmp = strcat(tmp, "usr/");
-		if (testsafepath(tmp,0,0) != 0) {
-			syslog(LOG_ERR, "abort, path %s in jail %s is not safe, check ownership and permissions", tmp, jail);
-			exit(53);
-		}
-		tmp = strcpy(tmp, jail);
-		tmp = strcat(tmp, "etc/");
-		if (testsafepath(tmp,0,0) != 0) {
-			syslog(LOG_ERR, "abort, path %s in jail %s is not safe, check ownership and permissions", tmp, jail);
-			exit(53);
-		}
-		free(tmp);
+	if (!basicjailissafe(jail)) {
+		syslog(LOG_ERR, "abort, jail %s is not safe, check ownership and permissions for the jail inclusing system directories such as /etc, /lib, /usr, /dev, /sbin, and /bin", jail);
+		exit(53);
 	}
 	
 	if (chdir(jail) != 0) {
@@ -648,13 +288,13 @@ int main(int argc, char **argv) {
 		char test[1024];
 		/* test if it really succeeded */
 		getcwd(test, 1024);
-		if (strcmp(jail, test) != 0) {
-			syslog(LOG_ERR, "abort, the current dir does not equal %s after chdir(%s)",jail,jail);
+		if (!dirs_equal(jail, test)) {
+			syslog(LOG_ERR, "abort, the current dir is %s after chdir(%s), but it should be %s",test,jail,jail);
 			exit(21);
 		}
 	}
 	
-	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jaildir, pw->pw_name, getuid());
+	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jail, pw->pw_name, getuid());
 	
 	/* do the chroot() call */
 	if (chroot(jail)) {
@@ -676,7 +316,7 @@ int main(int argc, char **argv) {
 	/* now execute the jailed shell */
 	execv(executable, newargv);
 	/* normally we wouldn't come to this bit of code */
-	syslog(LOG_ERR, "ERROR: failed to execute shell %s for user %s (%d), check the permissions and libraries of %s/%s",shell,pw->pw_name,getuid(),jaildir,shell);
+	syslog(LOG_ERR, "ERROR: failed to execute %s for user %s (%d), check the permissions and libraries of %s/%s",executable,pw->pw_name,getuid(),jail,executable);
 
 	free(jail);
 	exit(111);

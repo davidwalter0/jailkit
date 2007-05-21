@@ -29,7 +29,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define DEBUG */
+/*#define DEBUG*/
 #include "config.h"
 
 #include <string.h>
@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 int testsafepath(const char *path, int owner, int group) {
 	struct stat sbuf;
+	DEBUG_MSG("testsafepath %s\n",path);
 	if (lstat(path, &sbuf) == 0) {
 		int retval=0;
 		if (S_ISLNK(sbuf.st_mode)) {
@@ -86,6 +87,23 @@ int testsafepath(const char *path, int owner, int group) {
 	}
 }
 
+int basicjailissafe(const char *path) {
+	if (path && testsafepath(path, 0, 0) ==0) {
+		char *tmp;
+		int retval = 1;
+		tmp = malloc0(strlen(path)+6);
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "dev/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "etc/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "lib/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "usr/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "bin/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "sbin/"), 0, 0)&~TESTPATH_NOREGPATH)!=0) retval = 0;
+		free(tmp);
+		DEBUG_MSG("basicjailissafe, returning %d\n",retval);
+		return retval;
+	}
+	return 0;
+}
 
 /* if it returns 1 it will allocate new memory for jaildir and newhomedir
  * else it will return 0

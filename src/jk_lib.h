@@ -33,6 +33,7 @@
 
 
 int testsafepath(const char *path, int owner, int group);
+int basicjailissafe(const char *path);
 int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir);
 char *strip_string(char * string);
 int count_char(const char *string, char lookfor);
