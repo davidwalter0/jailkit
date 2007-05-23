@@ -56,29 +56,31 @@ int testsafepath(const char *path, int owner, int group) {
 	if (lstat(path, &sbuf) == 0) {
 		int retval=0;
 		if (S_ISLNK(sbuf.st_mode)) {
-			syslog(LOG_ERR, "abort, path %s is a symlink", path);
+			syslog(LOG_ERR, "path %s is a symlink", path);
 			retval |= TESTPATH_NOREGPATH;
 		}
 		if (sbuf.st_mode & S_ISUID) {
-			syslog(LOG_ERR, "abort, path %s is setuid", path);
+			syslog(LOG_ERR, "path %s is setuid", path);
 			retval |= TESTPATH_SETUID;
 		}
 		if (sbuf.st_mode & S_ISGID) {
-			syslog(LOG_ERR, "abort, path %s is setgid", path);
+			syslog(LOG_ERR, "path %s is setgid", path);
 			retval |= TESTPATH_SETGID;
 		}
 		if (sbuf.st_mode & S_IWGRP) {
-			syslog(LOG_ERR, "abort, path %s is setgid", path);
+			syslog(LOG_ERR, "path %s is setgid", path);
 			retval |= TESTPATH_GROUPW;
 		}
 		if (sbuf.st_mode & S_IWOTH) {
-			syslog(LOG_ERR, "abort, path %s is setgid", path);
+			syslog(LOG_ERR, "path %s is setgid", path);
 			retval |= TESTPATH_OTHERW;
 		}
 		if (sbuf.st_uid != owner){
+			syslog(LOG_ERR, "path %s is not owned by user %d", path, owner);
 			retval |= TESTPATH_OWNER;
 		}
 		if (sbuf.st_gid != group){
+			syslog(LOG_ERR, "path %s is not owned by group %d", path, group);
 			retval |= TESTPATH_GROUP;
 		}
 		return retval;
@@ -104,6 +106,22 @@ int basicjailissafe(const char *path) {
 	}
 	return 0;
 }
+
+/* this function can handle differences in ending slash */
+int dirs_equal(const char *dir1, const char *dir2) {
+	int d1len, d2len;
+	d1len = strlen(dir1);
+	d2len = strlen(dir2);
+	if (d1len == d2len) {
+		return (strcmp(dir1,dir2)==0);
+	} else if (d1len == d2len-1 && dir1[d1len-1]!='/' && dir2[d2len-1]=='/') {
+		return (strncmp(dir1,dir2,d1len)==0);
+	} else if (d1len-1 == d2len && dir1[d1len-1]=='/' && dir2[d2len-1]!='/') {
+		return (strncmp(dir1,dir2,d2len)==0);
+	}
+	return 0;
+}
+
 
 /* if it returns 1 it will allocate new memory for jaildir and newhomedir
  * else it will return 0

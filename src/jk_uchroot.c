@@ -58,8 +58,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <liberty.h>
 #endif
 
-#define DEVELOPMENT
-#define DEBUG
+/*#define DEBUG*/
 
 #ifdef DEBUG
 #define DEBUG_MSG printf
@@ -98,21 +97,6 @@ static char *ending_slash(const char *src) {
 	}
 }
 
-/* this function can handle differences in ending slash */
-static int dirs_equal(const char *dir1, const char *dir2) {
-	int d1len, d2len;
-	d1len = strlen(dir1);
-	d2len = strlen(dir2);
-	if (d1len == d2len) {
-		return (strcmp(dir1,dir2)==0);
-	} else if (d1len == d2len-1 && dir1[d1len-1]!='/' && dir2[d2len-1]=='/') {
-		return (strncmp(dir1,dir2,d1len)==0);
-	} else if (d1len-1 == d2len && dir1[d1len-1]=='/' && dir2[d2len-1]!='/') {
-		return (strncmp(dir1,dir2,d2len)==0);
-	}
-	return 0;
-}
-
 /* check basics */
 /* parse arguments */
 /* parse configfile */
@@ -127,7 +111,6 @@ int main(int argc, char **argv) {
 	Tiniparser *parser=NULL;
 	char **newargv=NULL;
 	char **allowed_jails = NULL;
-	char *injail_shell=NULL;
 	int skip_injail_passwd_check=0;
 
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
@@ -242,12 +225,8 @@ int main(int argc, char **argv) {
 				allowed_jails = explode_string(buffer, ',');
 			}
 
-			if (iniparser_get_string_at_position(parser, section, "injail_shell", pos, buffer, 1024) > 0) {
-				injail_shell = strdup(buffer);
-			}
-			if (injail_shell) {
-				skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
-			}
+			skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
+
 			free(section);
 			
 			if (allowed_jails == NULL) {
@@ -313,10 +292,38 @@ int main(int argc, char **argv) {
 		exit(36);
 	}
 
+	if (!skip_injail_passwd_check){
+		char *oldpw_name,*oldgr_name;
+		oldpw_name = strdup(pw->pw_name);
+		oldgr_name = strdup(gr->gr_name);
+		
+		pw = getpwuid(getuid());
+		if (!pw) {
+			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jail);
+			exit(35);
+		}
+		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
+		gr = getgrgid(getgid());
+		if (!gr) {
+			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d: %s, check %s/etc/group",getgid(),strerror(errno),jail);
+			exit(35);
+		}
+		if (strcmp(pw->pw_name, oldpw_name)!=0) {
+			syslog(LOG_ERR, "abort, username %s differs from jail username %s for user ID %d, check /etc/passwd and %s/etc/passwd", oldpw_name, pw->pw_name, getuid(), jail);
+			exit(37);
+		}
+		if (strcmp(gr->gr_name, oldgr_name)!=0) {
+			syslog(LOG_ERR, "abort, groupname %s differs from jail groupname %s for group ID %d, check /etc/passwd and %s/etc/passwd", oldgr_name, gr->gr_name, getgid(), jail);
+			exit(37);
+		}
+		free(oldpw_name);
+		free(oldgr_name);
+	}
+
 	/* now execute the jailed shell */
 	execv(executable, newargv);
 	/* normally we wouldn't come to this bit of code */
-	syslog(LOG_ERR, "ERROR: failed to execute %s for user %s (%d), check the permissions and libraries of %s/%s",executable,pw->pw_name,getuid(),jail,executable);
+	syslog(LOG_ERR, "ERROR: failed to execute %s for user %s (%d), check the permissions and libraries of %s%s",executable,pw->pw_name,getuid(),jail,executable);
 
 	free(jail);
 	exit(111);

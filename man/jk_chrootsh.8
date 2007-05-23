@@ -1,4 +1,4 @@
-.TH jk_chrootsh 8 07-09-2006 JAILKIT jk_chrootsh
+.TH jk_chrootsh 8 23-05-2007 JAILKIT jk_chrootsh
 
 .SH NAME
 jk_chrootsh \- a shell that will put the user inside a changed root
@@ -21,7 +21,7 @@ test:x:10000:10000::/home/test:/usr/sbin/jk_lsh
 
 Notice that the home directory and the shell are local inside the chroot
 
-jk_chrootsh needs root access to make the 
+jk_chrootsh needs root privileges to make the 
 .BR chroot(2)
 system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot() system call.
 

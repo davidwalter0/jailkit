@@ -34,6 +34,7 @@
 
 int testsafepath(const char *path, int owner, int group);
 int basicjailissafe(const char *path);
+int dirs_equal(const char *dir1, const char *dir2);
 int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir);
 char *strip_string(char * string);
 int count_char(const char *string, char lookfor);

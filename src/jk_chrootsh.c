@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -291,22 +291,17 @@ int main (int argc, char **argv) {
 		char test[1024];
 		/* test if it really succeeded */
 		getcwd(test, 1024);
-		if (strcmp(jaildir, test) != 0) {
-			syslog(LOG_ERR, "abort, the current dir does not equal %s after chdir(%s)",jaildir,jaildir);
+		if (!dirs_equal(jaildir, test)) {
+			syslog(LOG_ERR, "abort, the current dir is %s after chdir(%s), but it should be %s",test,jaildir,jaildir);
 			exit(21);
-		}
+		}		
 	}		
 	
 	/* here do test the ownership of the jail and the homedir and such
 	the function testsafepath doe exit itself on any failure */
-	{ 
+	if (basicjailissafe(jaildir)) { 
 		int ret;
-		DEBUG_MSG("test paths\n");
-		ret = testsafepath(jaildir,0,0);
-		if (ret != 0) {
-			syslog(LOG_ERR, "abort, path %s is not a safe jail, check ownership and permissions", jaildir);
-			exit(53);	
-		}
+
 		ret = testsafepath(pw->pw_dir, getuid(), getgid());
 		if ((ret & TESTPATH_NOREGPATH) ) {
 			syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
@@ -317,17 +312,20 @@ int main (int argc, char **argv) {
 			exit(53);
 		}
 		if (!relax_home_group && (ret & TESTPATH_GROUP)) {
-			syslog(LOG_ERR, "abort, path %s does not have group %d", pw->pw_dir,getgid());
+			syslog(LOG_ERR, "abort, path %s does not have group owner %d, set option 'relax_home_group' to relax this check", pw->pw_dir,getgid());
 			exit(53);
 		}
 		if (!relax_home_group_permissions && (ret & TESTPATH_GROUPW)) {
-			syslog(LOG_ERR, "abort, path %s is group writable", pw->pw_dir);
+			syslog(LOG_ERR, "abort, path %s is group writable, set option 'relax_home_group_permissions' to relax this check", pw->pw_dir);
 			exit(53);
 		}
 		if (!relax_home_other_permissions && (ret & TESTPATH_OTHERW)) {
-			syslog(LOG_ERR, "abort, path %s is writable for other", pw->pw_dir);
+			syslog(LOG_ERR, "abort, path %s is writable for other, set option 'relax_home_other_permissions' to relax this check", pw->pw_dir);
 			exit(53);
 		}
+	} else {
+		syslog(LOG_ERR, "abort, %s is not a safe chroot jail.", jaildir);
+		exit(53);
 	}
 	/* do a final log message */
 	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jaildir, pw->pw_name, getuid());
@@ -391,7 +389,7 @@ int main (int argc, char **argv) {
 			and not the info inside the jail, lets test that, and if true, we should use the 
 			shell from the internal function as well*/
 			intpw = internal_getpwuid(getuid());
-			if (strcmp(intpw->pw_dir, newhome)!=0) {
+			if (!dirs_equal(intpw->pw_dir, newhome)) {
 				DEBUG_MSG("%s!=%s\n",intpw->pw_dir, newhome);
 				syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);
 				exit(39);

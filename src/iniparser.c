@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* memset() */
 
-/* #define DEBUG */
+/*#define DEBUG*/
 
 #ifdef DEBUG
 #include <syslog.h>
