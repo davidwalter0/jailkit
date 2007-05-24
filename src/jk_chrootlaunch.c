@@ -141,17 +141,8 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 		exit(27);
 	}
 	/* test the jail existance */
-	if (lstat(jail, &sbuf) == 0) {
-		if (S_ISLNK(sbuf.st_mode)) {
-			syslog(LOG_ERR, "abort, jail %s is a symlink", jail);
-			exit(27);
-		}
-		if (!(sbuf.st_mode & S_IFDIR)) {
-			syslog(LOG_ERR, "abort, jail %s is not a directory", jail);
-			exit(27);
-		}
-	} else {
-		syslog(LOG_ERR, "abort, could not get properties of jail directory %s: %s",jail, strerror(errno));
+	if (!basicjailissafe(jail)) {
+		syslog(LOG_ERR, "abort, jail directory %s is not a safe jail",jail);
 		exit(25);
 	}
 	/* test the executable, first we test if the executable was specified relative in the jail or absolute */

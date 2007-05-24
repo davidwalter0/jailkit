@@ -41,7 +41,7 @@ PTHREAD_LIBS = @PTHREAD_LIBS@
 
 #CFLAGS = ${CFLAGS} -g -O2 -Wall -pipe
 
-SRCS = jk_socketd.c iniparser.c jk_lsh.c jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c utils.c wordexp.c passwdparser.c
+SRCS = jk_socketd.c iniparser.c jk_lsh.c jk_uchroot.c jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c utils.c wordexp.c passwdparser.c
 OBJS = $(SRCS:.c=.o)
 BINARIES = @BINARIES@
 HAVEPROCMAIL = @HAVEPROCMAIL@
@@ -51,8 +51,8 @@ HAVEPROCMAIL = @HAVEPROCMAIL@
 
 all: ${BINARIES}
 
-jk_chrootlaunch: jk_chrootlaunch.o
-	$(CC) $(DEFS) -o jk_chrootlaunch jk_chrootlaunch.o $(LDFLAGS) $(LIBS)
+jk_chrootlaunch: jk_chrootlaunch.o jk_lib.o
+	$(CC) $(DEFS) -o jk_chrootlaunch jk_lib.o jk_chrootlaunch.o $(LDFLAGS) $(LIBS)
 
 jk_socketd: jk_socketd.o jk_lib.o utils.o iniparser.o
 	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o utils.o iniparser.o $(LDFLAGS) $(LIBS) $(PTHREAD_LIBS)
@@ -62,6 +62,9 @@ jk_lsh: jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o
 
 jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o
 	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o $(LDFLAGS) $(LIBS)
+
+jk_uchroot: jk_uchroot.o iniparser.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o jk_uchroot jk_uchroot.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
 jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o utils.o
 	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
@@ -81,6 +84,7 @@ install: ${BINARIES}
 	${INSTALL} -g 0 -o 0 -s -m 0755 jk_chrootlaunch ${prefix}/sbin/
 	${INSTALL} -g 0 -o 0 -s -m 0755 jk_lsh  ${prefix}/sbin/
 	${INSTALL} -g 0 -o 0 -s -m 4755 jk_chrootsh  ${prefix}/sbin/
+	${INSTALL} -g 0 -o 0 -s -m 4755 jk_uchroot  ${prefix}/bin/
 	if [ ${HAVEPROCMAIL} -eq "1" ]; then \
 		${INSTALL} -g 0 -o root -s -m 4755 jk_procmailwrapper  ${prefix}/sbin/ ;\
 	fi
@@ -90,6 +94,7 @@ uninstall:
 	rm -f  ${prefix}/sbin/jk_chrootlaunch
 	rm -f  ${prefix}/sbin/jk_lsh
 	rm -f  ${prefix}/sbin/jk_chrootsh
+	rm -f  ${prefix}/bin/jk_uchroot
 	rm -f  ${prefix}/sbin/jk_procmailwrapper
 
 iniparsertester: iniparser.o iniparsertester.o jk_lib.o

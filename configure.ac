@@ -145,7 +145,7 @@ else
 	AC_MSG_ERROR(your python version is too old, please install python 2 or newer)
 fi
 
-BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch"
+BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch jk_uchroot"
 
 AC_PATH_PROG(PROCMAILPATH, procmail, no)
 HAVEPROCMAIL="0"
