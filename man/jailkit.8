@@ -13,19 +13,18 @@ If you want the user to be able to do one thing, that one thing should be possib
 
 .SH SECURITY CONSIDERATIONS
 
-DO NOT RELY ON THE JAIL. If you don't trust a process on a regular system, don't trust it in a jail. A bad configured jail might even make the situation worse!
+.B A bad configured jail is a security risk!
 
-The super user (root), or any process running with root privileges, can break out of a jail created with 
-.BR chroot(2)
-It is therefore important that the jail does not contain any files that are set user id root (also called setuid).
+If a jailed user or a jailed process can modify files in e.g. the /lib/ or /etc/ directory inside the jail a user can bypass security checks and gain root privileges. 
 
-Normal users can create files that are setuid (set user id) root, creating a hardlink to an existing setuid root binary. For example 'ln /bin/su /jail/my_su' will create a setuid root binary in /jail/. If the user now modifies /jail/lib/libc... or /jail/etc/passwd the user might gain root privileges! 
 .B No directory
 inside the jail 
 .B except
-for the homedirectory should, therefore, be writable by the user. Especially the jail directory itself should 
+for the users homedirectory or tmp should be writable by the user. Especially the root of the jail should 
 .B not be writable
-by the user. If the jail is on a separate filesystem, furthermore, this jail filesystem can mounted with the 
+by the user. Jailkit utilities will perform some basic checks if a jail is secure and abort if a jail is not secure. Check your logfiles if things don't work as expected.
+
+The super user (root), or any process running with root privileges, can always break out of a jail. It is therefore important that the processes inside the jail do not have root privileges, nor have the means to receive those privileges. Avoid setuid (+s) executables inside the jail. If the jail is on a separate filesystem, the jail filesystem can mounted with the 
 .I nosuid
 flag.
 
@@ -34,10 +33,10 @@ flag.
 .BR jk_init
 can be used to quickly create a jail with several files or directories needed for a specific task. There are many tasks in
 .I /etc/jailkit/jk_init.ini
-predefined. For example a limited shell, a jail to run apache, a jail for just sftp and scp can be quickly set it up by jk_init. It will copy the binaries, the required libraries (and symlinks) and other files like /etc/passwd
+predefined that work on Debian or Ubuntu systems. For other platforms you might need to update the predefined configuration. For example a limited shell, a jail to run apache, a jail for just sftp and scp can be quickly set it up by jk_init. It will copy the binaries, the required libraries (and symlinks) and other files like /etc/passwd
 
 .BR jk_cp
-can be used to copy a file into a jail, the file will be copied with the same permissions, except for any setuid or setgid permissions, they are removed. If the file is a binary executable, the libraries are copied as well.
+can be used to copy a file or device into a jail, the file will be copied with the same permissions, except for any setuid or setgid permissions, they are removed. If the file is a binary executable, the libraries are copied as well.
 
 .BR jk_check
 can be used to check a jail for any potential security problems. It checks for setuid and setgid programs, it checks for any modified programs, it checks for world writable directories and more. Very convenient to run daily from the cron daemon. It is controlled by
@@ -72,16 +71,16 @@ is a utility to start a daemon that cannot do a
 call itself in a jail. It can change the user and group id after jailing the process, and before executing the daemon.
 
 .BR jk_jailuser
-is a script to move an existing user account into a jail
+is a tool to move an existing user account into a jail
 
 .BR jk_list
 lists all jailed processes on a system, with the PID, UID, and their jail
 
 .BR jk_procmailwrapper
-is a wrapper for procmail, it will run the .procmailrc from jailed users inside the jail, the .procmailrc from regular users on the normal system.
+is a wrapper for procmail, it will run the .procmailrc from jailed users inside the jail, the .procmailrc from regular users on the normal system. Procmail needs to be avilable inside the jail.
 
 .BR jk_update
-is a utility to update a jail according to updates on the real system.
+is a tool to update files inside a jail according to updates on the real system.  
 
 .SH EXAMPLE
 
