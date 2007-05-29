@@ -1,4 +1,4 @@
-.TH jailkit 8 07-12-2006 JAILKIT jailkit
+.TH jailkit 8 29-05-2007 JAILKIT jailkit
 
 .SH NAME
 jailkit \- utilities for jailing a user or process
@@ -39,12 +39,14 @@ predefined that work on Debian or Ubuntu systems. For other platforms you might 
 can be used to copy a file or device into a jail, the file will be copied with the same permissions, except for any setuid or setgid permissions, they are removed. If the file is a binary executable, the libraries are copied as well.
 
 .BR jk_check
-can be used to check a jail for any potential security problems. It checks for setuid and setgid programs, it checks for any modified programs, it checks for world writable directories and more. Very convenient to run daily from the cron daemon. It is controlled by
+is a jail integrity checker. It checks a jail for any potential security problems. It checks for setuid and setgid programs, it checks for any modified programs, it checks for world writable directories and more. Very convenient to run daily from the cron daemon. It is controlled by
 .I /etc/jailkit/jk_check.ini
 .
 
 .BR jk_chrootsh
-is a shell for a user that will jail the user in a specific directory, called the JAIL. It does this by using the chroot (change root) system call. The JAIL must contain some basic files, like /etc/passwd and a shell to execute. jk_chrootsh will read the shell to execute inside the JAIL from
+is a shell for a user that will jail the user in a specific directory, called the JAIL. It does this by using the 
+.BR chroot(2)
+(change root) system call. The JAIL must contain some basic files, like /etc/passwd and a shell to execute. jk_chrootsh will read the shell to execute inside the JAIL from
 .I JAIL/etc/passwd.
 jk_chrootsh is typically run from 
 .I /etc/passwd
@@ -60,6 +62,13 @@ or started by jk_chrootsh inside a jail from
 (recommended) in which case the config file is 
 .I JAIL/etc/jailkit/jk_lsh.ini.
 Use this program if you want to deny regular shell access (e.g. logins) but you want to allow execution from commands like sftp, scp, rsync or cvs.
+
+.BR jk_uchroot
+is a utility to give regular users access to the 
+.BR chroot(2)
+(change root) system call in a safe way. Which users are allowed in which jails is controlled from
+.I /etc/jailkit/jk_uchroot.ini
+. Use this utility for users that can run processes both inside a jail and outside a jail.
 
 .BR jk_socketd
 is a daemon that will allow logging to syslog from a jail, in a safe way. It will limit the logging rate based on 
