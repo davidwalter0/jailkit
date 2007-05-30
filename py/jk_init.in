@@ -114,6 +114,10 @@ def init_directory(config,chroot,dirs):
 def handle_cfg_section(config,chroot,cfg,section):
 	if(chroot[-1] == '/'):
 		chroot = chroot[:-1]
+	# first create the chroot jail itself if it does not yet exist
+	if (not os.path.exists(chroot)):
+		print 'Creating jail '+chroot
+		os.makedirs(chroot, mode=0755)
 	sections = jk_lib.config_get_option_as_list(cfg,section,'includesections')
 	for tmp in sections:
 		handle_cfg_section(config,chroot,cfg,tmp)
@@ -157,7 +161,7 @@ def activateConfig(config, args):
 
 def usage():
 	print ''
-	print "Usage: "+sys.argv[0]+" [OPTIONS] chrootdir sections..."
+	print "Usage: "+sys.argv[0]+" [OPTIONS] jaildir sections..."
 	print ''
 	print "-h --help              : this help screen"
 	print "-c, --configfile=FILE  : specify configfile location"
@@ -182,9 +186,9 @@ def listsections(file):
 
 def testargs(args,config):
 	if (len(args)<2):
-		jk_lib.clean_exit(2,'need at least a chrootdir and a configfile-section',usage)
+		jk_lib.clean_exit(2,'need at least a jail directory and a configfile-section',usage)
 	if (jk_lib.chroot_is_safe(args[0]) != 1):
-		jk_lib.clean_exit(3,'chrootdir '+args[0]+' is not safe',usage)
+		jk_lib.clean_exit(3,'jail directory '+args[0]+' is not safe',usage)
 	if (not os.path.isfile(config['file'])):
 		jk_lib.clean_exit(3,'configfile '+config['file']+' does not exist',usage)
 

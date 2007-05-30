@@ -31,7 +31,7 @@
 #define TESTPATH_OWNER    32    // (0010 0000)
 #define TESTPATH_GROUP    64    // (0100 0000)
 
-
+char *ending_slash(const char *src);
 int testsafepath(const char *path, int owner, int group);
 int basicjailissafe(const char *path);
 int dirs_equal(const char *dir1, const char *dir2);

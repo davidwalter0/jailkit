@@ -86,17 +86,6 @@ static void print_usage() {
 	printf(PROGRAMNAME" logs all errors to syslog, for diagnostics check your logfiles\n");
 }
 
-static char *ending_slash(const char *src) {
-	int len;
-	if (!src) return NULL;
-	len = strlen(src);
-	if (src[len-1] == '/') {
-		return strdup(src);
-	} else {
-		return strcat(strcat(malloc0((len+1)*sizeof(char)), src), "/");
-	}
-}
-
 /* check basics */
 /* parse arguments */
 /* parse configfile */

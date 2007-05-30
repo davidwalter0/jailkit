@@ -111,17 +111,6 @@ static int parse_gid(char *tmpstr) {
 	return gr->gr_gid;
 }
 
-static char *ending_slash(const char *src) {
-	int len;
-	if (!src) return NULL;
-	len = strlen(src);
-	if (src[len-1] == '/') {
-		return strdup(src);
-	} else {
-		return strcat(strcat(malloc0((len+1)*sizeof(char)), src), "/");
-	}
-}
-
 /* tests the jail and executable, if they exists etc. 
 returns a newly allocated executable relative to the chroot, 
 so it can be used during exec() */

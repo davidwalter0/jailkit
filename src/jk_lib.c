@@ -29,7 +29,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*#define DEBUG*/
+/* #define DEBUG */
 #include "config.h"
 
 #include <string.h>
@@ -44,6 +44,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "jk_lib.h"
 #include "utils.h"
 
+char *ending_slash(const char *src) {
+	int len;
+	if (!src) return NULL;
+	len = strlen(src);
+	if (src[len-1] == '/') {
+		return strdup(src);
+	} else {
+		return strcat(strcat(malloc0((len+1)*sizeof(char)), src), "/");
+	}
+}
+
+
 /*
  * the path should be owned owner:group
  * if it is a file it should not have any setuid or setgid bits set
@@ -55,6 +67,7 @@ int testsafepath(const char *path, int owner, int group) {
 	DEBUG_MSG("testsafepath %s\n",path);
 	if (lstat(path, &sbuf) == 0) {
 		int retval=0;
+		DEBUG_MSG("%s has mode %d  and owned %d:%d\n",path,sbuf.st_mode,sbuf.st_uid,sbuf.st_gid);
 		if (S_ISLNK(sbuf.st_mode)) {
 			syslog(LOG_ERR, "path %s is a symlink", path);
 			retval |= TESTPATH_NOREGPATH;
@@ -68,11 +81,11 @@ int testsafepath(const char *path, int owner, int group) {
 			retval |= TESTPATH_SETGID;
 		}
 		if (sbuf.st_mode & S_IWGRP) {
-			syslog(LOG_ERR, "path %s is setgid", path);
+			syslog(LOG_ERR, "path %s is group writable", path);
 			retval |= TESTPATH_GROUPW;
 		}
 		if (sbuf.st_mode & S_IWOTH) {
-			syslog(LOG_ERR, "path %s is setgid", path);
+			syslog(LOG_ERR, "path %s is writable for others", path);
 			retval |= TESTPATH_OTHERW;
 		}
 		if (sbuf.st_uid != owner){
@@ -91,16 +104,18 @@ int testsafepath(const char *path, int owner, int group) {
 
 int basicjailissafe(const char *path) {
 	if (path && testsafepath(path, 0, 0) ==0) {
-		char *tmp;
+		char *tmp, *path_w_slash;
 		int retval = 1;
-		tmp = malloc0(strlen(path)+6);
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "dev/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "etc/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "lib/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "usr/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "bin/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path), "sbin/"), 0, 0)&~TESTPATH_NOREGPATH)!=0) retval = 0;
+		path_w_slash = ending_slash(path);
+		tmp = malloc0(strlen(path_w_slash)+6);
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "dev/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "etc/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "lib/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "usr/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "bin/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "sbin/"), 0, 0)&~TESTPATH_NOREGPATH)!=0) retval = 0;
 		free(tmp);
+		free(path_w_slash);
 		DEBUG_MSG("basicjailissafe, returning %d\n",retval);
 		return retval;
 	}

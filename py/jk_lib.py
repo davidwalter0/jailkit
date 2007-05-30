@@ -233,18 +233,23 @@ def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownersh
 	if (copy_ownership):
 		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
 
+def return_existing_base_directory(path):
+	"""This function tests if a directory exists, if not tries the parent etc. etc. until it finds a directory that exists"""
+	tmp = path
+	while (not os.path.exists(tmp) and not tmp == '/'):
+		tmp = os.path.dirname(tmp)
+	return tmp
+
 def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_suid=0, copy_ownership=0):
 	"""creates the directory and all its parents id needed. copy_ownership can only be used if copy permissions is also used"""
-	directory =  path
+	directory = path
 	if (directory[-1:] == '/'):
 		directory = directory[:-1]
 	if (os.path.exists(chroot+directory)):
 		return
-	tmp = directory
-	while (not os.path.exists(chroot+tmp)):
-#		print 'DEBUG A: '+tmp+' does not exist'
-		tmp = os.path.dirname(tmp)
-	oldindx = len(tmp) 
+	tmp = return_existing_base_directory(chroot+directory)
+	oldindx = len(tmp)-len(chroot) 
+	# find the first slash after the existing directories
 	indx = string.find(directory,'/',oldindx+1)
 	while (indx != -1):
 		# avoid the /bla//bla pitfall
@@ -252,7 +257,7 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 			oldindx = indx
 		else: 
 			if (be_verbose):
-				print 'Creating directory '+directory[:indx]
+				print 'Creating directory '+chroot+directory[:indx]
 			os.mkdir(chroot+directory[:indx], 0755)
 			if (copy_permissions):
 				try:
@@ -262,7 +267,7 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 			oldindx = indx
 		indx = string.find(directory,'/',oldindx+1)
 	if (be_verbose):
-		print 'Creating directory '+directory
+		print 'Creating directory '+chroot+directory
 	os.mkdir(chroot+directory, 0755)
 	if (copy_permissions):
 		try:
