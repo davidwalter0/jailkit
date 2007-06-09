@@ -16,9 +16,9 @@ typedef struct {
 
 Tiniparser *new_iniparser(char *filename);
 void iniparser_close(Tiniparser *ip);
-unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, long position, char *buffer, int bufferlen);
-unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position);
-unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, long position);
+int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, long position, char *buffer, int bufferlen);
+int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position);
+int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, long position);
 float iniparser_get_float_at_position(Tiniparser *ip, const char *section, const char *key, long position);
 char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen);
 unsigned short int iniparser_has_section(Tiniparser *ip, const char *section);

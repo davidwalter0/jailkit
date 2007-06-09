@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* memset() */
 
-/*#define DEBUG*/
+/* #define DEBUG */
 
 #ifdef DEBUG
 #include <syslog.h>
@@ -110,7 +110,7 @@ unsigned short int iniparser_has_section(Tiniparser *ip, const char *section) {
 	return 0;
 }
 
-unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, long position, char *buffer, int bufferlen) {
+int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const char *key, long position, char *buffer, int bufferlen) {
 	char ch='\0', prevch='\0';
 	unsigned int sectionNameChar=0, keyNameChar=0, bufferChar=0;
 	unsigned short int inSection=0, sectionStart=0, foundKey=0, inComment=0, inWrongKey=0;
@@ -152,7 +152,7 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 				sectionStart=0;
 				inSection=1;
 				sectionNameChar=0;
-				DEBUG_MSG("The correct section is now found, now we continue with the key\n");
+				DEBUG_MSG("The correct section %s is now found, now we continue with the key %s\n", section, key);
 			} else if (sectionStart){
 				DEBUG_MSG("Oops, wrong section, %c is not in position %d of %s\n", ch,sectionNameChar,section);
 				sectionStart=0;
@@ -183,7 +183,7 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 				keyNameChar=0;
 			} else if (ch=='[') {
 				DEBUG_MSG("Found the start of a new section, abort, the key does not exist\n");
-				break;				
+				return -1;				
 			} else {
 				DEBUG_MSG("if all else fails: %c must be a character that is not on position %d of key %s, set inWrongKey\n",ch,keyNameChar,key);
 				inWrongKey=1;
@@ -213,9 +213,9 @@ unsigned int iniparser_get_string_at_position(Tiniparser*ip, const char *section
 	return bufferChar;
 }
 
-unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
+int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
 	char data[25];
-	unsigned int buffer=0;
+	int buffer=0;
 	memset(data, 0, 25);
 	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
 		return -1;
@@ -225,9 +225,9 @@ unsigned int iniparser_get_int_at_position(Tiniparser *ip, const char *section, 
 	return buffer;
 }
 
-unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
+int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
 	char data[25];
-	unsigned int buffer=0;
+	int buffer=0;
 	memset(data, 0, 25);
 	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
 		return -1;
@@ -235,7 +235,6 @@ unsigned int iniparser_get_octalint_at_position(Tiniparser *ip, const char *sect
 	strip_string(data);	
 	sscanf(data, "%o", &buffer);
 	return buffer;
-
 }
 
 float iniparser_get_float_at_position(Tiniparser *ip, const char *section, const char *key, long position) {
