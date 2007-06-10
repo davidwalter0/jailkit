@@ -183,6 +183,7 @@ int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const c
 				keyNameChar=0;
 			} else if (ch=='[') {
 				DEBUG_MSG("Found the start of a new section, abort, the key does not exist\n");
+				buffer[0]='\0';
 				return -1;				
 			} else {
 				DEBUG_MSG("if all else fails: %c must be a character that is not on position %d of key %s, set inWrongKey\n",ch,keyNameChar,key);
