@@ -163,6 +163,7 @@ int main(int argc, char **argv) {
 			switch (c) {
 			case 'j':
 				jail = ending_slash(optarg);
+				DEBUG_MSG("argument jail='%s', ending_slash returned '%s'\n",optarg,jail);
 				break;
 			case 'x':
 				executable = strdup(optarg);
@@ -211,6 +212,7 @@ int main(int argc, char **argv) {
 			 */
 			unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
 			if (iniparser_get_string_at_position(parser, section, "allowed_jails", pos, buffer, 1024) > 0) {
+				DEBUG_MSG("found allowed_jails=%s\n",buffer);
 				allowed_jails = explode_string(buffer, ',');
 			}
 
@@ -237,6 +239,7 @@ int main(int argc, char **argv) {
 		/* 'jail' has an ending slash */
 		for (i=0;allowed_jails[i]!=NULL&&!allowed;i++) {
 			allowed = dirs_equal(jail,allowed_jails[i]);
+			DEBUG_MSG("allowed=%d after testing '%s' with '%s'\n",allowed,jail,allowed_jails[i]);
 		}
 		if (allowed!=1) {
 			syslog(LOG_ERR,"abort, user %s (%d) is not allowed in jail %s",pw->pw_name, getuid(),jail);

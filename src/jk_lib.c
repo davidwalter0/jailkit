@@ -29,7 +29,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define DEBUG */
+/*#define DEBUG*/
 #include "config.h"
 
 #include <string.h>
@@ -51,7 +51,7 @@ char *ending_slash(const char *src) {
 	if (src[len-1] == '/') {
 		return strdup(src);
 	} else {
-		return strcat(strcat(malloc0((len+1)*sizeof(char)), src), "/");
+		return strcat(strcat(malloc0((len+2)*sizeof(char)), src), "/");
 	}
 }
 
@@ -127,6 +127,7 @@ int dirs_equal(const char *dir1, const char *dir2) {
 	int d1len, d2len;
 	d1len = strlen(dir1);
 	d2len = strlen(dir2);
+	DEBUG_MSG("dirs_equal, testing %s and %s\n",dir1,dir2);
 	if (d1len == d2len) {
 		return (strcmp(dir1,dir2)==0);
 	} else if (d1len == d2len-1 && dir1[d1len-1]!='/' && dir2[d2len-1]=='/') {
