@@ -71,7 +71,7 @@ AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pth
 
 AC_CHECK_FUNC(strndup,
 	AC_DEFINE(HAVE_STRNDUP, 1),
-	AC_CHECK_LIB(strndup, iberty,
+	AC_CHECK_LIB(iberty,strndup,
 		LIBS="$LIBS -liberty"
 		AC_DEFINE(HAVE_STRNDUP, 1)
 	)
@@ -87,7 +87,7 @@ AC_CHECK_FUNC(wordexp,
 
 AC_CHECK_FUNC(mempcpy,
 	AC_DEFINE(HAVE_MEMPCPY, 1),
-	AC_CHECK_LIB(mempcpy, iberty,
+	AC_CHECK_LIB(iberty,memcpy,
 		LIBS="$LIBS -liberty"
 		AC_DEFINE(HAVE_MEMPCPY, 1)
 	)
@@ -95,7 +95,7 @@ AC_CHECK_FUNC(mempcpy,
 
 AC_CHECK_FUNC(stpcpy,
 	AC_DEFINE(HAVE_STPCPY, 1),
-	AC_CHECK_LIB(stpcpy, iberty,
+	AC_CHECK_LIB(iberty,stpcpy,
 		LIBS="$LIBS -liberty"
 		AC_DEFINE(HAVE_STPCPY, 1)
 	)

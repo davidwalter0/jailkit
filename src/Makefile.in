@@ -51,8 +51,8 @@ HAVEPROCMAIL = @HAVEPROCMAIL@
 
 all: ${BINARIES}
 
-jk_chrootlaunch: jk_chrootlaunch.o jk_lib.o
-	$(CC) $(DEFS) -o jk_chrootlaunch jk_lib.o jk_chrootlaunch.o $(LDFLAGS) $(LIBS)
+jk_chrootlaunch: jk_chrootlaunch.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o jk_chrootlaunch jk_lib.o jk_chrootlaunch.o utils.o $(LDFLAGS) $(LIBS)
 
 jk_socketd: jk_socketd.o jk_lib.o utils.o iniparser.o
 	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o utils.o iniparser.o $(LDFLAGS) $(LIBS) $(PTHREAD_LIBS)
