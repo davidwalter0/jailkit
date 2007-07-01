@@ -87,7 +87,7 @@ AC_CHECK_FUNC(wordexp,
 
 AC_CHECK_FUNC(mempcpy,
 	AC_DEFINE(HAVE_MEMPCPY, 1),
-	AC_CHECK_LIB(iberty,memcpy,
+	AC_CHECK_LIB(iberty,mempcpy,
 		LIBS="$LIBS -liberty"
 		AC_DEFINE(HAVE_MEMPCPY, 1)
 	)
