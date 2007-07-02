@@ -236,7 +236,7 @@ def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownersh
 def return_existing_base_directory(path):
 	"""This function tests if a directory exists, if not tries the parent etc. etc. until it finds a directory that exists"""
 	tmp = path
-	while (not os.path.exists(tmp) and not tmp == '/'):
+	while (not os.path.exists(tmp) and not (tmp == '/' or tmp=='')):
 		tmp = os.path.dirname(tmp)
 	return tmp
 
@@ -443,7 +443,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (try_hardlink):
 					print 'Trying to link '+file+' to '+chroot+file
 				else:
-					print 'Copying'+file+' to '+chroot+file
+					print 'Copying '+file+' to '+chroot+file
 				copy_with_permissions(file,chroot+file,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
@@ -453,7 +453,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
 			mode = stat.S_IMODE(sb[stat.ST_MODE])
-			if (check_libs and (string.find(file, '/lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
+			if (check_libs and (string.find(file, 'lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
 				libs = lddlist_libraries(file)
 				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, try_hardlink, handledfiles)
 	return handledfiles
