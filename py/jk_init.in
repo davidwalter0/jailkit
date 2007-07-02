@@ -43,85 +43,109 @@ LIBDIR='/usr/share/jailkit'
 sys.path.append(LIBDIR)
 import jk_lib
 
-def logsocket(config,chroot):
-	if (not os.path.exists(chroot+'/dev')):
-		os.mkdir(chroot+'/dev')
-	fd = open(INIPREFIX+'/jk_socketd.ini', 'r')
-	line = fd.readline()
-	while (line):
-		if (line == '['+chroot+'/dev/log]'):
-			if (config['verbose']):
-				print 'we already have '+chroot+'/dev/log in '+INIPREFIX+'/jk_socketd.ini'
-			return
+class jk_init:
+	
+	def __init__(self):
+		self.didfiles = []
+		self.didsections = []
+		self.diddevices = []
+		self.didusers = []
+
+	def logsocket(self,config,chroot):
+		if (not os.path.exists(chroot+'/dev')):
+			os.mkdir(chroot+'/dev')
+		fd = open(INIPREFIX+'/jk_socketd.ini', 'r')
 		line = fd.readline()
-	fd = open(INIPREFIX+'/jk_socketd.ini', 'a')
-	fd.write('\n['+chroot+'/dev/log]\nbase=512\npeak=2048\ninterval=10\n')
-	fd.close()
-
-def proc_mount(config, chroot):
-	if (config['verbose']):
-		print 'appending proc mount '+chroot+'proc to /etc/fstab'
-	fd = open('/etc/fstab', 'a')
-	fd.write("proc 	"+chroot+"proc 	proc 	defaults 	0 	0\n")
-	fd.close()
-	if (config['verbose']):
-		print 'executing mount '+chroot+'proc'
-	os.spawnlp(os.P_WAIT, 'mount','mount', chroot+'proc')
-
-def add_jk_socketd_entry(config, chroot):
-	print 'not yet implemented'
-
-def handle_cfg_section(config,chroot,cfg,section):
-	if(chroot[-1] == '/'):
-		chroot = chroot[:-1]
-	# first create the chroot jail itself if it does not yet exist
-	if (not os.path.exists(chroot)):
-		print 'Creating jail '+chroot
-		os.makedirs(chroot, mode=0755)
-		# if the parent is setuid or setgid that is not covered by the umask set above, so we remove that
-		os.chmod(chroot, 0755)
-	sections = jk_lib.config_get_option_as_list(cfg,section,'includesections')
-	for tmp in sections:
-		handle_cfg_section(config,chroot,cfg,tmp)
-	#libraries, executables, regularfiles and directories are now all handled as 'paths'
-	paths = jk_lib.config_get_option_as_list(cfg,section,'paths')
-	paths = paths + jk_lib.config_get_option_as_list(cfg,section,'libraries')
-	paths = paths + jk_lib.config_get_option_as_list(cfg,section,'executables')
-	paths = paths + jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
-	paths = paths + jk_lib.config_get_option_as_list(cfg,section,'directories')
-	jk_lib.copy_binaries_and_libs(chroot, paths, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
+		while (line):
+			if (line == '['+chroot+'/dev/log]'):
+				if (config['verbose']):
+					print 'we already have '+chroot+'/dev/log in '+INIPREFIX+'/jk_socketd.ini'
+				return
+			line = fd.readline()
+		fd = open(INIPREFIX+'/jk_socketd.ini', 'a')
+		fd.write('\n['+chroot+'/dev/log]\nbase=512\npeak=2048\ninterval=10\n')
+		fd.close()
 	
-	paths_w_owner = jk_lib.config_get_option_as_list(cfg,section,'path_w_owner')
-	if (len(paths_w_owner)>0):
-		jk_lib.copy_binaries_and_libs(chroot, paths_w_owner, config['force'], config['verbose'], check_libs=1, try_hardlink=config['hardlink'], retain_owner=1)
+	def proc_mount(self,config, chroot):
+		if (sys.platform[:5] == 'linux'):
+			if (config['verbose']):
+				print 'appending proc mount '+chroot+'proc to /etc/fstab'
+			fd = open('/etc/fstab', 'a')
+			fd.write("proc 	"+chroot+"proc 	proc 	defaults 	0 	0\n")
+			fd.close()
+			if (config['verbose']):
+				print 'executing mount '+chroot+'proc'
+			os.spawnlp(os.P_WAIT, 'mount','mount', chroot+'proc')
+		else:
+			print 'Not processing proc mount; proc mounts are Linux specific'
 	
-	#jk_lib.copy_binaries_and_libs(chroot, libs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
- 	#execs = jk_lib.config_get_option_as_list(cfg,section,'executables')
-	#jk_lib.copy_binaries_and_libs(chroot, execs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
- 	#regulars = jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
-	#init_files(config,chroot,regulars)
-	#dirs = jk_lib.config_get_option_as_list(cfg,section,'directories')
-	#init_directory(config,chroot,dirs)
-	emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
-	for edir in emptydirs:
-#		print 'DEBUG emptydir='+edir
-		jk_lib.create_parent_path(chroot,edir, config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
-	users = jk_lib.config_get_option_as_list(cfg,section,'users')
-	groups = jk_lib.config_get_option_as_list(cfg,section,'groups')
-	jk_lib.init_passwd_and_group(chroot,users,groups,config['verbose'])
-	if (cfg.has_option(section,'need_proc')):
-		do_proc = cfg.get(section,'need_proc')
-		if (do_proc):
-			proc_mount(config,chroot)
-	if (cfg.has_option(section,'need_logsocket')):
-		do_logsocket = cfg.get(section,'need_logsocket')
-		if (do_logsocket):
-			logsocket(config,chroot)
-	devices = jk_lib.config_get_option_as_list(cfg,section,'devices')
-	for tmp in devices:
-		jk_lib.create_parent_path(chroot,os.path.dirname(tmp), config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
-		jk_lib.copy_device(chroot,tmp,config['verbose'])
+	def add_jk_socketd_entry(self,config, chroot):
+		print 'not yet implemented'
 	
+	def handle_cfg_section(self,config,chroot,cfg,section):
+		if(chroot[-1] == '/'):
+			chroot = chroot[:-1]
+		# first create the chroot jail itself if it does not yet exist
+		if (not os.path.exists(chroot)):
+			print 'Creating jail '+chroot
+			os.makedirs(chroot, mode=0755)
+			# if the parent is setuid or setgid that is not covered by the umask set above, so we remove that
+			os.chmod(chroot, 0755)
+		sections = jk_lib.config_get_option_as_list(cfg,section,'includesections')
+		for tmp in sections:
+			if (tmp not in self.didsections):
+				self.handle_cfg_section(config,chroot,cfg,tmp)
+				self.didsections.append(tmp)
+		#libraries, executables, regularfiles and directories are now all handled as 'paths'
+		paths = jk_lib.config_get_option_as_list(cfg,section,'paths')
+		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'libraries')
+		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'executables')
+		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
+		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'directories')
+		self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'],handledfiles=self.didfiles)
+		
+		paths_w_owner = jk_lib.config_get_option_as_list(cfg,section,'path_w_owner')
+		if (len(paths_w_owner)>0):
+			self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths_w_owner, config['force'], config['verbose'], check_libs=1, try_hardlink=config['hardlink'], retain_owner=1, handledfiles=self.didfiles)
+		
+		#jk_lib.copy_binaries_and_libs(chroot, libs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
+	 	#execs = jk_lib.config_get_option_as_list(cfg,section,'executables')
+		#jk_lib.copy_binaries_and_libs(chroot, execs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
+	 	#regulars = jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
+		#init_files(config,chroot,regulars)
+		#dirs = jk_lib.config_get_option_as_list(cfg,section,'directories')
+		#init_directory(config,chroot,dirs)
+		emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
+		for edir in emptydirs:
+	#		print 'DEBUG emptydir='+edir
+			jk_lib.create_parent_path(chroot,edir, config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
+		users = []
+		groups = []
+		tmplist = jk_lib.config_get_option_as_list(cfg,section,'users')
+		for tmp in tmplist:
+			if (tmp not in self.didusers):
+				users.append(tmp)
+		tmplist = jk_lib.config_get_option_as_list(cfg,section,'groups')
+		for tmp in tmplist:
+			if (tmp not in self.didusers):
+				groups.append(tmp)
+		jk_lib.init_passwd_and_group(chroot,users,groups,config['verbose'])
+		self.didusers = self.didusers + users
+		self.didgroups = self.didusers + groups
+		if (cfg.has_option(section,'need_proc')):
+			do_proc = cfg.get(section,'need_proc')
+			if (do_proc):
+				self.proc_mount(config,chroot)
+		if (cfg.has_option(section,'need_logsocket')):
+			do_logsocket = cfg.get(section,'need_logsocket')
+			if (do_logsocket):
+				self.logsocket(config,chroot)
+		devices = jk_lib.config_get_option_as_list(cfg,section,'devices')
+		for tmp in devices:
+			if (tmp not in self.diddevices):
+				jk_lib.create_parent_path(chroot,os.path.dirname(tmp), config['verbose'], copy_permissions=0, allow_suid=0, copy_ownership=0)
+				jk_lib.copy_device(chroot,tmp,config['verbose'])
+				self.diddevices.append(tmp)
 		
 
 def activateConfig(config, jail, args):
@@ -131,13 +155,15 @@ def activateConfig(config, jail, args):
 	if (jail == None):
 		jail = args[0]
 		start = 1
+		
+	ji = jk_init()
 	for section in args[start:]:
 		if (cfg.has_section(section)):
-			handle_cfg_section(config,jail,cfg,section)
+			ji.handle_cfg_section(config,jail,cfg,section)
 		else:
 			print 'WARNING: section '+section+' does not exist in '+config['file']
 	jk_lib.gen_library_cache(jail)
-
+	
 def usage():
 	print ''
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
