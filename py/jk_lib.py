@@ -35,6 +35,7 @@ import os
 import sys
 import stat
 import shutil
+import glob
 
 def nextpathup(path):
 	#if (path[-1:] == '/'):
@@ -322,7 +323,7 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0
 			os.link(src,dst)
 			do_normal_copy = 0
 		except:
-			print 'Failed to link '+src+' to '+dst+', will try to copy'
+			print 'Linking '+src+' to '+dst+' failed, will revert to copying'
 			pass
 	if (do_normal_copy == 1):
 		try:
@@ -372,7 +373,7 @@ def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1,
 			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 	return handledfiles
 
-def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, handledfiles=[]):
+def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, try_glob_matching=0, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
@@ -384,11 +385,14 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		try:
 			sb = os.lstat(file)
 		except OSError, e:
-			if (be_verbose):
-				if (e.errno == 2):
+			if (e.errno == 2):
+				if (try_glob_matching == 1):
+					ret = glob.glob(file)
+					handledfiles = copy_binaries_and_libs(chroot, ret, force_overwrite, be_verbose, check_libs, try_hardlink=try_hardlink, retain_owner=retain_owner, try_glob_matching=0, handledfiles=handledfiles)
+				elif (be_verbose):
 					print 'Source file '+file+' does not exist'
-				else:
-					sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
+			else:
+				sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
 		try:
 			chrootsb = os.lstat(chroot+file)
