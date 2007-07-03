@@ -388,7 +388,10 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			if (e.errno == 2):
 				if (try_glob_matching == 1):
 					ret = glob.glob(file)
-					handledfiles = copy_binaries_and_libs(chroot, ret, force_overwrite, be_verbose, check_libs, try_hardlink=try_hardlink, retain_owner=retain_owner, try_glob_matching=0, handledfiles=handledfiles)
+					if (len(ret)>0):
+						handledfiles = copy_binaries_and_libs(chroot, ret, force_overwrite, be_verbose, check_libs, try_hardlink=try_hardlink, retain_owner=retain_owner, try_glob_matching=0, handledfiles=handledfiles)
+					elif (be_verbose):
+						print 'Source file(s) '+file+' do not exist'
 				elif (be_verbose):
 					print 'Source file '+file+' does not exist'
 			else:

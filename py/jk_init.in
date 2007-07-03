@@ -50,6 +50,7 @@ class jk_init:
 		self.didsections = []
 		self.diddevices = []
 		self.didusers = []
+		self.didgroups = []
 
 	def logsocket(self,config,chroot):
 		if (not os.path.exists(chroot+'/dev')):
@@ -205,7 +206,7 @@ def testargs(config,jail,args):
 
 def main():
 	if (os.getuid()!=0):
-		print 'cannot run without root privileges'
+		print 'Cannot create chroot jail without root privileges. Abort.'
 		sys.exit(5)
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "vhflc:kj:", ["help", "configfile=", "verbose", "force", 'list', 'hardlink', 'jail'])
