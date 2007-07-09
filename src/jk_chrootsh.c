@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <syslog.h>
 #include <limits.h>
+#include <signal.h>
 /* #define DEBUG */
 
 #ifdef DEBUG
@@ -134,6 +135,10 @@ static void unset_environ_except(char **except) {
 	}
 }
 
+void signal_handler(int signum) {
+	syslog(LOG_ERR, "abort, received signal %s (%d)", strsignal(signum),signum);
+	exit(666);
+}
 
 int main (int argc, char **argv) {
 	int i;
@@ -155,6 +160,12 @@ int main (int argc, char **argv) {
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
+	
+	/* attach signal handler */
+	signal(SIGILL,signal_handler);
+	signal(SIGSEGV,signal_handler);
+	signal(SIGTERM,signal_handler);
+	signal(SIGFPE,signal_handler);
 	
 	/* check if it us that the user wants */
 	{
@@ -385,10 +396,15 @@ int main (int argc, char **argv) {
 		}
 		if (strcmp(pw->pw_dir, newhome)!=0) {
 			DEBUG_MSG("%s!=%s\n",pw->pw_dir, newhome);
-			/* if these are different, it could be that getpwuid() gets the real user info, 
-			and not the info inside the jail, lets test that, and if true, we should use the 
-			shell from the internal function as well*/
-			intpw = internal_getpwuid(getuid());
+			/* if these are different, it could be that getpwuid() gets the real user 
+			info (from for example ldap or nscd), and not the info inside the jail, lets 
+			test that, and if true, we should use the	shell from the internal function as well*/
+			intpw = internal_getpwuid("/etc/passwd", getuid());
+			if (!intpw) {
+				DEBUG_MSG("%s!=%s\n",intpw->pw_dir, newhome);
+				syslog(LOG_ERR, "abort, failed to find user %d in %s/etc/passwd", getuid(), jaildir);
+				exit(39);
+			}
 			if (!dirs_equal(intpw->pw_dir, newhome)) {
 				DEBUG_MSG("%s!=%s\n",intpw->pw_dir, newhome);
 				syslog(LOG_ERR, "abort, home directory %s differs from jail home directory %s for user %s (%d), check /etc/passwd and %s/etc/passwd", newhome, pw->pw_dir, pw->pw_name, getuid(), jaildir);

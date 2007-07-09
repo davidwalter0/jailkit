@@ -29,6 +29,8 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 */
+/* #define DEBUG */
+
 #include "config.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -37,6 +39,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string.h> /* memset() */
 
 #include "utils.h"
+
+#ifdef DEBUG
+#define DEBUG_MSG printf
+#else
+#define DEBUG_MSG(args...)
+ /**/
+#endif
+
 
 static char *field_from_line(const char *line, int field) {
 	int pos=0, fcount=0, fstart=0;
@@ -61,64 +71,117 @@ static int int_field_from_line(const char *line, int field) {
 	char *tmp;
 	int retval;
 	tmp = field_from_line(line, field);
-	retval = atoi(tmp);
-	free(tmp);
-	return retval;
+	if (tmp) {
+		retval = atoi(tmp);
+		free(tmp);
+		return retval;
+	}
+	return -1;
 }
 
-#define BLOCKSIZE 4096
+#define BLOCKSIZE 1024
 static char * find_line(const char *filename, const char *fcont, int fnum) {
 	FILE *fp;
-	char buf[BLOCKSIZE];
+	char buf[BLOCKSIZE+1];
 	char *prev, *next, *retline=NULL;
 	size_t num;
 	int restlen=0;
 	
 /*	printf("searching for %s in field %d\n",fcont,fnum);*/
 	fp = fopen(filename,"r");
+	if (fp == NULL) {
+		return NULL;
+	}
+	bzero(buf, (BLOCKSIZE+1)*sizeof(char));
+	restlen = num = fread(buf, 1, BLOCKSIZE, fp);
+	DEBUG_MSG("read %d bytes from %s\n",num,filename);
 	prev = buf;
-	num = fread(buf, 1, BLOCKSIZE, fp);
 	while (num || restlen) {
+		DEBUG_MSG("num=%d, restlen=%d, prev=%p\n",num,restlen,prev);
 		next = strchr(prev, '\n');
 		if (next || num==0) {
 			char *field;
 			if (num) *next = '\0';
-/*			printf("line: %s\n",prev);*/
+			DEBUG_MSG("line: %s\n",prev);
 			field = field_from_line(prev,fnum);
-/*			printf("field: %s\n",field);*/
+			DEBUG_MSG("field=%s, we are looking for %s\n",field,fcont);
 			if (field && strcmp(field,fcont)==0) {
 				/* we found the line */
 				retline = strdup(prev);
 /*				printf("retline: %s\n",retline);*/
 			}
 			if (field) free(field);
-			if (retline) return retline;
-			if (num) *next = '\n';
-			prev = next+1;
+			if (retline) {
+				DEBUG_MSG("found a line, returning %s\n",retline);
+				return retline;
+			}
+			if (num) {
+				*next = '\n';
+				prev = next+1;
+			} else {
+				restlen = 0;
+			}
 		} else {
-			restlen = BLOCKSIZE-(prev-buf);
-			/* no more newlines, move the  */
-			memmove(buf, prev, restlen);
+			restlen = restlen-(prev-buf);
+			DEBUG_MSG("prev=%p,buf=%p,num=%d,restlen=%d\n",prev,buf,num,restlen);
+			if (restlen > 0) {
+				/* no more newlines, move the  */
+				DEBUG_MSG("moving %d bytes to the beginning of the block\n",restlen);
+				memmove(buf, prev, restlen);
+			} else {
+				DEBUG_MSG("*** can restlen be < 0 ????????? restlen=%d\n",restlen);
+			}
+			DEBUG_MSG("reading next block\n");
 			num = fread(buf+restlen, 1, BLOCKSIZE-restlen, fp);
+			DEBUG_MSG("read %d bytes from %s\n",num,filename);
+			restlen += num;
+			DEBUG_MSG("setting byte buf[%d] to \\0\n",restlen);
+			buf[restlen] = '\0';
+			prev = buf;
 		}
 	}
+	DEBUG_MSG("returning NULL\n");
 	return NULL;
 }
 
-struct passwd *internal_getpwuid(uid_t uid) {
+struct passwd *internal_getpwuid(const char *filename, uid_t uid) {
 	static struct passwd retpw;
 	char find[10], *line;
 	
 	snprintf(find,10,"%d",(int)uid);
-	line = find_line("/etc/passwd", find, 2);
+	line = find_line(filename, find, 2);
 	if (line) {
 		retpw.pw_name = field_from_line(line, 0);
-		retpw.pw_passwd = NULL; /* not required */
-		retpw.pw_uid = uid;
+		if (retpw.pw_name == NULL)
+			return NULL;
+		
 		retpw.pw_gid = int_field_from_line(line, 3);
-		retpw.pw_gecos = NULL; /* not required */
+		if (retpw.pw_gid == -1 || strlen(retpw.pw_name)<1) {
+			free(retpw.pw_name);
+			return NULL;
+		}
+
 		retpw.pw_dir = field_from_line(line, 5);
+		if (retpw.pw_dir == NULL) {
+			free(retpw.pw_name);
+			return NULL;
+		}
 		retpw.pw_shell = field_from_line(line, 6);
+		if (retpw.pw_shell == NULL || strlen(retpw.pw_dir)<1) {
+			free(retpw.pw_name);
+			free(retpw.pw_dir);
+			return NULL;
+		}
+		if (strlen(retpw.pw_shell)<1) {
+			free(retpw.pw_name);
+			free(retpw.pw_dir);
+			free(retpw.pw_shell);
+			return NULL;
+		}
+
+		retpw.pw_uid = uid;
+		retpw.pw_gecos = NULL; /* not required */
+		retpw.pw_passwd = NULL; /* not required */		
 		return &retpw;
 	}
 	return NULL;
