@@ -97,11 +97,13 @@ static char * find_line(const char *filename, const char *fcont, int fnum) {
 	DEBUG_MSG("read %d bytes from %s\n",num,filename);
 	prev = buf;
 	while (num || restlen) {
+		/* continue the loop if we either expect more bytes from the file (represented by num)
+		or there are bytes in the block left (represented by restlen) */
 		DEBUG_MSG("num=%d, restlen=%d, prev=%p\n",num,restlen,prev);
 		next = strchr(prev, '\n');
 		if (next || num==0) {
 			char *field;
-			if (num) *next = '\0';
+			if (next) *next = '\0';
 			DEBUG_MSG("line: %s\n",prev);
 			field = field_from_line(prev,fnum);
 			DEBUG_MSG("field=%s, we are looking for %s\n",field,fcont);
@@ -115,7 +117,7 @@ static char * find_line(const char *filename, const char *fcont, int fnum) {
 				DEBUG_MSG("found a line, returning %s\n",retline);
 				return retline;
 			}
-			if (num) {
+			if (next) {
 				*next = '\n';
 				prev = next+1;
 			} else {
