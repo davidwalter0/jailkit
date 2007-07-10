@@ -154,30 +154,15 @@ struct passwd *internal_getpwuid(const char *filename, uid_t uid) {
 	line = find_line(filename, find, 2);
 	if (line) {
 		retpw.pw_name = field_from_line(line, 0);
-		if (retpw.pw_name == NULL)
-			return NULL;
-		
 		retpw.pw_gid = int_field_from_line(line, 3);
-		if (retpw.pw_gid == -1 || strlen(retpw.pw_name)<1) {
-			free(retpw.pw_name);
-			return NULL;
-		}
-
 		retpw.pw_dir = field_from_line(line, 5);
-		if (retpw.pw_dir == NULL) {
-			free(retpw.pw_name);
-			return NULL;
-		}
 		retpw.pw_shell = field_from_line(line, 6);
-		if (retpw.pw_shell == NULL || strlen(retpw.pw_dir)<1) {
-			free(retpw.pw_name);
-			free(retpw.pw_dir);
-			return NULL;
-		}
-		if (strlen(retpw.pw_shell)<1) {
-			free(retpw.pw_name);
-			free(retpw.pw_dir);
-			free(retpw.pw_shell);
+
+		if (retpw.pw_name == NULL || retpw.pw_gid == -1 || retpw.pw_shell == NULL || retpw.pw_dir == NULL
+				|| strlen(retpw.pw_name)<1 || strlen(retpw.pw_dir)<1 || strlen(retpw.pw_shell)<1) {
+			if (retpw.pw_name) free(retpw.pw_name);
+			if (retpw.pw_dir) free(retpw.pw_dir);
+			if (retpw.pw_shell) free(retpw.pw_shell);
 			return NULL;
 		}
 
