@@ -15,17 +15,16 @@ It is not an easy task to setup a jail (a changed root) in a functional way. If 
 
 With jk_init you can automate these tasks. You can create a section in the configfile 
 .I /etc/jailkit/jk_init.ini
-that has all the files, directories and devices, anbd you can use jk_init to setup such a jail with a single command. The default configfile has examples for cvs, sftp, scp, rsync and more. 
+that has all the files, directories and devices, and you can use jk_init to setup such a jail with a single command. The default configfile has examples for cvs, sftp, scp, rsync and more for Debian and Ubuntu Linux. For other operating systems the defaults might need some (minor) updates. 
 
 .SH EXAMPLE
-An example configfile might look like this:
+An example configfile section might look like this:
 
 .nf
 .sp
 [jk_lsh]
 comment = Jailkit limited shell
-executables = /usr/sbin/jk_lsh
-regularfiles = /etc/jailkit/jk_lsh.ini
+paths = /usr/sbin/jk_lsh, /etc/jailkit/jk_lsh.ini
 users = root
 groups = root
 need_logsocket = 1
@@ -34,18 +33,18 @@ includesections = uidbasics
 [sftp]
 comment = ssh secure ftp with Jailkit limited shell
 executables = /usr/lib/sftp-server
-includesections = netbasics, uidbasics, jk_lsh
+includesections = netbasics, uidbasics
 devices = /dev/urandom, /dev/null
 emptydirs = /svr
 .fi
 
 The 
 .B comment
-entry specifies the comment that is shown if option -l or --list is used. The 
-.B executables
-entry specifies which executables need to be copied into the jail. These files are checked for any required libraries, and these libraries are copied too. The
-.B regularfiles
-entry specifies which other files are needed, these files are not checked for required libraries. The
+entry specifies the comment that is shown if jk_init option -l or --list is used. The 
+.B paths
+entry specifies which files and directories need to be copied into the jail. Executables and libraries are checked for any required libraries, and these requirements are copied too. All files are created with user root as owner. The
+.B paths_w_owner
+entry specifies which paths need to be copied with their current ownership. This can be used to copy files that need to be writable by a server process that does not run as user root (for example database files). The
 .B users
 and
 .B groups
@@ -61,8 +60,20 @@ entry specifies which devices are required in the jail. The
 .B includesections
 entry specifies which other sections need to be processed as well when processing the current section. In the above example, the jk_lsh section is automatically included if the sftp section is processed. Finally the
 .B emptydirs
-entry specifies which directories to create as empty directories.
- 
+entry specifies which directories to create as empty directories. This can be useful to create for example mountpoints in the jail. 
+
+.SH DEPRECATED CONFIGFILE ENTRIES
+The entries 
+.B executables
+, 
+.B regularfiles
+, 
+.B directories
+and  
+.B libraries
+are all replaced by the entry
+.B paths.
+They are still supported, but are handled similar to the paths entry. 
 
 .SH LIMITATIONS
 
