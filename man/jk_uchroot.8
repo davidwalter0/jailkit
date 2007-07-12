@@ -9,7 +9,7 @@ jk_uchroot \- grant regular users the right to change root into certain director
 
 .SH DESCRIPTION
 
-jk_uchroot can be used to give regular users access to the chroot() system call in a safe way. jk_uchroot will only grant chroot into a jail if the user is granted access to that jail. jk_uchroot will furthermore only grant access if the chroot jail is safe. Safe means that it is owned by uid 0 gid 0 and not writable for others, including the system directories such as  /bin, /lib, /dev/, /sbin, and /usr.
+jk_uchroot can be used to give regular users access to the chroot() system call in a safe way. jk_uchroot will only grant chroot into a jail if the configuration file lists this user and jail combination. jk_uchroot will furthermore only grant access if the chroot jail is safe. Safe means that it is owned by uid 0 gid 0 and not writable for others, including the system directories such as  /bin, /lib, /dev/, /sbin, and /usr.
 
 jk_uchroot needs root privileges to make the 
 .BR chroot(2)

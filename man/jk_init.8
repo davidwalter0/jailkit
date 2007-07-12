@@ -5,9 +5,9 @@ jk_init \- a utility to quicky create functional jail directories
 
 .SH SYNOPSIS
 
-.B jk_init jail section
+.B jk_init -j jail section
 
-.B jk_init -v -f -k jail section
+.B jk_init -v -f -k -j jail section
 
 .SH DESCRIPTION
 
@@ -96,6 +96,9 @@ Use alternative configfile
 .TP
 .BR \-l\ \-\-list 
 List available sections in the config file
+.TP
+.BR \-j\ \-\-jail\ <jail> 
+Specify the jail directory to operate on. 
 .TP
 .BR \-h\ \-\-help
 The help screen
