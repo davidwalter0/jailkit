@@ -1,4 +1,4 @@
-.TH jk_update 8 06-03-2007 JAILKIT jk_update
+.TH jk_update 8 17-07-2007 JAILKIT jk_update
 
 .SH NAME
 jk_update \- a utility to update and cleanup a jail according to changes on the real system 
@@ -89,17 +89,19 @@ Try to create hardlinks instead of copying the files when updating
 Do not update this file. The argument can either be the path in the jail or the path on the real system. In order to skip multiple files, use this option multiple times. 
 
 .SH "SEE ALSO"
-
 .BR jailkit(8)
 .BR jk_check(8)
 .BR jk_chrootlaunch(8)
 .BR jk_chrootsh(8)
+.BR jk_cp(8)
 .BR jk_init(8)
+.BR jk_jailuser(8)
 .BR jk_list(8)
 .BR jk_lsh(8)
-.BR jk_cp(8)
 .BR jk_procmailwrapper(8)
 .BR jk_socketd(8)
+.BR jk_uchroot(8)
+.BR chroot(2)
 
 .SH COPYRIGHT
 

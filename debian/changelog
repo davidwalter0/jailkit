@@ -1,3 +1,16 @@
+jailkit (2.4-1) unstable; urgency=low
+
+  * added a new jk_uchroot utility
+  * fixed a rare crash in configuration file parsing 
+  * added new jk_init configuration file options
+  * added new options to jk_cp and jk_init to retain ownership when copying files into the jail
+  * improved the documentation
+  * improved several chroot security checks 
+  * fixed some build issues on OpenBSD
+  * improved error reporting
+
+ -- Olivier Sessink <olivier@cort.fakenet>  Tue, 17 Jul 2007 20:32:41 +0200
+
 jailkit (2.3-1) unstable; urgency=low
 
   * various small fixes for the new jk_update utility
