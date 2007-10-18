@@ -58,12 +58,12 @@ distclean:
 	@cd man/ && $(MAKE) distclean
 
 install:
-	${INSTALL} -d -m 755 ${iniprefix}
+	${INSTALL} -d -m 755 ${DESTDIR}${iniprefix}
 	for file in ${INIFILES} ; do \
 		if [ -f ${iniprefix}$${file} ]; then \
-			${INSTALL} -o root -m 0644 ini/$${file} ${iniprefix}$${file}.dist ;\
+			${INSTALL} -m 0644 ini/$${file} ${DESTDIR}${iniprefix}$${file}.dist ;\
 		else \
-			${INSTALL} -o root -m 0644 ini/$${file} ${iniprefix} ;\
+			${INSTALL} -m 0644 ini/$${file} ${DESTDIR}${iniprefix} ;\
 		fi ;\
 	done
 	@cd src/ && $(MAKE) install
@@ -71,9 +71,11 @@ install:
 	@cd man/ && $(MAKE) install
 	# test if the jk_chrootsh is already in /etc/shells
 	# this previously had @echo but that fails on FreeBSD
-	if ! grep ${prefix}/sbin/jk_chrootsh /etc/shells ; then \
-		echo "appending ${prefix}/sbin/jk_chroots to /etc/shells";\
-		echo ${prefix}/sbin/jk_chrootsh >> /etc/shells ;\
+	if test -w /etc/shells; then \
+		if ! grep ${prefix}/sbin/jk_chrootsh /etc/shells ; then \
+			echo "appending ${prefix}/sbin/jk_chroots to /etc/shells";\
+			echo ${prefix}/sbin/jk_chrootsh >> /etc/shells ;\
+		fi \
 	fi
 
 

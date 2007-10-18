@@ -68,17 +68,17 @@ jailkit: jk_lib.pyc jk_cp jk_init jk_check jk_addjailuser jk_jailuser jk_list jk
 all: jailkit
 
 install: jailkit
-	${INSTALL} -d -m 755 ${prefix}/sbin
-	${INSTALL} -d -m 755 ${PYLIBDIR}
-	${INSTALL} -g 0 -o root -m 0644 jk_lib.py ${PYLIBDIR}/
-	${INSTALL} -g 0 -o root -m 0644 jk_lib.pyc ${PYLIBDIR}/
-	${INSTALL} -g 0 -o root -m 0755 jk_init ${prefix}/sbin
-	${INSTALL} -g 0 -o root -m 0755 jk_check ${prefix}/sbin
-	${INSTALL} -g 0 -o root -m 0755 jk_cp ${prefix}/sbin
-	${INSTALL} -g 0 -o root -m 0755 jk_addjailuser ${prefix}/sbin
-	${INSTALL} -g 0 -o root -m 0755 jk_jailuser ${prefix}/sbin
-	${INSTALL} -g 0 -o root -m 0755 jk_list ${prefix}/sbin
-	${INSTALL} -g 0 -o root -m 0755 jk_update ${prefix}/sbin
+	${INSTALL} -d -m 755 ${DESTDIR}${prefix}/sbin
+	${INSTALL} -d -m 755 ${DESTDIR}${PYLIBDIR}
+	${INSTALL} -m 0644 jk_lib.py ${DESTDIR}${PYLIBDIR}/
+	${INSTALL} -m 0644 jk_lib.pyc ${DESTDIR}${PYLIBDIR}/
+	${INSTALL} -m 0755 jk_init ${DESTDIR}${prefix}/sbin
+	${INSTALL} -m 0755 jk_check ${DESTDIR}${prefix}/sbin
+	${INSTALL} -m 0755 jk_cp ${DESTDIR}${prefix}/sbin
+	${INSTALL} -m 0755 jk_addjailuser ${DESTDIR}${prefix}/sbin
+	${INSTALL} -m 0755 jk_jailuser ${DESTDIR}${prefix}/sbin
+	${INSTALL} -m 0755 jk_list ${DESTDIR}${prefix}/sbin
+	${INSTALL} -m 0755 jk_update ${DESTDIR}${prefix}/sbin
 
 uninstall:
 	rm -f ${prefix}/sbin/jk_cp

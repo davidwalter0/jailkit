@@ -63,9 +63,9 @@ jailkit: ${OBJS}
 all: jailkit
 	
 install: jailkit
-	${INSTALL} -d -m 755 ${prefix}/share/man/man8/
+	${INSTALL} -d -m 755 ${DESTDIR}${prefix}/share/man/man8/
 	for file in ${OBJS} ; do \
-		${INSTALL} -g 0 -o root -m 0644 $${file} ${prefix}/share/man/man8/ ;\
+		${INSTALL} -m 0644 $${file} ${DESTDIR}${prefix}/share/man/man8/ ;\
 	done
 
 uninstall:
