@@ -79,6 +79,7 @@ distclean: clean
 
 install: ${BINARIES}
 	${INSTALL} -d -m 755 ${DESTDIR}${prefix}
+	${INSTALL} -d -m 755 ${DESTDIR}${prefix}/bin
 	${INSTALL} -d -m 755 ${DESTDIR}${prefix}/sbin
 	${INSTALL} -m 0755 jk_socketd ${DESTDIR}${prefix}/sbin/
 	${INSTALL} -m 0755 jk_chrootlaunch ${DESTDIR}${prefix}/sbin/
