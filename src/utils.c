@@ -95,10 +95,10 @@ int clearenv(void) {
 }
 #endif /* HAVE_CLEARENV */
 
-#ifndef HAVE_GETCURRENTDIRNAME
+#ifndef HAVE_GET_CURRENT_DIR_NAME
 char *get_current_dir_name(void) {
 	char *string;
 	string = malloc0(512);
 	return getcwd(string, 512);
 }
-#endif /* HAVE_GETCURRENTDIRNAME */
+#endif /* HAVE_GET_CURRENT_DIR_NAME */

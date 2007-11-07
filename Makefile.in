@@ -36,6 +36,7 @@ PACKAGE = @PACKAGE@
 INIFILES = jk_check.ini jk_init.ini jk_lsh.ini jk_socketd.ini jk_chrootsh.ini jk_update.ini
 
 jailkit: all
+
 all:
 	@cd src/ && $(MAKE) all
 	@cd py/ && $(MAKE) all
@@ -43,16 +44,13 @@ all:
 
 clean:
 	rm -f core *~ ini/*~
-	rm -rf autom4te.cache/
-	rm -f config.log config.status config.cache
 	@cd src/ && $(MAKE) clean
 	@cd py/ && $(MAKE) clean
 	@cd man/ && $(MAKE) clean
 
-distclean:
-	rm -f core *~ ini/*~
+distclean: clean
 	rm -rf autom4te.cache/
-	rm -f Makefile config.log config.status config.cache build-arch-stamp
+	rm -f Makefile config.log config.status config.cache
 	@cd src/ && $(MAKE) distclean
 	@cd py/ && $(MAKE) distclean
 	@cd man/ && $(MAKE) distclean
@@ -84,6 +82,6 @@ uninstall:
 	@cd py/ && $(MAKE) uninstall
 	@cd man/ && $(MAKE) uninstall
 	@cd src/ && $(MAKE) uninstall
-	- rmdir --ignore-fail-on-non-empty ${iniprefix}
+	-rmdir --ignore-fail-on-non-empty ${DESTDIR}${iniprefix}
 	@echo "You must manually remove jk_chrootsh from /etc/shells"
 # remove jk_chrootsh from /etc/shells

@@ -30,7 +30,7 @@ char *return_malloced_getwd(void);
 int clearenv(void);
 #endif
 
-#ifndef HAVE_GETCURRENTDIRNAME
+#ifndef HAVE_GET_CURRENT_DIR_NAME
 char *get_current_dir_name(void);
 #endif
 

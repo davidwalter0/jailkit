@@ -29,45 +29,59 @@
 #
 
 prefix = @prefix@
+bindir = @bindir@
+sbindir = @sbindir@
 sysconfdir = @sysconfdir@
 iniprefix = ${sysconfdir}/jailkit
 INSTALL = @INSTALL@
 CC = @CC@
-CFLAGS = @CFLAGS@ -g -O2 -Wall -pipe -DINIPREFIX="\"$(iniprefix)\""
+CFLAGS = @CFLAGS@ -DINIPREFIX=\"$(iniprefix)\"
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-PTHREAD_LIBS = @PTHREAD_LIBS@
+LDLIBS = @LIBS@
 
 
-#CFLAGS = ${CFLAGS} -g -O2 -Wall -pipe
+BINARIES = jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch jk_uchroot 
 
-SRCS = jk_socketd.c iniparser.c jk_lsh.c jk_uchroot.c jk_chrootsh.c jk_lib.c jk_chrootlaunch.c jk_procmailwrapper.c utils.c wordexp.c passwdparser.c
+@HAVEPROCMAIL_TRUE@BINARIES += jk_procmailwrapper
+
+SRCS = \
+	jk_socketd.c \
+	iniparser.c \
+	jk_lsh.c \
+	jk_uchroot.c \
+	jk_chrootsh.c \
+	jk_lib.c \
+	jk_chrootlaunch.c \
+	jk_procmailwrapper.c \
+	utils.c \
+	wordexp.c \
+	passwdparser.c
+
+@HAVEPROCMAIL_TRUE@SRCS += jk_procmailwrapper.c
+HAVEPROCMAIL_TRUE=@HAVEPROCMAIL_TRUE@
+
 OBJS = $(SRCS:.c=.o)
-BINARIES = @BINARIES@
-HAVEPROCMAIL = @HAVEPROCMAIL@
-
-.c.o:
-	$(CC) $(DEFS) $(CFLAGS) -c -o $@ $<
 
 all: ${BINARIES}
 
 jk_chrootlaunch: jk_chrootlaunch.o jk_lib.o utils.o
-	$(CC) $(DEFS) -o jk_chrootlaunch jk_lib.o jk_chrootlaunch.o utils.o $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) $(LDFLAGS) $(LIBS) -o $@ jk_chrootlaunch.o jk_lib.o utils.o
 
 jk_socketd: jk_socketd.o jk_lib.o utils.o iniparser.o
-	$(CC) $(DEFS) -o jk_socketd jk_socketd.o jk_lib.o utils.o iniparser.o $(LDFLAGS) $(LIBS) $(PTHREAD_LIBS)
+	$(CC) $(DEFS) $(LDFLAGS) $(LIBS) -o $@ jk_socketd.o jk_lib.o utils.o iniparser.o
 
 jk_lsh: jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o
-	$(CC) $(DEFS) -o jk_lsh jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) $(LDFLAGS) $(LIBS) -o $@ jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o
 
 jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o
-	$(CC) $(DEFS) -o jk_chrootsh jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) $(LDFLAGS) $(LIBS) -o $@ jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o
 
 jk_uchroot: jk_uchroot.o iniparser.o jk_lib.o utils.o
-	$(CC) $(DEFS) -o jk_uchroot jk_uchroot.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) $(LDFLAGS) $(LIBS) -o $@ jk_uchroot.o iniparser.o jk_lib.o utils.o
 
 jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o utils.o
-	$(CC) $(DEFS) -o jk_procmailwrapper jk_procmailwrapper.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
+	$(CC) $(DEFS) $(LDFLAGS) $(LIBS) -o $@ jk_procmailwrapper.o jk_lib.o utils.o
 
 clean:
 	rm -f ${BINARIES}
@@ -86,7 +100,7 @@ install: ${BINARIES}
 	${INSTALL} -m 0755 jk_lsh ${DESTDIR}${prefix}/sbin/
 	${INSTALL} -m 4755 jk_chrootsh ${DESTDIR}${prefix}/sbin/
 	${INSTALL} -m 4755 jk_uchroot ${DESTDIR}${prefix}/bin/
-	if [ ${HAVEPROCMAIL} -eq "1" ]; then \
+	if [ -z "@HAVEPROCMAIL_TRUE@" ]; then \
 		${INSTALL} -m 4755 jk_procmailwrapper ${DESTDIR}${prefix}/sbin/ ;\
 	fi
 	

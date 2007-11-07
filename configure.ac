@@ -32,30 +32,32 @@
 #
 #
 
-AC_INIT
-AC_PREFIX_DEFAULT(/usr)
+AC_INIT([jailkit],[2.4],[https://savannah.nongnu.org/bugs/?group=jailkit])
+
+AC_SUBST([PACKAGE], AC_PACKAGE_NAME)
+AC_DEFINE_UNQUOTED([PACKAGE], "AC_PACKAGE_NAME", [The package name.])
+AC_SUBST([VERSION], AC_PACKAGE_VERSION)
+AC_DEFINE_UNQUOTED([VERSION], "AC_PACKAGE_VERSION", [The package version.])
+
+AC_PREFIX_DEFAULT([/usr])
+dnl does this make sense?
 if test "$prefix" = "NONE"; then
 	sysconfdir="/etc"
-	echo "config files will be in /etc/jailkit/"
+	AC_MSG_NOTICE([config files will be in /etc/jailkit/])
 fi
-AC_CONFIG_SRCDIR(src/jk_socketd.c)
-AC_CONFIG_HEADER(src/config.h)
-
-PACKAGE=jailkit
-VERSION=2.4
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
-AC_DEFINE_UNQUOTED(INIPREFIX, "${sysconfdir}/etc/")
+AC_CONFIG_SRCDIR([src/jk_socketd.c])
+AC_CONFIG_HEADER([src/config.h])
 
 AC_GNU_SOURCE
 
-AC_ARG_PROGRAM
 AC_PROG_CC
 AC_ISC_POSIX
 AC_C_INLINE
 AC_PROG_INSTALL
+
+if test "$CC" = "gcc" ; then
+	CFLAGS="$CFLAGS -Wall -pipe"
+fi
 
 dnl ************************
 dnl Check for standard headers
@@ -67,98 +69,81 @@ dnl ************************
 dnl Checks for header files.
 dnl ************************
 
-AC_CHECK_HEADERS(errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h liberty.h)
+AC_CHECK_HEADERS([errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h liberty.h])
 
-AC_CHECK_FUNC(strndup,
-	AC_DEFINE(HAVE_STRNDUP, 1),
-	AC_CHECK_LIB(iberty,strndup,
-		LIBS="$LIBS -liberty"
-		AC_DEFINE(HAVE_STRNDUP, 1)
-	)
+AC_CHECK_FUNCS([strnlen wordexp clearenv get_current_dir_name])
+
+AC_CHECK_FUNCS(
+	[strndup],,
+	AC_CHECK_LIB([iberty], [strndup])
 )
 
-AC_CHECK_FUNC(strnlen,
-	AC_DEFINE(HAVE_STRNLEN, 1)
+AC_CHECK_FUNCS(
+	[mempcpy],,
+	AC_CHECK_LIB([iberty], [mempcpy])
 )
 
-AC_CHECK_FUNC(wordexp,
-	AC_DEFINE(HAVE_WORDEXP, 1)
+AC_CHECK_FUNCS(
+	[stpcpy],,
+	AC_CHECK_LIB([iberty], [stpcpy])
 )
 
-AC_CHECK_FUNC(mempcpy,
-	AC_DEFINE(HAVE_MEMPCPY, 1),
-	AC_CHECK_LIB(iberty,mempcpy,
-		LIBS="$LIBS -liberty"
-		AC_DEFINE(HAVE_MEMPCPY, 1)
-	)
-)
-
-AC_CHECK_FUNC(stpcpy,
-	AC_DEFINE(HAVE_STPCPY, 1),
-	AC_CHECK_LIB(iberty,stpcpy,
-		LIBS="$LIBS -liberty"
-		AC_DEFINE(HAVE_STPCPY, 1)
-	)
-)
-
-AC_CHECK_FUNC(clearenv,
-	AC_DEFINE(HAVE_CLEARENV, 1)
-)
-
-AC_CHECK_FUNC(get_current_dir_name,
-	AC_DEFINE(HAVE_GETCURRENTDIRNAME, 1)
-)
-
-AC_CHECK_LIB(pthread, pthread_create,
-	PTHREAD_LIBS=-lpthread,
-	AC_CHECK_LIB(c_r, pthread_create,
-		PTHREAD_LIBS=-lc_r,
-		AC_MSG_ERROR(libpthread not found)
+AC_CHECK_LIB(
+	[pthread],
+	[pthread_create],,
+	AC_CHECK_LIB(
+		[c_r],
+		[pthread_create],,
+		AC_MSG_ERROR([libpthread not found])
 	)
 )
 
 # FreeBSD has a gnugetopt library for this
 # Solaris might have libiberty
-AC_CHECK_FUNCS([getopt_long],,
-	AC_CHECK_LIB(gnugetopt,getopt_long,
-		AC_DEFINE(HAVE_GETOPT_LONG)
-		LIBS="$LIBS -lgnugetopt",
-		AC_CHECK_LIB(iberty,getopt_long,
-			AC_DEFINE(HAVE_GETOPT_LONG)
-  			LIBS="$LIBS -liberty",
-  			AC_MSG_ERROR(getopt_long not found)
-  		)
+AC_CHECK_FUNCS(
+	[getopt_long],,
+	AC_CHECK_LIB(
+		[gnugetopt],
+		[getopt_long],,
+		AC_CHECK_LIB(
+			[iberty],
+			[getopt_long],,
+			AC_MSG_ERROR(getopt_long not found)
+		)
 	)
 )
 
-
-AC_PATH_PROG(PYTHONINTERPRETER, python, no)
-if test "x$PYTHONINTERPRETER" == "xno" ; then
-	AC_MSG_ERROR(python not found please install python)
+dnl you should maybe add AC_ARG_VAR for every AC_PATH_PROG to allow users
+dnl to specify the binary path if it is not in PATH
+AC_ARG_VAR(
+	[PYTHONINTERPRETER],
+	[The `python' binary with path. Use it to define or override the location of `python'.]
+)
+AC_PATH_PROG([PYTHONINTERPRETER], [python], [no])
+if test "x$PYTHONINTERPRETER" = "xno" ; then
+	AC_MSG_ERROR([python not found please install python])
 fi
 AC_SUBST(PYTHONINTERPRETER)
+AC_MSG_CHECKING([for up to date python])
 echo -n "checking for up to date python... "
 if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
-	echo "ok"
+	AC_MSG_RESULT([ok])
 else
-	echo "failed"
-	AC_MSG_ERROR(your python version is too old, please install python 2 or newer)
+	AC_MSG_RESULT([failed])
+	AC_MSG_ERROR([your python version is too old, please install python 2 or newer])
 fi
 
-BINARIES="jk_socketd jk_lsh jk_chrootsh jk_chrootlaunch jk_uchroot"
-
-AC_PATH_PROG(PROCMAILPATH, procmail, no)
-HAVEPROCMAIL="0"
+AC_ARG_VAR(
+	[PROCMAILPATH],
+	[The `procmail' binary with path. Use it to define or override the location of `procmail'.]
+)
+AC_PATH_PROG([PROCMAILPATH], [procmail], [no])
 if test "x$PROCMAILPATH" != "xno" ; then
-	AC_DEFINE_UNQUOTED(PROCMAILPATH, "$PROCMAILPATH")
-	BINARIES="${BINARIES} jk_procmailwrapper"
-	HAVEPROCMAIL="1"
+	AC_DEFINE_UNQUOTED([PROCMAILPATH], "$PROCMAILPATH", [The procmail path.])
+	AC_SUBST([HAVEPROCMAIL_TRUE], [])
+else
+	AC_SUBST([HAVEPROCMAIL_TRUE], [#])
 fi
-AC_SUBST(BINARIES)
-AC_SUBST(HAVEPROCMAIL)
-AC_SUBST(LIBS)
-AC_SUBST(LDFLAGS)
-AC_SUBST(PTHREAD_LIBS)
 
-AC_CONFIG_FILES(Makefile src/Makefile py/Makefile man/Makefile)
+AC_CONFIG_FILES([Makefile src/Makefile py/Makefile man/Makefile])
 AC_OUTPUT
