@@ -1,5 +1,5 @@
 #
-#Copyright (C) 2003, 2004, 2005, 2006, Olivier Sessink
+#Copyright (C) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -278,7 +278,7 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 
 
 def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
-	# used to move home directories into the jail
+	# used to **move** home directories into the jail
 	#create directory dstdir
 	try:
 		if (be_verbose):
@@ -361,17 +361,30 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 
 def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, handledfiles=[]):
 	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
-	
-	for root, dirs, files in os.walk(dir):
-		files2 = ()
-		for name in files:
-			files2 += os.path.join(root, name),
-		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
-		for name in dirs:
-			tmp = os.path.join(root, name)
-			create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)			
-			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
-	return handledfiles
+	files2 = ()
+	for entry in os.listdir(dir):
+		tmp = os.path.join(dir, entry)
+		try:
+			sbuf = os.lstat(tmp)
+			if (stat.S_ISDIR(sbuf.st_mode)):
+				create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)			
+				handledfiles = copy_dir_recursive(chroot,tmp,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+			else:
+				files2 += os.path.join(dir, entry),
+		except OSError, e:
+			sys.stderr.write('ERROR: failed to investigate source file '+tmp+': '+e.strerror+'\n')
+	handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+	return handledfiles 
+#	for root, dirs, files in os.walk(dir):
+#		files2 = ()
+#		for name in files:
+#			files2 += os.path.join(root, name),
+#		handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+#		for name in dirs:
+#			tmp = os.path.join(root, name)
+#			create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)			
+#			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+#	return handledfiles
 
 def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, try_glob_matching=0, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""

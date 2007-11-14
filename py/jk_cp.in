@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006, 2007 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -47,26 +47,27 @@ def startcopy(config, chroot, filestocopy, checklibs=1):
 	jk_lib.gen_library_cache(chroot)
 
 def usage():
-	print "Usage: "+sys.argv[0]+" [OPTIONS]"
+	print "Usage: "+sys.argv[0]+" -j <jail> [OPTIONS] <files and directories>"
 	print ""
 	print "-h --help          : this help screen"
+	print "-j, --jail         : the jail to copy to"
 	print "-v, --verbose      : show what is being copied"
 	print "-f, --force        : overwrite existing files"
 	print "-k, --hardlink     : use hardlinks if possible"
 	print "-o, --owner        : retain file ownership and group"
-	print ""
+	print "\nNote: if no jail is specified, the first argument is\nconsidered to be the jail\n"
 
-def testargs(args):
-	if (len(args) < 2):
+def testargs(jail, args):
+	if (len(args) == 0 or jail == None):
 		sys.stderr.write('ERROR: need at least a chroot directory and a file to copy\n\n')
 		usage()
 		sys.exit(2)
-	if (not os.path.isdir(args[0])):
-		sys.stderr.write('ERROR: '+args[0]+' is not a directory\n')
+	if (not os.path.isdir(jail)):
+		sys.stderr.write('ERROR: '+jail+' is not a directory\n')
 		print ""
 		usage()
 		sys.exit(3)
-	for file in args[1:]:
+	for file in args:
 		if (not os.path.exists(file)):
 			sys.stderr.write('ERROR: '+file+' does not exist\n\n')
 			usage()
@@ -77,7 +78,7 @@ def main():
 		print 'cannot run without root privileges'
 		sys.exit(5)
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'fhvko', ['help', 'verbose', 'force', 'hardlink', 'owner'])
+		opts, args = getopt.getopt(sys.argv[1:], 'fh?vkoj:', ['help', 'verbose', 'force', 'hardlink', 'owner', 'jail'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
@@ -86,10 +87,13 @@ def main():
 	config['force'] = 0
 	config['hardlink'] = 0
 	config['retainowner'] = 0
+	jail = None
 	for o, a in opts:
-		if o in ("-h", "--help"):
+		if o in ("-h",'?', "--help"):
 			usage()
 			sys.exit()
+		if o in ("-j", "--jail"):
+			jail = a
 		if o in ("-v", "--verbose"):
 			config['verbose'] = 1
 		if o in ("-f", "--force"):
@@ -98,11 +102,14 @@ def main():
 			config['hardlink'] = 1
 		if o in ("-o", "--owner"):
 			config['retainowner'] = 1
-	testargs(args)
-	if (args[0][-1] != '/'): args[0] = args[0]+'/'
-	if (jk_lib.chroot_is_safe(args[0])!=1):
+	if (jail == None and len(args)>0 ):
+		jail = args[0]
+		args = args[1:]
+	testargs(jail, args)
+	if (jail[-1] != '/'): jail = jail+'/'
+	if (jk_lib.chroot_is_safe(jail)!=1):
 		sys.exit(6)
-	startcopy(config, args[0], args[1:])
+	startcopy(config, jail, args)
 
 if __name__ == "__main__":
     main()

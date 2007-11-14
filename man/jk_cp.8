@@ -1,13 +1,13 @@
-.TH jk_cp 8 17-07-2007 JAILKIT jk_cp
+.TH jk_cp 8 14-11-2007 JAILKIT jk_cp
 
 .SH NAME
 jk_cp \- a utility to copy files including permissions and libraries into a jail
 
 .SH SYNOPSIS
 
-.B jk_cp jail source
+.B jk_cp -j jail source
 
-.B jk_cp -v -k -f jail source
+.B jk_cp -v -k -f -j jail source
 
 .SH DESCRIPTION
 
@@ -15,16 +15,19 @@ jk_cp will copy any file into a jail on the identical location, with identical p
 
 .SH EXAMPLE
 
-jk_cp /home/testchroot /usr/bin/cvs
+jk_cp -j /home/testchroot /usr/bin/cvs
 
 will copy /usr/bin/cvs to /home/testchroot/usr/bin/cvs, and it will copy the libraries used by cvs also to the jail.
 
-jk_cp -k /svr/testjail /usr/bin/firefox /usr/share/firefox
+jk_cp -k -j /svr/testjail /usr/bin/firefox /usr/share/firefox
 
 will hardlink /usr/bin/firefox and all files in /usr/share/firefox into jail /svr/testjail 
 
 .SH OPTIONS
 
+.TP
+.BR \-j\ \-\-jail
+The destination jail. If no jail is specified, the first argument is used as jail for backwards compatibility
 .TP
 .BR \-f\ \-\-force
 Force overwriting of existing files
