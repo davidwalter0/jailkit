@@ -1,3 +1,11 @@
+jailkit (2.5-1) unstable; urgency=low
+
+  * fixed an issue in jk_cp and jk_init that symlinks to directories were sometimes copied as directories instead of symlinks
+  * improved some documentation
+  * added a -j option to all utilities to improve consistency
+
+ -- Olivier Sessink <olivier@aria.fakenet>  Fri, 07 Dec 2007 13:53:52 +0100
+
 jailkit (2.4-1) unstable; urgency=low
 
   * added a new jk_uchroot utility
