@@ -7,7 +7,7 @@ make
 su root
 make install
 
-# now copy the startup script to 
+# to run the jk_socketd daemon, copy the startup script to 
 # your init directory, on Debian this is
 cp extra/jailkit /etc/init.d/jailkit
 chmod a+x /etc/init.d/jailkit

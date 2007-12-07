@@ -1,4 +1,4 @@
-.TH jailkit 8 17-07-2007 JAILKIT jailkit
+.TH jailkit 8 07-12-2007 JAILKIT jailkit
 
 .SH NAME
 jailkit \- utilities for jailing a user or process
@@ -100,11 +100,13 @@ a homedirectory /home/test
 .sp
 #initialise the jail
 mkdir /home/sftproot
-jk_init /home/sftproot jk_lsh
-jk_init /home/sftproot sftp
-jk_init /home/sftproot scp
+chown root:root /home/sftproot
+chmod 0755 /home/sftproot
+jk_init -j /home/sftproot jk_lsh
+jk_init -j /home/sftproot sftp
+jk_init -j /home/sftproot scp
 # create the account
-jk_addjailuser /home/sftproot test
+jk_addjailuser -j /home/sftproot test
 # edit the jk_lsh configfile in the jail, see man jk_lsh
 # you can use every editor you want, I chose 'joe'
 joe /home/sftproot/etc/jailkit/jk_lsh.ini

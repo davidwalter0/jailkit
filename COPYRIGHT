@@ -1,7 +1,7 @@
 For all files in Jailkit except src/wordexp.c and src/wordexp.h 
 the following licence for use applies:
 ------------
-Copyright (C) 2003, 2004, 2005, 2006 Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,14 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
+
 ------------
+
 The file src/jk_lsh.c is additionally available  under the Library-GPL 
-licence as written below. 
+licence as written below. Additionally means that you can EITHER use 
+LGPL licence as described below OR the modified BSD licence as described 
+above, OR you use both exactly as in this file. You CANNOT use some (not
+all) of the LGPL clauses and some of the modified BSD licence clauses. 
 
 The files src/wordexp.c and src/wordexp.h are 
 Copyright (C) 1997, 1998, 1999 Free Software Foundation, Inc.
@@ -39,6 +44,7 @@ with some changes Copyright (C) 2003, 2004, 2005, 2006 Olivier Sessink
 and are only available under the Library-GPL licence as written below.
 These files (wordexp.c and wordexp.h) are only used on platforms on 
 which the wordexp() function is not available. 
+
 -------------
 
 		  GNU LIBRARY GENERAL PUBLIC LICENSE

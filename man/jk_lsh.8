@@ -1,4 +1,4 @@
-.TH jk_lsh 8 17-07-2007 JAILKIT jk_lsh
+.TH jk_lsh 8 07-12-2007 JAILKIT jk_lsh
 
 .SH NAME
 jk_lsh \- a shell that limits the binaries it will execute
@@ -56,7 +56,7 @@ The
 .B executables
 entry specifies all executables that jk_lsh will execute. The 
 .B paths
-entry specifies where it will look for these executables. The 
+entry specifies in which directories jk_lsh will look for these executables if no path is specified. The PATH environment variable is ignored by jk_lsh. The 
 .B allow_word_expansion
 if set to 1, will make jk_lsh do word expansion (*, ?, ~, $) using
 .BR wordexp(3)

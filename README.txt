@@ -29,12 +29,12 @@ a homedirectory /home/test
 
 #initialise the jail
 mkdir /home/sftproot
-jk_init /home/sftproot jk_lsh
-jk_init /home/sftproot sftp
-jk_init /home/sftproot scp
+jk_init -j /home/sftproot jk_lsh
+jk_init -j /home/sftproot sftp
+jk_init -j /home/sftproot scp
 # create the account
 adduser test
-jk_jailuser /home/sftproot test
+jk_jailuser -j /home/sftproot test
 # edit the jk_lsh configfile in the jail (man jk_lsh)
 # you can use every editor you want, I chose 'joe'
 joe /home/sftproot/etc/jailkit/jk_lsh.ini
