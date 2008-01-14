@@ -68,7 +68,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define PROGRAMNAME "jk_uchroot"
-#define CONFIGFILE INIPREFIX"/jk_uchrootsh.ini"
+#define CONFIGFILE INIPREFIX"/jk_uchroot.ini"
 
 #include "jk_lib.h"
 #include "utils.h"
