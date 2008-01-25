@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define PROGRAMNAME "jk_socketd"
 #define CONFIGFILE INIPREFIX"/jk_socketd.ini"
 
-#define MAX_SOCKETS 32
+#define MAX_SOCKETS 128
 #define CHECKTIME 100000 /* 0.1 seconds */
 #define FULLSECOND 1000000
 #define MILLISECOND 1000
@@ -354,6 +354,13 @@ int main(int argc, char**argv) {
 				unsigned int base=511, peak=2048;
 				float interval=5.0;
 				long prevpos, secpos;
+				
+				if (numsockets == MAX_SOCKETS) {
+					syslog(LOG_NOTICE, "Warning: jk_socketd is compiled to support maximum %d sockets and more sockets are requested, not all sockets are opened!",MAX_SOCKETS);
+					if (nodetach) printf("Warning: jk_socketd is compiled to support maximum %d sockets and more sockets are requested, not all sockets are opened!\n",MAX_SOCKETS);
+					break;
+				}
+				
 				prevpos = iniparser_get_position(ip);
 				secpos = prevpos - strlen(tmp)-4;
 				DEBUG_MSG("secpos=%ld, prevpos=%ld\n",secpos,prevpos);
@@ -384,6 +391,7 @@ int main(int argc, char**argv) {
 				syslog(LOG_NOTICE, "version "VERSION", socket %s is mentioned multiple times in config file",tmp);
 				if (nodetach) printf("version "VERSION", socket %s is mentioned multiple times in config file\n",tmp);
 			}
+			
 		}
 	}
 	else
