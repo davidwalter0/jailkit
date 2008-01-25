@@ -236,7 +236,7 @@ def usage():
 	print
 
 def testjail(jail, shell):
-	if (type(jail) != str):
+	if (type(jail) != str or len(jail)==0):
 		return 0
 	if (jail[-1:] == '/'):
 		jail = jail[:-1]
@@ -256,7 +256,7 @@ def testjail(jail, shell):
 
 def getjail(jail, config):
 	while (1):
-		if (type(jail) == str and jail[0] != '/'):
+		if (type(jail) == str and len(jail)>0 and jail[0] != '/'):
 			tmp = os.getcwd()+'/'+jail
 			if (os.path.exists(tmp)):
 				jail = tmp
@@ -274,7 +274,7 @@ def getjail(jail, config):
 
 def getmovehome(jail,user,config):
 	pw = pwd.getpwnam(user)
-	if (pw.pw_dir[0:len(jail)] == jail):
+	if (pw[5][0:len(jail)] == jail): # pw[5] == pw.pw_dir
 		return 0
 	print 'home directory '+pw.pw_dir+' is not within '+jail+', move the directory contents?'
 	tmp = raw_input('[Y]/[n]')
