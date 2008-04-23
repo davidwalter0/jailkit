@@ -331,13 +331,14 @@ int main(int argc, char**argv) {
 		client_addr.sa_family = AF_UNIX;
 		if (connect(outsocket, &client_addr, sizeof(client_addr)) != 0) {
 			/*DEBUG_MSG("connect returned erno %d: %s\n",errno, strerror(errno));*/
-			syslog(LOG_CRIT, "version "VERSION", while connecting to /dev/log: %s", strerror(errno));
-			if (nodetach) printf("version "VERSION", while connecting to /dev/log: %s\n",strerror(errno) );
-			close(outsocket);
-			exit(1);
-		} else {
-			if (nodetach) printf("opened /dev/log\n");
+			outsocket = socket(AF_UNIX, SOCK_STREAM, 0);
+			if (connect(outsocket, &client_addr, sizeof(client_addr)) != 0) {
+				syslog(LOG_CRIT, "version "VERSION", while connecting to /dev/log: %s", strerror(errno));
+				if (nodetach) printf("version "VERSION", while connecting to /dev/log: %s\n",strerror(errno) );
+				exit(1);
+			}
 		}
+		if (nodetach) printf("opened /dev/log\n");
 	}
 	
 	if (!m_socket)
