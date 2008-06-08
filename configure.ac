@@ -98,6 +98,17 @@ AC_CHECK_LIB(
 	)
 )
 
+# solaris has -lsocket or -lxnet for various socket functions
+AC_CHECK_FUNCS(
+	[recvfrom],,
+	AC_CHECK_LIB([xnet], [recvfrom])
+)
+AC_CHECK_FUNCS(
+	[send],,
+	AC_CHECK_LIB([socket], [send])
+)
+
+
 # FreeBSD has a gnugetopt library for this
 # Solaris might have libiberty
 AC_CHECK_FUNCS(

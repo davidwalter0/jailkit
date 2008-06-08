@@ -142,6 +142,8 @@ void signal_handler(int signum) {
 
 int main (int argc, char **argv) {
 	int i;
+	char *user=NULL, *tmp=NULL;
+	
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
 	long ngroups_max=NGROUPS_MAX;
@@ -169,7 +171,7 @@ int main (int argc, char **argv) {
 	
 	/* check if it us that the user wants */
 	{
-		char *tmp = strrchr(argv[0], '/');
+		tmp = strrchr(argv[0], '/');
 		if (!tmp) {
 			tmp = argv[0];
 		} else {
@@ -198,13 +200,31 @@ int main (int argc, char **argv) {
 	}
 
 	DEBUG_MSG("get user info\n");
-	pw = getpwuid(getuid());
+	/* get user info based on the users name and not on the uid. this enables support
+	for systems with multiple users with the same user id*/
+	tmp = getenv("USER");
+	if (tmp) {
+		user = strdup(tmp);
+	}
+	if (user) {
+		pw = getpwnam(user);
+	} else {
+		pw = getpwuid(getuid());
+	}
 	if (!pw) {
 		syslog(LOG_ERR, "abort, failed to get user information for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
 		exit(13);
 	}
 	if (!pw->pw_name || strlen(pw->pw_name)==0) {
 		syslog(LOG_ERR, "abort, got an empty username for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
+		exit(13);
+	}
+	if (user && strcmp(user,pw->pw_name)!=0) {
+		syslog(LOG_ERR, "abort, asked for user %s, got user info for %s", user, pw->pw_name);
+		exit(13);
+	}
+	if (pw->pw_uid != getuid()) {
+		syslog(LOG_ERR, "abort, started by user ID %d, got user info %s with user ID %d,", getuid(), pw->pw_name, pw->pw_uid);
 		exit(13);
 	}
 	DEBUG_MSG("got user %s\nget group info\n",pw->pw_name);
@@ -375,9 +395,17 @@ int main (int argc, char **argv) {
 		oldpw_name = strdup(pw->pw_name);
 		oldgr_name = strdup(gr->gr_name);
 		
-		pw = getpwuid(getuid());
+		if (user) {
+			pw = getpwnam(user);
+		} else {
+			pw = getpwuid(getuid());
+		}
 		if (!pw) {
 			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jaildir);
+			exit(35);
+		}
+		if (pw->pw_uid != getuid()) {
+			syslog(LOG_ERR, "abort, got user information in the jail for user ID %d instead of user ID %d, check %s/etc/passwd",pw->pw_uid,getuid(),jaildir);
 			exit(35);
 		}
 		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
@@ -427,6 +455,7 @@ int main (int argc, char **argv) {
 	/* prepare the new environment */
 	setenv("HOME",newhome,1);
 	setenv("USER",pw->pw_name,1);
+	setenv("USERNAME",pw->pw_name,1);
 	setenv("SHELL",shell,1);
 	if (chdir(newhome) != 0) {
 		syslog(LOG_ERR, "abort, chdir(%s) failed inside the jail %s: %s, check the permissions for %s/%s",newhome,jaildir,strerror(errno),jaildir,newhome);
