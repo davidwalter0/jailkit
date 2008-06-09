@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <syslog.h>
 #include <limits.h>
+#include <fcntl.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
@@ -94,13 +95,16 @@ static void print_usage() {
 /* do chroot call */
 int main(int argc, char **argv) {
 	char *jail = NULL;
+	char *user = NULL;
 	char *executable = NULL;
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
 	Tiniparser *parser=NULL;
 	char **newargv=NULL;
 	char **allowed_jails = NULL;
-	int skip_injail_passwd_check=0;
+	unsigned int skip_injail_passwd_check=0;
+	unsigned int i;
+	char *tmp;
 
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
 	
@@ -130,15 +134,57 @@ int main(int argc, char **argv) {
 		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense because user root can use the chroot utility");
 		exit(12);
 	}
+	
+#ifdef OPEN_MAX
+    i = OPEN_MAX;
+#elif defined(NOFILE)
+    i = NOFILE;
+#else
+    i = getdtablesize();
+#endif
+	while (i-- > 2) {
+		while (close(i) != 0 && errno == EINTR);
+	}
+	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
+	while (1) {
+		int fd;
+		fd = open("/dev/null", O_RDWR);
+		if (fd < 0)
+			exit(10);
+		if (fd > 2) {
+			close(fd);
+			break;
+		}
+	}
+	
 
 	DEBUG_MSG("get user info\n");
-	pw = getpwuid(getuid());
+	/* get user info based on the users name and not on the uid. this enables support
+	for systems with multiple users with the same user id*/
+	tmp = getenv("USER");
+	if (tmp && strlen(tmp)) {
+		user = strdup(tmp);
+	}
+	if (user) {
+		pw = getpwnam(user);
+	} else {
+		pw = getpwuid(getuid());
+	}
+
 	if (!pw) {
 		syslog(LOG_ERR, "abort, failed to get user information for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
 		exit(13);
 	}
 	if (!pw->pw_name || strlen(pw->pw_name)==0) {
 		syslog(LOG_ERR, "abort, got an empty username for user ID %d: %s, check /etc/passwd", getuid(), strerror(errno));
+		exit(13);
+	}
+	if (user && strcmp(user,pw->pw_name)!=0) {
+		syslog(LOG_ERR, "abort, asked for user %s, got user info for %s", user, pw->pw_name);
+		exit(13);
+	}
+	if (pw->pw_uid != getuid()) {
+		syslog(LOG_ERR, "abort, started by user ID %d, got user info %s with user ID %d,", getuid(), pw->pw_name, pw->pw_uid);
 		exit(13);
 	}
 	gr = getgrgid(getgid());
@@ -190,7 +236,11 @@ int main(int argc, char **argv) {
 			exit(1);
 		}
 	}
-
+	/* make sure the jailkit config directory is owned root:root and not writable for others */
+	if ( (testsafepath(INIPREFIX, 0, 0) &~TESTPATH_GROUPW) != 0 ) {
+		syslog(LOG_ERR, "abort, jailkit configuration directory "INIPREFIX" is not safe; it should be owned 0:0 and not writable for others");
+		exit(14);
+	}
 	parser = new_iniparser(CONFIGFILE);
 	if (parser) {
 		/* first check for a section specific for this user, then for a group section, else a DEFAULT section */
@@ -234,8 +284,7 @@ int main(int argc, char **argv) {
 	}
 	/* check if the requested jail is allowed */
 	{
-		int allowed = 0;
-		int i;
+		unsigned int allowed = 0;
 		/* 'jail' has an ending slash */
 		for (i=0;allowed_jails[i]!=NULL&&!allowed;i++) {
 			allowed = dirs_equal(jail,allowed_jails[i]);
@@ -289,12 +338,20 @@ int main(int argc, char **argv) {
 		oldpw_name = strdup(pw->pw_name);
 		oldgr_name = strdup(gr->gr_name);
 		
-		pw = getpwuid(getuid());
+		if (user) {
+			pw = getpwnam(user);
+		} else {
+			pw = getpwuid(getuid());
+		}
 		if (!pw) {
 			syslog(LOG_ERR, "abort, failed to get user information in the jail for user ID %d: %s, check %s/etc/passwd",getuid(),strerror(errno),jail);
 			exit(35);
 		}
 		DEBUG_MSG("got %s as pw_dir\n",pw->pw_dir);
+		if (pw->pw_uid != getuid()) {
+			syslog(LOG_ERR, "abort, got user information in the jail for user ID %d instead of user ID %d, check %s/etc/passwd",pw->pw_uid,getuid(),jail);
+			exit(35);
+		}
 		gr = getgrgid(getgid());
 		if (!gr) {
 			syslog(LOG_ERR, "abort, failed to get group information in the jail for group ID %d: %s, check %s/etc/group",getgid(),strerror(errno),jail);

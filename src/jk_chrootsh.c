@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -222,7 +222,7 @@ int main (int argc, char **argv) {
 	/* get user info based on the users name and not on the uid. this enables support
 	for systems with multiple users with the same user id*/
 	tmp = getenv("USER");
-	if (tmp) {
+	if (tmp && strlen(tmp)) {
 		user = strdup(tmp);
 	}
 	if (user) {
