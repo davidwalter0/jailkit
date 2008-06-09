@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h> /* fseek() */
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* memset() */
-
+#include <fcntl.h> /* fcntl() */
 /* #define DEBUG */
 
 #ifdef DEBUG
@@ -51,6 +51,9 @@ Tiniparser *new_iniparser(char *filename) {
 		Tiniparser *ip = malloc(sizeof(Tiniparser));
 		ip->filename = strdup(filename);
 		ip->fd = tmp;
+		/* set close-on-exec so this file descriptor will not be passed 
+		to the a process after an exec() call */
+		fcntl(fileno(ip->fd), F_SETFD, FD_CLOEXEC);
 		DEBUG_MSG("new_iniparser, ip=%p for filename %s\n",ip,filename);
 		return ip;
 	}

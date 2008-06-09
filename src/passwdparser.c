@@ -37,7 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h> /* memset() */
-
+#include <fcntl.h>
 #include "utils.h"
 
 #ifdef DEBUG
@@ -92,6 +92,9 @@ static char * find_line(const char *filename, const char *fcont, int fnum) {
 	if (fp == NULL) {
 		return NULL;
 	}
+	/* set close-on-exec so this file descriptor will not be passed 
+		to the a process after an exec() call */
+	fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	bzero(buf, (BLOCKSIZE+1)*sizeof(char));
 	restlen = num = fread(buf, 1, BLOCKSIZE, fp);
 	DEBUG_MSG("read %d bytes from %s\n",num,filename);

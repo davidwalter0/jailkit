@@ -43,6 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <pwd.h>
 #include <grp.h>
@@ -141,23 +142,23 @@ void signal_handler(int signum) {
 }
 
 int main (int argc, char **argv) {
-	int i;
+	unsigned int i;
 	char *user=NULL, *tmp=NULL;
 	
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
-	long ngroups_max=NGROUPS_MAX;
-	long ngroups=0;
+	unsigned long ngroups_max=NGROUPS_MAX;
+	unsigned long ngroups=0;
 	gid_t *gids;
 	struct passwd *intpw=NULL; /* for internal_getpwuid() */
 	char *jaildir=NULL, *newhome=NULL, *shell=NULL;
 	Tiniparser *parser=NULL;
 	char **envs=NULL;
-	int relax_home_group_permissions=0;
-	int relax_home_other_permissions=0;
-	int relax_home_group=0;
+	unsigned int relax_home_group_permissions=0;
+	unsigned int relax_home_other_permissions=0;
+	unsigned int relax_home_group=0;
 	char *injail_shell=NULL;
-	int skip_injail_passwd_check=0;
+	unsigned int skip_injail_passwd_check=0;
 
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
@@ -185,8 +186,26 @@ int main (int argc, char **argv) {
 	}
 	DEBUG_MSG("close filedescriptors\n");
 	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
-	for (i=getdtablesize();i>3;i--) {
+#ifdef OPEN_MAX
+    i = OPEN_MAX;
+#elif defined(NOFILE)
+    i = NOFILE;
+#else
+    i = getdtablesize();
+#endif
+	while (i-- > 2) {
 		while (close(i) != 0 && errno == EINTR);
+	}
+	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
+	while (1) {
+		int fd;
+		fd = open("/dev/null", O_RDWR);
+		if (fd < 0)
+			exit(10);
+		if (fd > 2) {
+			close(fd);
+			break;
+		}
 	}
 
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
@@ -251,7 +270,11 @@ int main (int argc, char **argv) {
 	}
 #endif
 
-	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
+	/* make sure the jailkit config directory is owned root:root and not writable for others */
+	if ( (testsafepath(INIPREFIX, 0, 0) &~TESTPATH_GROUPW) != 0 ) {
+		syslog(LOG_ERR, "abort, jailkit configuration directory "INIPREFIX" is not safe; it should be owned 0:0 and not writable for others");
+		exit(14);
+	}
 	parser = new_iniparser(CONFIGFILE);
 	
 	if (parser) {
@@ -290,7 +313,8 @@ int main (int argc, char **argv) {
 	} else {
 		DEBUG_MSG("no configfile "CONFIGFILE" ??\n");
 	}
-	
+
+	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */	
 	unset_environ_except(envs);
 	if (envs) {
 		free_array(envs);
