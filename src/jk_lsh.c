@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
 All rights reserved.
 
 This file is available under two licences, at your own choice
@@ -189,7 +189,7 @@ int main (int argc, char **argv) {
 	const char *section;
 	unsigned int section_pos, umaskval;
 	struct passwd *pw;
-	char *new, buffer[1024];
+	char *new, buffer[1024], *tmp=NULL, *user=NULL;
 	char **paths = NULL;
 	char ** newargv;
 	struct group *gr;
@@ -206,12 +206,26 @@ int main (int argc, char **argv) {
 	syslog(LOG_INFO, PROGRAMNAME" version "VERSION", started");
 
 	DEBUG_MSG(PROGRAMNAME" log started\n");
-
-	pw = getpwuid(getuid());
+	tmp = getenv("USER");
+	if (tmp && strlen(tmp)) {
+		user = strdup(tmp);
+	}
+	if (user) {
+		pw = getpwnam(user);
+	} else {
+		pw = getpwuid(getuid());
+	}
 	if (!pw) {
-		syslog(LOG_ERR, "cannot find user name for uid %d: %s", getuid(), strerror(errno));
+		if (user) 
+			syslog(LOG_ERR, "cannot find user info for uid %d: %s", getuid(), strerror(errno));
+		else
+			syslog(LOG_ERR, "cannot find user info for USER %s: %s", user, strerror(errno)); 
 		DEBUG_MSG(PROGRAMNAME" cannot find user name for uid %d: %s", getuid(), strerror(errno));
 		exit(2);
+	}
+	if (user && pw->pw_uid != getuid()) {
+		syslog(LOG_ERR, "abort, running as UID %d, but environment variable USER %s has UID %d", getuid(), user, pw->pw_uid);
+		exit(2);	
 	}
 	gr = getgrgid(getgid());
 	if (!gr) {

@@ -220,7 +220,7 @@ int main (int argc, char **argv) {
 
 	DEBUG_MSG("get user info\n");
 	/* get user info based on the users name and not on the uid. this enables support
-	for systems with multiple users with the same user id*/
+	for systems with multiple users with the same user id */ 
 	tmp = getenv("USER");
 	if (tmp && strlen(tmp)) {
 		user = strdup(tmp);

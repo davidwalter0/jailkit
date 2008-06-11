@@ -182,16 +182,23 @@ static void print_usage() {
 
 int main (int argc, char **argv) {
 	char *pidfile=NULL, *jail=NULL, *exec=NULL;
-	int uid=-1,gid=-1,i;
+	int uid=-1,gid=-1;
+	unsigned int i;
 	char **newargv;
 
 	openlog(PROGRAMNAME, LOG_PID, LOG_DAEMON);
 
 	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
-	for (i=getdtablesize();i>3;i--) {
+#ifdef OPEN_MAX
+    i = OPEN_MAX;
+#elif defined(NOFILE)
+    i = NOFILE;
+#else
+    i = getdtablesize();
+#endif
+	while (i-- > 2) {
 		while (close(i) != 0 && errno == EINTR);
-	}
-	
+	}	
 	{
 		int c=0;
 		char *tuser=NULL, *tgroup=NULL, *texec=NULL;

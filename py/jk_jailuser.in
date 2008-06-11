@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Copyright (c) 2003, 2004, 2005, 2006, Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,12 @@ def striptrailingslash(dir):
 	if (dir[-1] == '/'):
 		return dir[:-1]
 	return dir
+
+def dirinjail(dir, jail):
+	# always test inclusing slashes to avoid /home/jailtest being inside /home/jail
+	jail = striptrailingslash(jail)
+	return (jail+'/' == dir[:strlen(jail)+1]+'/')
+	
 
 def addgrouptojail(jail, group_id, user, config):
 	jail = striptrailingslash(jail)
@@ -110,10 +116,13 @@ def addusertojail(jail, user, shell, config):
 	jail = striptrailingslash(jail)
 	if (jk_lib.test_user_exist(user, jail+'/etc/passwd')):
 		if (config['verbose']):
-			print 'user '+user+' already exists in '+jail+'/etc/passwd'
+			sys.stderr.write('user '+user+' already exists in '+jail+'/etc/passwd\n')
 		return 1
 	pw = pwd.getpwnam(user)
-	if (pw[5][0:len(jail)] == jail):
+	# the next check MUST include a trailing slash! (otherwise if a user
+	# has a homedir that starts with the same string as the jail directory
+	# the check has the wrong result)
+	if (dirinjail(pw[5], jail)):
 		if (pw[5][0:len(jail)+3] == jail+'/./'):
 			jailhome = pw[5][len(jail)+2:]
 		else:
@@ -141,12 +150,12 @@ def addusertojail(jail, user, shell, config):
 			fd.close()
 			postcommand = None
 	except IOError:
-		print 'failed to write to '+file+''
+		sys.stderr.write('failed to write to '+file+'\n')
 		return 0
 	if (postcommand != None):
 		ret = os.system(postcommand)
 		if (ret != 0):
-			print 'failed to execute '+postcommand
+			sys.stderr.write('failed to execute '+postcommand+'\n')
 			return 0
 	return 1
 
@@ -156,11 +165,11 @@ def moduser(user, home, shell=PREFIX+'/sbin/jk_chrootsh'):
 	elif (sys.platform[:5] == 'linux') or (sys.platform[:7] == 'openbsd') or (sys.platform[:5] == 'sunos5'):
 		command = 'usermod -d '+home+' -s '+shell+' '+user
 	else:
-		print 'please report that user modding on platform '+sys.platform+' is not yet handled'
-		print 'to the jailkit developers, and suggest which command is needed to modify users'
+		sys.stderr.write('please report that user modding on platform '+sys.platform+' is not yet handled\n')
+		sys.stderr.write('to the jailkit developers, and suggest which command is needed to modify users\n')
 		return 0
 	if (os.system(command)!=0):
-		print 'failed to execute '+command
+		sys.stderr.write('failed to execute '+command+'\n')
 		return 0
 	return 1
 
@@ -182,7 +191,7 @@ def jailuser(jail, user, movehome, config):
 			if not ret:
 				return 0
 	# change the shell and the homedir
-	if (pw[5][0:len(jail)] == jail):
+	if (dirinjail(pw[5], jail)):
 		# the home is within in the jail already, does it have the /./ sequence?
 		if (pw[5][0:len(jail)+2] == jail+'./'):
 			newhome = pw[5]
@@ -196,7 +205,7 @@ def jailuser(jail, user, movehome, config):
 		if (config['verbose'] == 1):
 			print 'modify user '+user+'; dir '+newhome+' and shell '+PREFIX+'/sbin/jk_chrootsh'
 		if (not moduser(user,newhome,PREFIX+'/sbin/jk_chrootsh')):
-			print 'failed to modify user '+user
+			sys.stderr.write('failed to modify user '+user+'\n')
 	else:
 		if (config['verbose'] == 1):
 			print 'user '+user+' has a correct home directory and shell already'
@@ -206,7 +215,7 @@ def jailuser(jail, user, movehome, config):
 			print 'home directory '+oldhome+' is already inside the jail'
 		else:
 			if (not os.path.exists(oldhome)):
-				print 'home directory '+oldhome+' does not exist, nothing moved'
+				sys.stderr.write('home directory '+oldhome+' does not exist, nothing moved\n')
 			else:
 				# test if the base directory for newhome exists
 				tmp = jk_lib.nextpathup(oldhome)
@@ -241,16 +250,16 @@ def testjail(jail, shell):
 	if (jail[-1:] == '/'):
 		jail = jail[:-1]
 	if (not os.path.exists(jail)):
-		print jail+' does not exist'
+		sys.stderr.write(jail+' does not exist\n')
 		return 0
 	if (not os.path.exists(jail+'/etc/passwd')):
-		print 'invalid jail, '+jail+'/etc/passwd does not exist'
+		sys.stderr.write('invalid jail, '+jail+'/etc/passwd does not exist\n')
 		return 0
 	if (not os.path.exists(jail+shell)):
-		print 'invalid shell, '+jail+shell+' does not exist'
+		sys.stderr.write('invalid shell, '+jail+shell+' does not exist\n')
 		return 0
 	if (not os.access(jail+shell,os.X_OK)):
-		print 'invalid shell, '+jail+shell+' is not executable'
+		sys.stderr.write('invalid shell, '+jail+shell+' is not executable\n')
 		return 0
 	return 1
 
@@ -274,7 +283,7 @@ def getjail(jail, config):
 
 def getmovehome(jail,user,config):
 	pw = pwd.getpwnam(user)
-	if (pw[5][0:len(jail)] == jail): # pw[5] == pw.pw_dir
+	if (pw[5][0:len(jail)+1] == jail+'/'): # pw[5] == pw.pw_dir
 		return 0
 	print 'home directory '+pw.pw_dir+' is not within '+jail+', move the directory contents?'
 	tmp = raw_input('[Y]/[n]')
