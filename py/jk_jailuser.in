@@ -52,7 +52,7 @@ def striptrailingslash(dir):
 def dirinjail(dir, jail):
 	# always test inclusing slashes to avoid /home/jailtest being inside /home/jail
 	jail = striptrailingslash(jail)
-	return (jail+'/' == dir[:strlen(jail)+1]+'/')
+	return (jail+'/' == dir[:len(jail)+1]+'/')
 	
 
 def addgrouptojail(jail, group_id, user, config):
