@@ -174,7 +174,7 @@ static char *expand_executable_w_path(const char *executable, char **allowed_pat
 			path++;
 		}
 	}
-	syslog(LOG_DEBUG,"the requested executable %s is not found\n",executable);
+	syslog(LOG_ERR,"the requested executable %s is not found\n",executable);
 	return NULL;
 }
 /* returns a NULL terminated array of strings */

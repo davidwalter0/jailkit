@@ -64,7 +64,7 @@ injail_shell=/bin/bash
 
 .SH DIAGNOSTICS
 
-jk_chrootsh logs everything to syslog, please check the log files
+jk_chrootsh logs everything to syslog, please check the log files. Logging is sent to the LOG_AUTH facility with levels LOG_ERR and LOG_CRIT for critical errors, LOG_NOTICE for non-critical errors,  and LOG_INFO for normal events.
 
 commonly made mistakes are:
 
@@ -93,7 +93,7 @@ referring to a file outside the chroot
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
