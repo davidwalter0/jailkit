@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Olivier Sessink
 All rights reserved.
 
 This file is available under two licences, at your own choice
@@ -302,6 +302,7 @@ int main (int argc, char **argv) {
 	} else {
 		DEBUG_LOG("no key paths found\n");
 	}
+	
 	DEBUG_LOG("paths=%p, newargv[0]=%s",paths,newargv[0]);
 	new = expand_executable_w_path(newargv[0], paths);
 	free_array(paths);
@@ -309,7 +310,17 @@ int main (int argc, char **argv) {
 		free(newargv[0]);
 		newargv[0] = new;
 	}
-	if (executable_is_allowed(parser, section, newargv[0],section_pos)) {
+	if (!executable_is_allowed(parser, section, newargv[0],section_pos)) {
+		char *logstring;
+		logstring = implode_array(newargv,-1," ");
+		DEBUG_MSG("WARNING: user %s (%d) tried to run '%s'\n", pw->pw_name, getuid(),newargv[0]);
+		syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),logstring);
+		free(logstring);
+		exit(4);
+	}
+	
+	iniparser_close(parser);
+	{	
 		int retval;
 		char *logstring;
 		logstring = implode_array(newargv,-1," ");
@@ -322,14 +333,6 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "WARNING: running %s failed for user %s (%d): %s", newargv[0],pw->pw_name, getuid(), strerror(retval));
 		syslog(LOG_ERR, "WARNING: check the permissions and libraries for %s", newargv[0]);
 		return retval;
-	} else {
-		char *logstring;
-		logstring = implode_array(newargv,-1," ");
-		DEBUG_MSG("WARNING: user %s (%d) tried to run '%s'\n", pw->pw_name, getuid(),newargv[0]);
-		syslog(LOG_ERR, "WARNING: user %s (%d) tried to run '%s', which is not allowed according to "CONFIGFILE, pw->pw_name, getuid(),logstring);
-		free(logstring);
-		exit(4);
 	}
-
 	return 0;
 }

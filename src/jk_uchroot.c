@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -135,27 +135,6 @@ int main(int argc, char **argv) {
 		exit(12);
 	}
 	
-#ifdef OPEN_MAX
-    i = OPEN_MAX;
-#elif defined(NOFILE)
-    i = NOFILE;
-#else
-    i = getdtablesize();
-#endif
-	while (i-- > 2) {
-		while (close(i) != 0 && errno == EINTR);
-	}
-	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
-	while (1) {
-		int fd;
-		fd = open("/dev/null", O_RDWR);
-		if (fd < 0)
-			exit(10);
-		if (fd > 2) {
-			close(fd);
-			break;
-		}
-	}
 	
 
 	DEBUG_MSG("get user info\n");
@@ -277,11 +256,36 @@ int main(int argc, char **argv) {
 		} else {
 			DEBUG_MSG("no relevant section found in configfile\n");
 		}
+		iniparser_close(parser);
 	} else {
 		DEBUG_MSG("no configfile "CONFIGFILE" ??\n");
 		syslog(LOG_ERR,"abort, no config file "CONFIGFILE);
 		exit(1);
 	}
+	
+#ifdef OPEN_MAX
+    i = OPEN_MAX;
+#elif defined(NOFILE)
+    i = NOFILE;
+#else
+    i = getdtablesize();
+#endif
+	while (i-- > 2) {
+		while (close(i) != 0 && errno == EINTR);
+	}
+	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
+	while (1) {
+		int fd;
+		fd = open("/dev/null", O_RDWR);
+		if (fd < 0)
+			exit(10);
+		if (fd > 2) {
+			close(fd);
+			break;
+		}
+	}
+	
+	
 	/* check if the requested jail is allowed */
 	{
 		unsigned int allowed = 0;

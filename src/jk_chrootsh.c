@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -184,29 +184,6 @@ int main (int argc, char **argv) {
 			exit(1);
 		}
 	}
-	DEBUG_MSG("close filedescriptors\n");
-	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
-#ifdef OPEN_MAX
-    i = OPEN_MAX;
-#elif defined(NOFILE)
-    i = NOFILE;
-#else
-    i = getdtablesize();
-#endif
-	while (i-- > 2) {
-		while (close(i) != 0 && errno == EINTR);
-	}
-	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
-	while (1) {
-		int fd;
-		fd = open("/dev/null", O_RDWR);
-		if (fd < 0)
-			exit(10);
-		if (fd > 2) {
-			close(fd);
-			break;
-		}
-	}
 
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
 	if (geteuid() != 0) {
@@ -310,8 +287,33 @@ int main (int argc, char **argv) {
 		} else {
 			DEBUG_MSG("no relevant section found in configfile\n");
 		}
+		iniparser_close(parser);
 	} else {
 		DEBUG_MSG("no configfile "CONFIGFILE" ??\n");
+	}
+
+	DEBUG_MSG("close filedescriptors\n");
+	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
+#ifdef OPEN_MAX
+    i = OPEN_MAX;
+#elif defined(NOFILE)
+    i = NOFILE;
+#else
+    i = getdtablesize();
+#endif
+	while (i-- > 2) {
+		while (close(i) != 0 && errno == EINTR);
+	}
+	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
+	while (1) {
+		int fd;
+		fd = open("/dev/null", O_RDWR);
+		if (fd < 0)
+			exit(10);
+		if (fd > 2) {
+			close(fd);
+			break;
+		}
 	}
 
 	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */	
