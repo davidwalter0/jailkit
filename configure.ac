@@ -69,7 +69,7 @@ dnl ************************
 dnl Checks for header files.
 dnl ************************
 
-AC_CHECK_HEADERS([errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h liberty.h])
+AC_CHECK_HEADERS([errno.h stdio.h ctype.h getopt.h math.h time.h sys/socket.h pthread.h pwd.h wordexp.h liberty.h strings.h])
 
 AC_CHECK_FUNCS([strnlen wordexp clearenv get_current_dir_name])
 

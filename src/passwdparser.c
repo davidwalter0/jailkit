@@ -37,6 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h> /* memset() */
+#include <strings.h> /* bzero() */
 #include <fcntl.h>
 #include "utils.h"
 
