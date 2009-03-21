@@ -275,12 +275,12 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, could not change root chroot() to the jail %s: %s", jail,strerror(errno));
 		exit(35);
 	}
-	if (gid != -1 && setgid(gid)) {
-		syslog(LOG_ERR, "abort, could not setgid %d", gid);
+	if (gid != -1 && setgid(gid)<0) {
+		syslog(LOG_ERR, "abort, could not setgid %d: %s", gid,strerror(errno));
 		exit(37);
 	}
-	if (uid != -1 && setuid(uid)) {
-		syslog(LOG_ERR, "abort, could not setuid %d", uid);
+	if (uid != -1 && setuid(uid)<0) {
+		syslog(LOG_ERR, "abort, could not setuid %d: %s", uid,strerror(errno));
 		exit(39);
 	}
 	syslog(LOG_NOTICE,"executing %s in jail %s",exec,jail);
