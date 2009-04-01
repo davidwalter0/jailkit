@@ -1,3 +1,10 @@
+jailkit (2.6-1) hardy; urgency=low
+
+  * some minor code cleanups and improvements
+  * some fixes for Solaris compatibility
+
+ -- Olivier <olivier@cort.fakenet>  Wed, 01 Apr 2009 21:13:20 +0200
+
 jailkit (2.5-1) unstable; urgency=low
 
   * fixed an issue in jk_cp and jk_init that symlinks to directories were sometimes copied as directories instead of symlinks
