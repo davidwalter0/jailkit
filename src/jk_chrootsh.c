@@ -301,7 +301,8 @@ int main (int argc, char **argv) {
 #else
     i = getdtablesize();
 #endif
-	while (i-- > 2) {
+	while (--i > 2) {
+		/*printf("closing file descriptor %d\n",i);*/
 		while (close(i) != 0 && errno == EINTR);
 	}
 	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
@@ -313,6 +314,8 @@ int main (int argc, char **argv) {
 		if (fd > 2) {
 			close(fd);
 			break;
+		} else {
+			DEBUG_MSG("re-opening file descriptor %d\n",fd);
 		}
 	}
 

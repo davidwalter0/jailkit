@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 #else
     i = getdtablesize();
 #endif
-	while (i-- > 2) {
+	while (--i > 2) {
 		while (close(i) != 0 && errno == EINTR);
 	}
 	/* now make sure file descriptors 0 1 and 2 are valid before we (or a child) starts writing to it */
