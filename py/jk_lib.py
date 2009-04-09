@@ -1,5 +1,5 @@
 #
-#Copyright (C) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
+#Copyright (C) 2003, 2004, 2005, 2006, 2007, 2009 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -252,29 +252,52 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 	oldindx = len(tmp)-len(chroot) 
 	# find the first slash after the existing directories
 	indx = string.find(directory,'/',oldindx+1)
+	if (indx == -1 ):
+		indx=len(directory)
 	while (indx != -1):
 		# avoid the /bla//bla pitfall
 		if (oldindx +1 == indx):
 			oldindx = indx
-		else: 
-			if (be_verbose):
-				print 'Creating directory '+chroot+directory[:indx]
-			os.mkdir(chroot+directory[:indx], 0755)
-			if (copy_permissions):
+		else:
+			try:
+				sb = os.lstat(directory[:indx])
+			except OSError, (errno,strerror):
+				sys.stderr.write('ERROR: failed to lstat('+directory[:indx]+'):'+strerror+'\n')
+				break
+			if (stat.S_ISLNK(sb.st_mode)):
+				# create the link, create the target, and then continue
+				realfile = os.readlink(directory[:indx])
+				if (be_verbose):
+					print 'Creating symlink '+chroot+directory[:indx]+' to '+realfile
 				try:
-					copy_time_and_permissions(directory[:indx], chroot+directory[:indx], be_verbose, allow_suid, copy_ownership)
+					os.symlink(realfile, chroot+directory[:indx])
 				except OSError, (errno,strerror):
-					sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chroot+directory[:indx]+': '+strerror+'\n')
+					if (errno == 17): # file exists
+						pass
+					else:
+						sys.stderr.write('ERROR: failed to create symlink '+chroot+directory[:indx]+'\n');
+				if (realfile[0]=='/'):
+					create_parent_path(chroot, realfile, be_verbose, copy_permissions, allow_suid, copy_ownership)
+				else:
+					indx2 = string.rfind(directory[:indx],'/')
+					print 'try',directory[:indx2+1]+realfile
+					create_parent_path(chroot, directory[:indx2+1]+realfile, be_verbose, copy_permissions, allow_suid, copy_ownership)
+			elif (stat.S_ISDIR(sb.st_mode)):
+				if (be_verbose):
+					print 'Creating directory '+chroot+directory[:indx]
+				os.mkdir(chroot+directory[:indx], 0755)
+				if (copy_permissions):
+					try:
+						copy_time_and_permissions(directory[:indx], chroot+directory[:indx], be_verbose, allow_suid, copy_ownership)
+					except OSError, (errno,strerror):
+						sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chroot+directory[:indx]+': '+strerror+'\n')
 			oldindx = indx
-		indx = string.find(directory,'/',oldindx+1)
-	if (be_verbose):
-		print 'Creating directory '+chroot+directory
-	os.mkdir(chroot+directory, 0755)
-	if (copy_permissions):
-		try:
-			copy_time_and_permissions(directory, chroot+directory, be_verbose, allow_suid, copy_ownership)
-		except OSError, (errno,strerror):
-			sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chroot+directory[:indx]+': '+strerror+'\n')
+		if (indx==len(directory)):
+			indx=-1
+		else:
+			indx = string.find(directory,'/',oldindx+1)
+			if (indx==-1):
+				indx=len(directory)
 
 
 def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
