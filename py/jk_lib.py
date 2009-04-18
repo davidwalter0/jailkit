@@ -363,8 +363,16 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 		return
 	sb = os.stat(path)
 	try:
-		major = sb.st_rdev / 256 #major = st_rdev divided by 256
-		minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
+		if (sys.platform[:5] == 'linux'):
+			major = sb.st_rdev / 256 #major = st_rdev divided by 256 (8bit reserved for the minor number)
+			minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
+		elif (sys.platform == 'sunos5'):
+			major = sb.st_rdev / 262144 #major = st_rdev divided by 256 (18 bits reserved for the minor number)
+			minor = sb.st_rdev % 262144 #minor = remainder of st_rdev divided by 256
+			# BUG: 64 bit solaris has 32 bit minor/32bit major
+		else:
+			major = sb.st_rdev / 256 #major = st_rdev divided by 256
+			minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
 		if (stat.S_ISCHR(sb.st_mode)): 
 			mode = 'c'
 		elif (stat.S_ISBLK(sb.st_mode)): 
