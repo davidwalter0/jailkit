@@ -217,9 +217,9 @@ int main (int argc, char **argv) {
 	}
 	if (!pw) {
 		if (user) 
-			syslog(LOG_ERR, "cannot find user info for uid %d: %s", getuid(), strerror(errno));
+			syslog(LOG_ERR, "cannot find user info for USER %s: %s", user, strerror(errno));
 		else
-			syslog(LOG_ERR, "cannot find user info for USER %s: %s", user, strerror(errno)); 
+			syslog(LOG_ERR, "cannot find user info for uid %d: %s", getuid(), strerror(errno));
 		DEBUG_MSG(PROGRAMNAME" cannot find user name for uid %d: %s", getuid(), strerror(errno));
 		exit(2);
 	}
