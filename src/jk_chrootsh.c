@@ -53,6 +53,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <syslog.h>
 #include <limits.h>
 #include <signal.h>
+
+#ifdef HAVE_SYS_CAPABILITY_H
+#include <sys/capability.h>
+#endif
+
 /* #define DEBUG */
 
 #ifdef DEBUG
@@ -136,6 +141,19 @@ static void unset_environ_except(char **except) {
 	}
 }
 
+static int have_capabilities(void) {
+#ifdef HAVE_CAP_GET_PROC
+	cap_t caps = cap_get_proc();
+	if (caps) {
+		cap_flag_value_t value_p;
+		cap_get_flag(caps, CAP_SYS_CHROOT, CAP_EFFECTIVE,&value_p);
+		cap_free(caps);
+		return (value_p);
+	}
+#endif  /*HAVE_CAP_GET_PROC*/
+	return 0;
+}
+
 void signal_handler(int signum) {
 	syslog(LOG_ERR, "abort, received signal %s (%d)", strsignal(signum),signum);
 	exit(666);
@@ -143,6 +161,7 @@ void signal_handler(int signum) {
 
 int main (int argc, char **argv) {
 	unsigned int i;
+	unsigned int use_capabilities=0;
 	char *user=NULL, *tmp=NULL;
 	
 	struct passwd *pw=NULL;
@@ -187,8 +206,12 @@ int main (int argc, char **argv) {
 
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
 	if (geteuid() != 0) {
-		syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
-		exit(11);
+		if (have_capabilities()) {
+			use_capabilities=1;
+		} else {
+			syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
+			exit(11);
+		}
 	}
 	if (getuid() == 0) {
 		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense because user root can break out of a jail anyway");
@@ -397,27 +420,60 @@ int main (int argc, char **argv) {
 		exit(33);
 	}
 	
-	/* drop all privileges, it seems that we first have to setgid(), 
-		then we have to call initgroups(), 
-		then we call setuid() */
-	if (setgid(getgid())) {
-		syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
-		exit(34);
+	if (use_capabilities) {
+#ifdef HAVE_CAP_GET_PROC
+		cap_t caps;
+		cap_value_t capv[1];
+		/* drop chroot capability, should we drop all other capabilities that may be used to escape from the jail too ?  */
+		if ((caps = cap_get_proc()) == NULL) {
+			syslog(LOG_ERR, "abort, failed to retrieve current capabilities: %s", strerror(errno));
+			exit(101);
+		}
+		capv[0] = CAP_SYS_CHROOT;
+		/* other capabilities that should/could be dropped:
+		CAP_SETPCAP, CAP_SYS_MODULE, CAP_SYS_RAWIO, CAP_SYS_PTRACE, CAP_SYS_ADMIN */
+		if (cap_set_flag(caps, CAP_PERMITTED, 1, capv, CAP_CLEAR)) {
+			syslog(LOG_ERR, "abort, failed to set PERMITTED capabilities: %s", strerror(errno));
+			exit(102);
+		}
+		if (cap_set_flag(caps, CAP_EFFECTIVE, 1, capv, CAP_CLEAR)) {
+			syslog(LOG_ERR, "abort, failed to set effective capabilities: %s", strerror(errno));
+			exit(103);
+		}
+		if (cap_set_flag(caps, CAP_INHERITABLE, 1, capv, CAP_CLEAR)) {
+			syslog(LOG_ERR, "abort, failed to set INHERITABLE capabilities: %s", strerror(errno));
+			exit(104);
+		}
+		if (cap_set_proc(caps)) {
+			syslog(LOG_ERR, "abort, failed to apply new capabilities: %s", strerror(errno));
+			exit(105);
+		}
+#else
+		/* we should never get here */
+		exit(333);
+#endif
+	} else {
+		/* drop all privileges, it seems that we first have to setgid(), 
+			then we have to call initgroups(), 
+			then we call setuid() */
+		if (setgid(getgid())) {
+			syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
+			exit(34);
+		}
+		if (setgroups(ngroups, gids)==-1) {
+			syslog(LOG_ERR, "abort, failed to set additional groups: %s", strerror(errno));
+			exit(35);
+		}
+		free(gids);
+	/*	if (initgroups(pw->pw_name, getgid())) {
+			syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/group", pw->pw_name,getuid(),jaildir);
+			exit(35);
+		}*/
+		if (setuid(getuid())) {
+			syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
+			exit(36);
+		}
 	}
-	if (setgroups(ngroups, gids)==-1) {
-		syslog(LOG_ERR, "abort, failed to set additional groups: %s", strerror(errno));
-		exit(35);
-	}
-	free(gids);
-/*	if (initgroups(pw->pw_name, getgid())) {
-		syslog(LOG_ERR, "abort, failed to init groups for user %s (%d), check %s/etc/group", pw->pw_name,getuid(),jaildir);
-		exit(35);
-	}*/
-	if (setuid(getuid())) {
-		syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
-		exit(36);
-	}
-	
 	/* test for user and group info, is it the same? checks username, groupname and home */
 	if (!skip_injail_passwd_check){
 		char *oldpw_name,*oldgr_name;

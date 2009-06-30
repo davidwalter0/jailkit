@@ -123,6 +123,15 @@ AC_CHECK_FUNCS(
 		)
 	)
 )
+AC_CHECK_HEADERS([sys/capability.h])
+
+AC_CHECK_FUNCS(
+	[cap_get_proc],,
+	AC_CHECK_LIB([cap], [cap_get_proc],
+		AC_DEFINE(HAVE_CAP_GET_PROC)
+		LDFLAGS="$LDLAGS -lcap",
+	)
+)
 
 dnl you should maybe add AC_ARG_VAR for every AC_PATH_PROG to allow users
 dnl to specify the binary path if it is not in PATH

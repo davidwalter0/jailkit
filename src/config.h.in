@@ -96,6 +96,9 @@
 /* Define to 1 if you have the <wordexp.h> header file. */
 #undef HAVE_WORDEXP_H
 
+#undef HAVE_SYS_CAPABILITY_H
+#undef HAVE_CAP_GET_PROC
+
 /* The package name. */
 #undef PACKAGE
 
