@@ -5357,7 +5357,6 @@ if test $ac_cv_lib_cap_cap_get_proc = yes; then
 _ACEOF
 
 		LDFLAGS="$LDLAGS -lcap"
-		echo $LDFLAGS
 fi
 
 

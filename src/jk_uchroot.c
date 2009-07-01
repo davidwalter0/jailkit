@@ -58,7 +58,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef HAVE_LIBERTY_H
 #include <liberty.h>
 #endif
-
+#ifdef HAVE_SYS_CAPABILITY_H
+#include <sys/capability.h>
+#endif
 /*#define DEBUG*/
 
 #ifdef DEBUG
@@ -87,6 +89,19 @@ static void print_usage() {
 	printf(PROGRAMNAME" logs all errors to syslog, for diagnostics check your logfiles\n");
 }
 
+static int have_capabilities(void) {
+#ifdef HAVE_CAP_GET_PROC
+	cap_t caps = cap_get_proc();
+	if (caps) {
+		cap_flag_value_t value_p;
+		cap_get_flag(caps, CAP_SYS_CHROOT, CAP_EFFECTIVE,&value_p);
+		cap_free(caps);
+		return (value_p);
+	}
+#endif  /*HAVE_CAP_GET_PROC*/
+	return 0;
+}
+
 /* check basics */
 /* parse arguments */
 /* parse configfile */
@@ -105,6 +120,7 @@ int main(int argc, char **argv) {
 	unsigned int skip_injail_passwd_check=0;
 	unsigned int i;
 	char *tmp;
+	unsigned int use_capabilities=0;
 
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
 	
@@ -126,8 +142,12 @@ int main(int argc, char **argv) {
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
 #ifndef DEVELOPMENT
 	if (geteuid() != 0) {
-		syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
-		exit(11);
+		if (have_capabilities()) {
+			use_capabilities=1;
+		} else {
+			syslog(LOG_ERR, "abort, effective user ID is not 0, possibly "PROGRAMNAME" is not setuid root");
+			exit(11);
+		}
 	}
 #endif
 	if (getuid() == 0) {
@@ -326,15 +346,49 @@ int main(int argc, char **argv) {
 		exit(33);
 	}
 	
-	/* drop all privileges, we first have to setgid(), 
-		then we call setuid() */
-	if (setgid(getgid())) {
-		syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
-		exit(34);
-	}
-	if (setuid(getuid())) {
-		syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
-		exit(36);
+	if (use_capabilities) {
+#ifdef HAVE_CAP_GET_PROC
+		cap_t caps;
+		cap_value_t capv[1];
+		/* drop chroot capability, should we drop all other capabilities that may be used to escape from the jail too ?  */
+		if ((caps = cap_get_proc()) == NULL) {
+			syslog(LOG_ERR, "abort, failed to retrieve current capabilities: %s", strerror(errno));
+			exit(101);
+		}
+		capv[0] = CAP_SYS_CHROOT;
+		/* other capabilities that should/could be dropped:
+		CAP_SETPCAP, CAP_SYS_MODULE, CAP_SYS_RAWIO, CAP_SYS_PTRACE, CAP_SYS_ADMIN */
+		if (cap_set_flag(caps, CAP_PERMITTED, 1, capv, CAP_CLEAR)) {
+			syslog(LOG_ERR, "abort, failed to set PERMITTED capabilities: %s", strerror(errno));
+			exit(102);
+		}
+		if (cap_set_flag(caps, CAP_EFFECTIVE, 1, capv, CAP_CLEAR)) {
+			syslog(LOG_ERR, "abort, failed to set effective capabilities: %s", strerror(errno));
+			exit(103);
+		}
+		if (cap_set_flag(caps, CAP_INHERITABLE, 1, capv, CAP_CLEAR)) {
+			syslog(LOG_ERR, "abort, failed to set INHERITABLE capabilities: %s", strerror(errno));
+			exit(104);
+		}
+		if (cap_set_proc(caps)) {
+			syslog(LOG_ERR, "abort, failed to apply new capabilities: %s", strerror(errno));
+			exit(105);
+		}
+#else
+		/* we should never get here */
+		exit(333);
+#endif		
+	} else {
+		/* drop all privileges, we first have to setgid(), 
+			then we call setuid() */
+		if (setgid(getgid())) {
+			syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
+			exit(34);
+		}
+		if (setuid(getuid())) {
+			syslog(LOG_ERR, "abort, failed to set effective user ID %d: %s", getuid(), strerror(errno));
+			exit(36);
+		}
 	}
 
 	if (!skip_injail_passwd_check){
