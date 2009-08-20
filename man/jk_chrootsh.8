@@ -21,9 +21,9 @@ test:x:10000:10000::/home/test:/usr/sbin/jk_lsh
 
 Notice that the home directory and the shell are local inside the chroot
 
-jk_chrootsh needs root privileges to make the 
+jk_chrootsh needs certain elevated privileges to make the 
 .BR chroot(2)
-system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot() system call.
+system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot() system call. Since Jailkit 2.8 jk_chrootsh may also use the CAP_SYS_CHROOT capability on systems that support capabilities, and then the setuid bit can be removed.
 
 By default jk_chrootsh does not copy any environment variables. For some functionality, however, environment variables need to be copied (e.g. the TERM variable for a functional terminal emulation, or the DISPLAY variable for X forwarding). In 
 .I /etc/jailkit/jk_chrootsh.ini

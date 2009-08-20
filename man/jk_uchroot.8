@@ -11,9 +11,9 @@ jk_uchroot \- grant regular users the right to change root into certain director
 
 jk_uchroot can be used to give regular users access to the chroot() system call in a safe way. jk_uchroot will only grant chroot into a jail if the configuration file lists this user and jail combination. jk_uchroot will furthermore only grant access if the chroot jail is safe. Safe means that it is owned by uid 0 gid 0 and not writable for others, including the system directories such as  /bin, /lib, /dev/, /sbin, and /usr.
 
-jk_uchroot needs root privileges to make the 
+jk_uchroot needs certain elevated privileges to make the 
 .BR chroot(2)
-system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot() system call.
+system call. Therefore it is setuid root. It will drop its root priveleges immediately after making the chroot() system call. Since Jailkit 2.8 jk_uchroot may also use the CAP_SYS_CHROOT capability on systems that support capabilities, and then the setuid bit can be removed.
 
 .nf
 .sp
