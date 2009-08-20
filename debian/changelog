@@ -1,3 +1,10 @@
+jailkit (2.8-1) hardy; urgency=low
+
+  * support for capabilities to replace the setuid bit
+  * minor Solaris compatibility fixes
+
+ -- Olivier <olivier@cort.fakenet>  Thu, 20 Aug 2009 12:51:05 +0200
+
 jailkit (2.7-1) hardy; urgency=low
 
   * fix a regression in jk_chrootsh and jk_uchroot for interactive sessions
