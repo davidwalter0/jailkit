@@ -108,6 +108,19 @@ AC_CHECK_FUNCS(
 	AC_CHECK_LIB([socket], [send])
 )
 
+# solaris needs -lrt or -lposix4 for nanosleep()
+AC_CHECK_FUNCS(
+	[nanosleep],,
+	AC_CHECK_LIB(
+		[posix4],
+		[nanosleep],,
+		AC_CHECK_LIB(
+			[rt],
+			[nanosleep],,
+			AC_MSG_ERROR(nanosleep not found)
+		)
+	)
+)
 
 # FreeBSD has a gnugetopt library for this
 # Solaris might have libiberty
