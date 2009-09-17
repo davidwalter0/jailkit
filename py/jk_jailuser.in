@@ -162,7 +162,7 @@ def addusertojail(jail, user, shell, config):
 def moduser(user, home, shell=PREFIX+'/sbin/jk_chrootsh'):
 	if (sys.platform[:7] == 'freebsd'):
 		command = 'pw usermod '+user+' -d '+home+' -s '+shell
-	elif (sys.platform[:5] == 'linux') or (sys.platform[:7] == 'openbsd') or (sys.platform[:5] == 'sunos5'):
+	elif (sys.platform[:5] == 'linux') or (sys.platform[:7] == 'openbsd') or (sys.platform[:6] == 'sunos5'):
 		command = 'usermod -d '+home+' -s '+shell+' '+user
 	else:
 		sys.stderr.write('please report that user modding on platform '+sys.platform+' is not yet handled\n')
