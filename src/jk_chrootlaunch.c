@@ -262,10 +262,9 @@ int main (int argc, char **argv) {
 #else
     i = getdtablesize();
 #endif
-	while (i-- > 2) {
+	while (--i > 2) {
 		while (close(i) != 0 && errno == EINTR);
-	}	
-	
+	}
 	
 	if (chdir(jail)) {
 		syslog(LOG_ERR, "abort, could not change directory chdir() to the jail %s: %s", jail,strerror(errno));
