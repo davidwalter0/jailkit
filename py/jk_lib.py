@@ -215,6 +215,27 @@ def lddlist_libraries(executable):
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 		return retval
 
+def resolve_realpath(path):
+	"""will return a path that contains not a single symlink element"""
+	donepath = os.path.basename(path)
+	todopath = os.path.dirname(path)
+	while (todopath != '/'):
+#		print 'todopath=',todopath,'donepath=',donepath
+		sb = os.lstat(todopath)
+		if (stat.S_ISLNK(sb.st_mode)):
+			realpath = os.readlink(todopath)
+			if (realpath[0]=='/'):
+				todopath = realpath
+				if (todopath[-1:]=='/'):
+					todopath = todopath[:-1]
+			else:
+				todopath = os.path.dirname(todopath)+'/'+realpath
+		else:
+			donepath = os.path.basename(todopath)+'/'+donepath
+			todopath = os.path.dirname(todopath)
+		sb=None
+	return '/'+donepath
+
 def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownership=0):
 	# the caller should catch any exceptions!
 # similar to shutil.copymode(src, dst) but we do not copy any SUID bits
@@ -421,15 +442,24 @@ def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1,
 #			handledfiles = copy_dir_recursive(chroot,os.path.join(root, name),force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 #	return handledfiles
 
+
+# there is a very tricky situation for this function:
+# suppose /srv/jail/opt/bin is a symlink to /usr/bin 
+# try to lstat(/srv/jail/opt/bin/foo) and you get the result for /usr/bin/foo
+# so use resolve_realpath to find you want lstat(/srv/jail/usr/bin/foo)
+#
 def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, try_glob_matching=0, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
 	for file in binarieslist:
 		if (file in handledfiles):
-#			print 'handled '+file+' already'
 			continue
-#		print 'file',file,'is not in',handledfiles
+		rfile = resolve_realpath(file)
+		if (rfile in handledfiles):
+			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
+		 	continue
+
 		try:
 			sb = os.lstat(file)
 		except OSError, e:
@@ -447,6 +477,8 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			continue
 		try:
 			chrootsb = os.lstat(chroot+file)
+			if (rfile != file):
+				chrootsb = os.lstat(chroot+rfile)
 			chrootfile_exists = 1
 		except OSError, e:
 			if (e.errno == 2):
@@ -461,11 +493,11 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				if (force_overwrite):
 					if (stat.S_ISREG(chrootsb.st_mode)):
 						if (be_verbose):
-							print 'Destination file '+chroot+file+' exists, will delete to force update'
+							print 'Destination file '+chroot+rfile+' exists, will delete to force update'
 						try:
-							os.unlink(chroot+file)
+							os.unlink(chroot+rfile)
 						except OSError, e:
-							sys.stderr.write('ERROR: failed to delete '+chroot+file+': '+e.strerror+'\ncannot overwrite '+chroot+file+'\n')
+							sys.stderr.write('ERROR: failed to delete '+chroot+rfile+': '+e.strerror+'\ncannot force update '+chroot+rfile+'\n')
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
 					elif (stat.S_ISDIR(chrootsb.st_mode)):
@@ -481,35 +513,35 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						continue
 			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
-				realfile = os.readlink(file)
-				print 'Creating symlink '+chroot+file+' to '+realfile
+				realfile = os.readlink(rfile)
+				print 'Creating symlink '+chroot+rfile+' to '+realfile
 				try:
-					os.symlink(realfile, chroot+file)
+					os.symlink(realfile, chroot+rfile)
 				except OSError:
 					# if the file exists already
 					pass
-				handledfiles.append(file)
+				handledfiles.append(file).append(rfile)
 				if (realfile[0] != '/'):
-					realfile = os.path.dirname(file)+'/'+realfile
+					realfile = os.path.dirname(rfile)+'/'+realfile
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISDIR(sb.st_mode)):
-				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+				handledfiles = copy_dir_recursive(chroot,rfile,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
 				if (try_hardlink):
-					print 'Trying to link '+file+' to '+chroot+file
+					print 'Trying to link '+rfile+' to '+chroot+rfile
 				else:
-					print 'Copying '+file+' to '+chroot+file
-				copy_with_permissions(file,chroot+file,be_verbose, try_hardlink, retain_owner)
-				handledfiles.append(file)
+					print 'Copying '+rfile+' to '+chroot+rfile
+				copy_with_permissions(rfile,chroot+rfile,be_verbose, try_hardlink, retain_owner)
+				handledfiles.append(file).append(rfile)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
-				copy_device(chroot, file, be_verbose, retain_owner)
+				copy_device(chroot, rfile, be_verbose, retain_owner)
 			else:
 				sys.stderr.write('Failed to find how to copy '+file+' into a chroot jail, please report to the Jailkit developers\n')
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
 			mode = stat.S_IMODE(sb[stat.ST_MODE])
-			if (check_libs and (string.find(file, 'lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
-				libs = lddlist_libraries(file)
+			if (check_libs and (string.find(rfile, 'lib') != -1 or string.find(rfile,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
+				libs = lddlist_libraries(rfile)
 				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, try_hardlink, handledfiles)
 	return handledfiles
 
