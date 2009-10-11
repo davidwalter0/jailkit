@@ -301,7 +301,7 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 					create_parent_path(chroot, realfile, be_verbose, copy_permissions, allow_suid, copy_ownership)
 				else:
 					indx2 = string.rfind(directory[:indx],'/')
-					print 'try',directory[:indx2+1]+realfile
+#					print 'try',directory[:indx2+1]+realfile
 					create_parent_path(chroot, directory[:indx2+1]+realfile, be_verbose, copy_permissions, allow_suid, copy_ownership)
 			elif (stat.S_ISDIR(sb.st_mode)):
 				if (be_verbose):
