@@ -520,7 +520,9 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				except OSError:
 					# if the file exists already
 					pass
-				handledfiles.append(file).append(rfile)
+				handledfiles.append(file)
+				if (file != rfile):
+					handledfiles.append(rfile)
 				if (realfile[0] != '/'):
 					realfile = os.path.dirname(rfile)+'/'+realfile
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
@@ -532,7 +534,9 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				else:
 					print 'Copying '+rfile+' to '+chroot+rfile
 				copy_with_permissions(rfile,chroot+rfile,be_verbose, try_hardlink, retain_owner)
-				handledfiles.append(file).append(rfile)
+				handledfiles.append(file)
+				if (file != rfile):
+					handledfiles.append(rfile)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
 				copy_device(chroot, rfile, be_verbose, retain_owner)
 			else:
