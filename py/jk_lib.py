@@ -215,8 +215,8 @@ def lddlist_libraries(executable):
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 		return retval
 
-def resolve_realpath(path):
-	"""will return a path that contains not a single symlink element"""
+def resolve_realpath(path, chroot=''):
+	"""will return the same path that contains not a single symlink directory element"""
 	donepath = os.path.basename(path)
 	todopath = os.path.dirname(path)
 	while (todopath != '/'):
@@ -225,7 +225,7 @@ def resolve_realpath(path):
 		if (stat.S_ISLNK(sb.st_mode)):
 			realpath = os.readlink(todopath)
 			if (realpath[0]=='/'):
-				todopath = realpath
+				todopath = chroot+realpath
 				if (todopath[-1:]=='/'):
 					todopath = todopath[:-1]
 			else:
@@ -516,7 +516,8 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				realfile = os.readlink(rfile)
 				print 'Creating symlink '+chroot+rfile+' to '+realfile
 				try:
-					os.symlink(realfile, chroot+rfile)
+					chrootrfile = resolve_realpath(rfile+chroot,chroot)
+					os.symlink(realfile, chrootrfile)
 				except OSError:
 					# if the file exists already
 					pass
@@ -533,7 +534,8 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 					print 'Trying to link '+rfile+' to '+chroot+rfile
 				else:
 					print 'Copying '+rfile+' to '+chroot+rfile
-				copy_with_permissions(rfile,chroot+rfile,be_verbose, try_hardlink, retain_owner)
+				chrootrfile = resolve_realpath(rfile+chroot,chroot)
+				copy_with_permissions(rfile,chrootrfile,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
 				if (file != rfile):
 					handledfiles.append(rfile)
