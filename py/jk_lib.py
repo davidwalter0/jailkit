@@ -220,7 +220,7 @@ def resolve_realpath(path, chroot=''):
 	donepath = os.path.basename(path)
 	todopath = os.path.dirname(path)
 	while (todopath != '/'):
-#		print 'todopath=',todopath,'donepath=',donepath
+		print 'todopath=',todopath,'donepath=',donepath
 		sb = os.lstat(todopath)
 		if (stat.S_ISLNK(sb.st_mode)):
 			realpath = os.readlink(todopath)
@@ -516,7 +516,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				realfile = os.readlink(rfile)
 				print 'Creating symlink '+chroot+rfile+' to '+realfile
 				try:
-					chrootrfile = resolve_realpath(rfile+chroot,chroot)
+					chrootrfile = resolve_realpath(chroot+rfile,chroot)
 					os.symlink(realfile, chrootrfile)
 				except OSError:
 					# if the file exists already
@@ -534,7 +534,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 					print 'Trying to link '+rfile+' to '+chroot+rfile
 				else:
 					print 'Copying '+rfile+' to '+chroot+rfile
-				chrootrfile = resolve_realpath(rfile+chroot,chroot)
+				chrootrfile = resolve_realpath(chroot+rfile,chroot)
 				copy_with_permissions(rfile,chrootrfile,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
 				if (file != rfile):
