@@ -220,7 +220,7 @@ def resolve_realpath(path, chroot=''):
 	donepath = os.path.basename(path)
 	todopath = os.path.dirname(path)
 	while (todopath != '/'):
-		print 'todopath=',todopath,'donepath=',donepath
+		#print 'todopath=',todopath,'donepath=',donepath
 		sb = os.lstat(todopath)
 		if (stat.S_ISLNK(sb.st_mode)):
 			realpath = os.readlink(todopath)
