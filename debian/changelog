@@ -1,3 +1,9 @@
+jailkit (2.9-1) hardy; urgency=low
+
+  * fix symlink handling, if a symlink inside the jail points to the real system jk_init and jk_cp could write files into the real system
+
+ -- Olivier <olivier@cort.fakenet>  Wed, 14 Oct 2009 23:07:33 +0200
+
 jailkit (2.8-1) hardy; urgency=low
 
   * support for capabilities to replace the setuid bit
