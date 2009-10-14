@@ -37,6 +37,14 @@ import stat
 import shutil
 import glob
 
+statcache = {}
+
+def cachedlstat(path):
+	ret = statcache.get(path, None)
+	if ret is None:
+		statcache[path] = ret = os.lstat(path)
+	return ret
+
 #def nextpathup(path):
 #	#if (path[-1:] == '/'):
 #	#	path = path[:-1]
@@ -51,7 +59,7 @@ import glob
 
 def path_is_safe(path, failquiet=0):
 	try:
-		statbuf = os.lstat(path)
+		statbuf = cachedlstat(path)
 	except OSError:
 		if (failquiet == 0):
 			sys.stderr.write('ERROR: cannot lstat() '+path+'\n')
@@ -98,14 +106,14 @@ def chroot_is_safe(path, failquiet=0):
 
 def test_suid_sgid(path):
 	"""returns 1 if the file is setuid or setgid, returns 0 if it is not"""
-	statbuf = os.lstat(path)
+	statbuf = cachedlstat(path)
 	if (statbuf[stat.ST_MODE] & (stat.S_ISUID | stat.S_ISGID)):
 		return 1
 	return 0
 
 def gen_library_cache(jail):
 	if (sys.platform[:5] == 'linux'):
-		create_parent_path(jail,'/etc/', 0, copy_permissions=0, allow_suid=0, copy_ownership=0)
+		create_parent_path(jail,'/etc', 0, copy_permissions=0, allow_suid=0, copy_ownership=0)
 		os.system('ldconfig -r '+jail)
 
 
@@ -116,12 +124,13 @@ def lddlist_libraries_linux(executable):
 	line = pd[1].readline()
 	while (len(line)>0):
 		subl = string.split(line)
+		#print 'parse line',subl,'with len',len(subl)
 		if (len(subl)>0):
 			if (subl[0] == 'statically' and subl[1] == 'linked'):
 				return retval
 			elif (subl[0] == 'not' and subl[2] == 'dynamic' and subl[3] == 'executable'):
 				return retval
-			elif (subl[0] == 'linux-gate.so.1'):
+			elif (subl[0] == 'linux-gate.so.1' or subl[0] == 'linux-vdso.so.1'):
 				pass
 			elif (len(subl)==4 and subl[2] == 'not' and subl[3] == 'found'):
 				pass
@@ -216,23 +225,62 @@ def lddlist_libraries(executable):
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 		return retval
 
+def resolve_realpath(path, chroot='', include_file=0):
+	if (path=='/'):
+		return '/'
+	spath = split_path(path)
+	basename = ''
+	if (not include_file):
+		basename = spath[-1]
+		spath = spath[:-1] 
+	ret = '/'
+	doscounter=0# a symlink loop may otherwise hang this script
+	#print 'path',path,'spath',spath
+	for entry in spath:
+		ret = os.path.join(ret,entry)
+		#print 'lstat',ret
+		sb = cachedlstat(ret)
+		if (stat.S_ISLNK(sb.st_mode)):
+			doscounter+=1
+			realpath = os.readlink(ret)
+			if (realpath[0]=='/'):
+				ret = os.path.normpath(chroot+realpath)
+			else:
+				tmp = os.path.normpath(os.path.join(os.path.dirname(ret),realpath))
+				if (len(chroot)>0 and tmp[:len(chroot)]!=chroot):
+					sys.stderr.write('ERROR: symlink '+tmp+' points outside jail, ABORT\n')
+					raise Exception, "Symlink points outside jail"
+				ret = tmp
+	return os.path.join(ret,basename)
+
 # os.path.realpath() seems to do the same:
 # NO: it cannot handle symlink resolving WITH a chroot
-def resolve_realpath(path, chroot=''):
+def OLDresolve_realpath(path, chroot='', include_file=0):
 	"""will return the same path that contains not a single symlink directory element"""
-	donepath = os.path.basename(path)
-	todopath = os.path.dirname(path)
-	while (todopath != '/'):
+	chrootlen=len(chroot)
+	if (include_file):
+		donepath = ''
+		todopath = path
+	else:
+		donepath = os.path.basename(path)
+		todopath = os.path.dirname(path)
+	doscounter=0 # a symlink loop may otherwise hang this script
+	while (todopath != '/' and doscounter != 100):
 		#print 'todopath=',todopath,'donepath=',donepath
-		sb = os.lstat(todopath)
+		sb = cachedlstat(todopath)
 		if (stat.S_ISLNK(sb.st_mode)):
+			doscounter += 1
 			realpath = os.readlink(todopath)
 			if (realpath[0]=='/'):
 				todopath = chroot+realpath
 				if (todopath[-1:]=='/'):
 					todopath = todopath[:-1]
 			else:
-				todopath = os.path.dirname(todopath)+'/'+realpath
+				tmp = os.path.normpath(os.path.join(os.path.dirname(todopath),realpath))
+				if (chrootlen>0 and tmp[:chrootlen]!=chroot):
+					sys.stderr.write('ERROR: symlink '+tmp+' points outside jail, ABORT\n')
+					raise Exception, "Symlink points outside jail" 
+				todopath=tmp
 		else:
 			donepath = os.path.basename(todopath)+'/'+donepath
 			todopath = os.path.dirname(todopath)
@@ -258,22 +306,14 @@ def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownersh
 	if (copy_ownership):
 		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
 
-def return_existing_base_directory(path):
+def OLDreturn_existing_base_directory(path):
 	"""This function tests if a directory exists, if not tries the parent etc. etc. until it finds a directory that exists"""
 	tmp = path
 	while (not os.path.exists(tmp) and not (tmp == '/' or tmp=='')):
 		tmp = os.path.dirname(tmp)
 	return tmp
 
-def split_path(path):
-	ret = []
-	next=path
-	while (next != '/'):
-		ret.insert(0,os.path.basename(next))
-		next=os.path.dirname(next)
-	return ret
-
-def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_suid=0, copy_ownership=0):
+def OLD_create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_suid=0, copy_ownership=0):
 	"""creates the directory and all its parents id needed. copy_ownership can only be used if copy permissions is also used"""
 	directory = path
 	if (directory[-1:] == '/'):
@@ -297,7 +337,7 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 			oldindx = indx
 		else:
 			try:
-				sb = os.lstat(directory[:indx])
+				sb = cachedlstat(directory[:indx])
 			except OSError, (errno,strerror):
 				sys.stderr.write('ERROR: failed to lstat('+directory[:indx]+'):'+strerror+'\n')
 				break
@@ -338,6 +378,81 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 			if (indx==-1):
 				indx=len(directory)
 
+def split_path(path):
+	ret = []
+	next=path
+	while (next != '/'):
+		ret.insert(0,os.path.basename(next))
+		next=os.path.dirname(next)
+	return ret
+
+def join_path(spath):
+	if (len(spath)==0):
+		return '/'
+	ret = ''
+	for entry in spath:
+		ret += '/'+entry
+	return ret
+
+def create_parent_path(chroot,path,be_verbose=0, copy_permissions=1, allow_suid=0, copy_ownership=0):
+	#print 'create_parent_path, path',path,'in chroot',chroot
+	# the first part of the function checks the already existing paths in the jail
+	# and follows any symlinks relative to the jail
+	spath = split_path(path)
+	existpath = chroot
+	i=0
+	while (i<len(spath)):
+		tmp1 = os.path.join(existpath,spath[i])
+		if not os.path.exists(tmp1):
+			#print 'tmp1 does not exist',tmp1
+			break
+		tmp = resolve_realpath(tmp1,chroot,1)
+		if not os.path.exists(tmp):
+			#print 'tmp does not exist',tmp
+			break
+		#print 'tmp exists:',tmp
+		existpath = tmp
+		i+=1
+	#print 'existpath result:',existpath,'i=',i
+	# the second part of the function creates the missing parts in the jail
+	# according to the original directory names, including any symlinks
+	while (i<len(spath)):
+		origpath = join_path(spath[0:i+1])
+		jailpath = os.path.join(existpath,spath[i])
+		#print 'origpath',origpath,'jailpath',jailpath
+		try:
+			sb = cachedlstat(origpath)
+		except OSError, (errno,strerror):
+			sys.stderr.write('ERROR: failed to lstat('+origpath+'):'+strerror+'\n')
+			return None
+		if (stat.S_ISDIR(sb.st_mode)):
+			if (be_verbose):
+				print 'Create directory '+jailpath
+			os.mkdir(jailpath, 0755)
+			if (copy_permissions):
+				try:
+					copy_time_and_permissions(origpath, jailpath, be_verbose, allow_suid, copy_ownership)
+				except OSError, (errno,strerror):
+					sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chrootname+': '+strerror+'\n')
+		elif (stat.S_ISLNK(sb.st_mode)):
+			realfile = os.readlink(origpath)
+			if (be_verbose):
+				print 'Creating symlink '+jailpath+' to '+realfile
+			os.symlink(realfile,jailpath)
+			if (realfile[0]=='/'):
+				jailpath = create_parent_path(chroot, realfile,be_verbose, copy_permissions, allow_suid, copy_ownership)
+			else:
+				tmp = os.path.normpath(os.path.join(os.path.dirname(jailpath),realfile))
+				#print 'symlink resolves to ',tmp
+				if (len(chroot)>0 and tmp[:len(chroot)]!=chroot):
+					sys.stderr.write('ERROR: symlink '+tmp+' points outside jail, ABORT\n')
+					raise Exception, "Symlink points outside jail"
+				realfile = tmp[len(chroot):]
+				jailpath = create_parent_path(chroot, realfile,be_verbose, copy_permissions, allow_suid, copy_ownership)
+		existpath = jailpath
+		#print 'new value for existpath is',existpath
+		i+=1
+	return existpath
 
 def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	# used to **move** home directories into the jail
@@ -440,7 +555,7 @@ def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1,
 	for entry in os.listdir(dir):
 		tmp = os.path.join(dir, entry)
 		try:
-			sbuf = os.lstat(tmp)
+			sbuf = cachedlstat(tmp)
 			if (stat.S_ISDIR(sbuf.st_mode)):
 				create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)			
 				handledfiles = copy_dir_recursive(chroot,tmp,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
@@ -476,7 +591,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			continue
 
 		try:
-			sb = os.lstat(file)
+			sb = cachedlstat(file)
 		except OSError, e:
 			if (e.errno == 2):
 				if (try_glob_matching == 1):
@@ -490,16 +605,15 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			else:
 				sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
-		# file exists, resolve the realfile
-		rfile = resolve_realpath(file)
-		if (rfile in handledfiles):
-			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
-		 	continue
+		# source file exists, resolve the chroot realfile
+		create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
+		chrootrfile = resolve_realpath(os.path.normpath(chroot+'/'+file),chroot)
+		#if (rfile in handledfiles):
+		#	create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
+		# 	continue
 		
 		try:
-			chrootsb = os.lstat(chroot+file)
-			if (rfile != file):
-				chrootsb = os.lstat(chroot+rfile)
+			chrootsb = cachedlstat(chrootrfile)
 			chrootfile_exists = 1
 		except OSError, e:
 			if (e.errno == 2):
@@ -509,22 +623,21 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		
 		if ((force_overwrite == 0) and chrootfile_exists and not stat.S_ISDIR(chrootsb.st_mode)):
 			if (be_verbose):
-				print ''+chroot+file+' already exists, will not touch it'
+				print ''+chrootrfile+' already exists, will not touch it'
 		else:
 			if (chrootfile_exists):
 				if (force_overwrite):
 					if (stat.S_ISREG(chrootsb.st_mode)):
 						if (be_verbose):
-							print 'Destination file '+chroot+rfile+' exists, will delete to force update'
+							print 'Destination file '+chrootrfile+' exists, will delete to force update'
 						try:
-							chrootrfile = resolve_realpath(chroot+rfile, chroot)
 							os.unlink(chrootrfile)
 						except OSError, e:
 							sys.stderr.write('ERROR: failed to delete '+chroot+rfile+': '+e.strerror+'\ncannot force update '+chroot+rfile+'\n')
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
 					elif (stat.S_ISDIR(chrootsb.st_mode)):
-						print 'Destination dir '+chroot+rfile+' exists'
+						print 'Destination dir '+chrootrfile+' exists'
 				else:
 					if (stat.S_ISDIR(chrootsb.st_mode)):
 						pass
@@ -532,45 +645,39 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						# skip to the next item of the loop
 					else:
 						if (be_verbose):
-							print 'Destination file '+chroot+rfile+' exists'
+							print 'Destination file '+chrootrfile+' exists'
 						continue
 			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
-				realfile = os.readlink(rfile)
+				realfile = os.readlink(file)
 				try:
-					chrootrfile = resolve_realpath(chroot+rfile,chroot)
 					print 'Creating symlink '+chrootrfile+' to '+realfile
 					os.symlink(realfile, chrootrfile)
 				except OSError:
 					# if the file exists already
 					pass
 				handledfiles.append(file)
-				if (file != rfile):
-					handledfiles.append(rfile)
 				if (realfile[0] != '/'):
-					realfile = os.path.dirname(rfile)+'/'+realfile
+					realfile = os.path.normpath(os.path.join(os.path.dirname(file),realfile))
 				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISDIR(sb.st_mode)):
-				handledfiles = copy_dir_recursive(chroot,rfile,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
-				chrootrfile = resolve_realpath(chroot+rfile,chroot)
 				if (try_hardlink):
-					print 'Trying to link '+rfile+' to '+chrootrfile
+					print 'Trying to link '+file+' to '+chrootrfile
 				else:
-					print 'Copying '+rfile+' to '+chrootrfile
-				copy_with_permissions(rfile,chrootrfile,be_verbose, try_hardlink, retain_owner)
+					print 'Copying '+file+' to '+chrootrfile
+				copy_with_permissions(file,chrootrfile,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
-				if (file != rfile):
-					handledfiles.append(rfile)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
-				copy_device(chroot, rfile, be_verbose, retain_owner)
+				copy_device(chroot, file, be_verbose, retain_owner)
 			else:
 				sys.stderr.write('Failed to find how to copy '+file+' into a chroot jail, please report to the Jailkit developers\n')
 #	in python 2.1 the return value is a tuple, not an object, st_mode is field 0
 #	mode = stat.S_IMODE(sbuf.st_mode)
 			mode = stat.S_IMODE(sb[stat.ST_MODE])
-			if (check_libs and (string.find(rfile, 'lib') != -1 or string.find(rfile,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
-				libs = lddlist_libraries(rfile)
+			if (check_libs and (string.find(file, 'lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
+				libs = lddlist_libraries(file)
 				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, try_hardlink, handledfiles)
 	return handledfiles
 
