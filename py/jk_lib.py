@@ -37,17 +37,17 @@ import stat
 import shutil
 import glob
 
-def nextpathup(path):
-	#if (path[-1:] == '/'):
-	#	path = path[:-1]
-	try:
-		#print 'path='+path
-		indx = string.rindex(path,'/')
-		if (indx > 0):
-			return path[:indx]
-	except ValueError:
-		pass
-	return None
+#def nextpathup(path):
+#	#if (path[-1:] == '/'):
+#	#	path = path[:-1]
+#	try:
+#		#print 'path='+path
+#		indx = string.rindex(path,'/')
+#		if (indx > 0):
+#			return path[:indx]
+#	except ValueError:
+#		pass
+#	return None
 
 def path_is_safe(path, failquiet=0):
 	try:
@@ -82,17 +82,18 @@ def chroot_is_safe(path, failquiet=0):
 	retval = path_is_safe(path,failquiet)
 	if (retval < -1):
 		return retval
-	for subd in 'lib','etc','usr','var','bin','dev','proc','sbin','sys':
+	for subd in 'etc','usr','var','bin','dev','proc','sbin','sys':
 		retval = path_is_safe(path+'/'+subd,1)
 		if (retval < -1):
 			return retval
-	npath = nextpathup(path)
-	while (npath != None):
+	npath = os.path.dirname(path)
+	while (npath != '/'):
+		print npath
 		retval = path_is_safe(npath,0)
 		if (retval != 1):
 #			print 'testing path='+npath+'returned '+str(retval)
 			return retval
-		npath = nextpathup(npath)
+		npath = os.path.dirname(npath)
 	return 1
 
 def test_suid_sgid(path):
@@ -215,6 +216,8 @@ def lddlist_libraries(executable):
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
 		return retval
 
+# os.path.realpath() seems to do the same:
+# NO: it cannot handle symlink resolving WITH a chroot
 def resolve_realpath(path, chroot=''):
 	"""will return the same path that contains not a single symlink directory element"""
 	donepath = os.path.basename(path)
@@ -262,15 +265,28 @@ def return_existing_base_directory(path):
 		tmp = os.path.dirname(tmp)
 	return tmp
 
+def split_path(path):
+	ret = []
+	next=path
+	while (next != '/'):
+		ret.insert(0,os.path.basename(next))
+		next=os.path.dirname(next)
+	return ret
+
 def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_suid=0, copy_ownership=0):
 	"""creates the directory and all its parents id needed. copy_ownership can only be used if copy permissions is also used"""
 	directory = path
 	if (directory[-1:] == '/'):
 		directory = directory[:-1]
-	if (os.path.exists(chroot+directory)):
-		return
+	# TODO, this function cannot yet handle if /lib in the jail is a symlink to something else
+	try:
+		chrootdirectory = resolve_realpath(chroot+directory,chroot)
+		if (os.path.exists(chrootdirectory)):
+			return
+	except OSError (errno,strerror):
+		pass
 	tmp = return_existing_base_directory(chroot+directory)
-	oldindx = len(tmp)-len(chroot) 
+	oldindx = len(tmp)-len(chroot)
 	# find the first slash after the existing directories
 	indx = string.find(directory,'/',oldindx+1)
 	if (indx == -1 ):
@@ -288,10 +304,11 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 			if (stat.S_ISLNK(sb.st_mode)):
 				# create the link, create the target, and then continue
 				realfile = os.readlink(directory[:indx])
+				chrootname = resolve_realpath(chroot+directory[:indx],chroot)
 				if (be_verbose):
-					print 'Creating symlink '+chroot+directory[:indx]+' to '+realfile
+					print 'Creating symlink '+chrootname+' to '+realfile
 				try:
-					os.symlink(realfile, chroot+directory[:indx])
+					os.symlink(realfile, chrootname)
 				except OSError, (errno,strerror):
 					if (errno == 17): # file exists
 						pass
@@ -304,14 +321,15 @@ def create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow_sui
 #					print 'try',directory[:indx2+1]+realfile
 					create_parent_path(chroot, directory[:indx2+1]+realfile, be_verbose, copy_permissions, allow_suid, copy_ownership)
 			elif (stat.S_ISDIR(sb.st_mode)):
+				chrootname = resolve_realpath(chroot+directory[:indx],chroot)
 				if (be_verbose):
-					print 'Creating directory '+chroot+directory[:indx]
-				os.mkdir(chroot+directory[:indx], 0755)
+					print 'Creating directory '+chrootname
+				os.mkdir(chrootname, 0755)
 				if (copy_permissions):
 					try:
-						copy_time_and_permissions(directory[:indx], chroot+directory[:indx], be_verbose, allow_suid, copy_ownership)
+						copy_time_and_permissions(directory[:indx], chrootname, be_verbose, allow_suid, copy_ownership)
 					except OSError, (errno,strerror):
-						sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chroot+directory[:indx]+': '+strerror+'\n')
+						sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chrootname+': '+strerror+'\n')
 			oldindx = indx
 		if (indx==len(directory)):
 			indx=-1
@@ -379,8 +397,9 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0
 def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 	# perhaps the calling function should make sure the basedir exists
 	create_parent_path(chroot,os.path.dirname(path), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=0)	
-	if (os.path.exists(chroot+path)):
-		print 'Device '+chroot+path+' does exist already'
+	chrootpath = resolve_realpath(chroot+path,chroot)
+	if (os.path.exists(chrootpath)):
+		print 'Device '+chrootpath+' does exist already'
 		return
 	sb = os.stat(path)
 	try:
@@ -407,12 +426,12 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 			return 1
 		if (be_verbose==1):
 			print 'Creating device '+chroot+path
-		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chroot+path, str(mode), str(major), str(minor))
-		copy_time_and_permissions(path, chroot+path, allow_suid=0, copy_ownership=retain_owner)
+		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chrootpath, str(mode), str(major), str(minor))
+		copy_time_and_permissions(path, chrootpath, allow_suid=0, copy_ownership=retain_owner)
 	except:
-		print 'Failed to create device '+path+', this is a know problem with python 2.1'
+		print 'Failed to create device '+chrootpath+', this is a know problem with python 2.1'
 		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
-		print 'use "mknod '+path+' mode major minor" to create the device'
+		print 'use "mknod '+chrootpath+' mode major minor" to create the device'
 		print 'use chmod and chown to set the permissions as found by ls -l'
 
 def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, handledfiles=[]):
@@ -455,10 +474,6 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 	for file in binarieslist:
 		if (file in handledfiles):
 			continue
-		rfile = resolve_realpath(file)
-		if (rfile in handledfiles):
-			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
-		 	continue
 
 		try:
 			sb = os.lstat(file)
@@ -475,6 +490,12 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			else:
 				sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
+		# file exists, resolve the realfile
+		rfile = resolve_realpath(file)
+		if (rfile in handledfiles):
+			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
+		 	continue
+		
 		try:
 			chrootsb = os.lstat(chroot+file)
 			if (rfile != file):
@@ -485,6 +506,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				chrootfile_exists = 0
 			else:
 				sys.stderr.write('ERROR: failed to investigate destination file '+chroot+file+': '+e.strerror+'\n')
+		
 		if ((force_overwrite == 0) and chrootfile_exists and not stat.S_ISDIR(chrootsb.st_mode)):
 			if (be_verbose):
 				print ''+chroot+file+' already exists, will not touch it'
@@ -495,13 +517,14 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						if (be_verbose):
 							print 'Destination file '+chroot+rfile+' exists, will delete to force update'
 						try:
-							os.unlink(chroot+rfile)
+							chrootrfile = resolve_realpath(chroot+rfile, chroot)
+							os.unlink(chrootrfile)
 						except OSError, e:
 							sys.stderr.write('ERROR: failed to delete '+chroot+rfile+': '+e.strerror+'\ncannot force update '+chroot+rfile+'\n')
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
 					elif (stat.S_ISDIR(chrootsb.st_mode)):
-						print 'Destination dir '+chroot+file+' exists'
+						print 'Destination dir '+chroot+rfile+' exists'
 				else:
 					if (stat.S_ISDIR(chrootsb.st_mode)):
 						pass
@@ -509,14 +532,14 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						# skip to the next item of the loop
 					else:
 						if (be_verbose):
-							print 'Destination file '+chroot+file+' exists'
+							print 'Destination file '+chroot+rfile+' exists'
 						continue
 			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(rfile)
-				print 'Creating symlink '+chroot+rfile+' to '+realfile
 				try:
 					chrootrfile = resolve_realpath(chroot+rfile,chroot)
+					print 'Creating symlink '+chrootrfile+' to '+realfile
 					os.symlink(realfile, chrootrfile)
 				except OSError:
 					# if the file exists already
@@ -530,11 +553,11 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			elif (stat.S_ISDIR(sb.st_mode)):
 				handledfiles = copy_dir_recursive(chroot,rfile,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
-				if (try_hardlink):
-					print 'Trying to link '+rfile+' to '+chroot+rfile
-				else:
-					print 'Copying '+rfile+' to '+chroot+rfile
 				chrootrfile = resolve_realpath(chroot+rfile,chroot)
+				if (try_hardlink):
+					print 'Trying to link '+rfile+' to '+chrootrfile
+				else:
+					print 'Copying '+rfile+' to '+chrootrfile
 				copy_with_permissions(rfile,chrootrfile,be_verbose, try_hardlink, retain_owner)
 				handledfiles.append(file)
 				if (file != rfile):
