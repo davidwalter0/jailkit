@@ -245,9 +245,8 @@ int main (int argc, char **argv) {
 	
 	if (pidfile) {
 		FILE *pidfilefd = fopen(pidfile, "w");
-		if (pidfilefd) {
-			int pid = getpid();
-			fscanf(pidfilefd,"%d",&pid);
+		int pid = getpid();
+		if (pidfilefd && fprintf(pidfilefd, "%d",pid)>=0) {
 			fclose(pidfilefd);
 		} else {
 			syslog(LOG_NOTICE, "failed to write PID into %s", pidfile);

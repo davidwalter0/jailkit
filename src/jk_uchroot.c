@@ -331,8 +331,7 @@ int main(int argc, char **argv) {
 	} else {
 		char test[1024];
 		/* test if it really succeeded */
-		getcwd(test, 1024);
-		if (!dirs_equal(jail, test)) {
+		if (getcwd(test, 1024)==NULL || !dirs_equal(jail, test)) {
 			syslog(LOG_ERR, "abort, the current dir is %s after chdir(%s), but it should be %s",test,jail,jail);
 			exit(21);
 		}
