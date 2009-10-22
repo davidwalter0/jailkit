@@ -32,7 +32,7 @@
 #
 #
 
-AC_INIT([jailkit],[2.8],[https://savannah.nongnu.org/bugs/?group=jailkit])
+AC_INIT([jailkit],[2.10],[https://savannah.nongnu.org/bugs/?group=jailkit])
 
 AC_SUBST([PACKAGE], AC_PACKAGE_NAME)
 AC_DEFINE_UNQUOTED([PACKAGE], "AC_PACKAGE_NAME", [The package name.])

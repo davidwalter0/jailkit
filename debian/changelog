@@ -1,3 +1,10 @@
+jailkit (2.10-1) hardy; urgency=low
+
+  * 2.9 fix was incompatible with jk_jailuser, fixed now
+  * compiler warning fixes
+
+ -- Olivier <olivier@cort.fakenet>  Thu, 22 Oct 2009 13:31:18 +0200
+
 jailkit (2.9-1) hardy; urgency=low
 
   * fix symlink handling, if a symlink inside the jail points to the real system jk_init and jk_cp could write files into the real system
