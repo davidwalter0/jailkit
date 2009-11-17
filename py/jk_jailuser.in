@@ -49,10 +49,10 @@ def striptrailingslash(dir):
 		return dir[:-1]
 	return dir
 
-def dirinjail(dir, jail):
-	# always test inclusing slashes to avoid /home/jailtest being inside /home/jail
-	jail = striptrailingslash(jail)
-	return (jail+'/' == dir[:len(jail)+1]+'/')
+def dirinjail(testdir, jail):
+	if (testdir[-1]!= '/'):
+			testdir = testdir+'/'
+	return (jail == testdir[:len(jail)])
 	
 
 def addgrouptojail(jail, group_id, user, config):
@@ -175,7 +175,7 @@ def moduser(user, home, shell=PREFIX+'/sbin/jk_chrootsh'):
 
 def jailuser(jail, user, movehome, config):
 	pw = pwd.getpwnam(user)
-	if (jail[-1:] != '/'):
+	if (jail[-1] != '/'):
 		jail = jail + '/'
 	# add the user in the jail
 	if (not addusertojail(jail, user, config['shell'], config)):
@@ -193,12 +193,15 @@ def jailuser(jail, user, movehome, config):
 	# change the shell and the homedir
 	if (dirinjail(pw[5], jail)):
 		# the home is within in the jail already, does it have the /./ sequence?
-		if (pw[5][0:len(jail)+2] == jail+'./'):
+		if (pw[5][:len(jail)+2] == jail+'./'):
 			newhome = pw[5]
+			#print 'no need to change home ',newhome
 		else:
 			newhome = jail+'.'+pw[5][len(jail)-1:]
+			#print 'add jail separator, newhome=',newhome
 	else:
 		newhome = jail+'.'+pw[5]
+		#print 'user not in jail, newhome=',newhome
 	newhome = striptrailingslash(newhome)
 	oldhome = striptrailingslash(pw[5])
 	if (oldhome != newhome or pw[6] != PREFIX+'/sbin/jk_chrootsh'):
@@ -265,11 +268,14 @@ def testjail(jail, shell):
 	return 1
 
 def getjail(jail, config):
+	"""returns a jail that will have a slash appended"""
 	while (1):
 		if (type(jail) == str and len(jail)>0 and jail[0] != '/'):
 			tmp = os.getcwd()+'/'+jail
 			if (os.path.exists(tmp)):
 				jail = tmp
+		if (jail[-1] != '/'):
+			jail=jail+'/'
 		test = testjail(jail, config['shell'])
 		if (test == 1):
 			return jail
@@ -284,7 +290,7 @@ def getjail(jail, config):
 
 def getmovehome(jail,user,config):
 	pw = pwd.getpwnam(user)
-	if (pw[5][0:len(jail)+1] == jail+'/'): # pw[5] == pw.pw_dir
+	if (pw[5][0:len(jail)] == jail): # pw[5] == pw.pw_dir
 		return 0
 	print 'home directory '+pw.pw_dir+' is not within '+jail+', move the directory contents?'
 	tmp = raw_input('[Y]/[n]')
