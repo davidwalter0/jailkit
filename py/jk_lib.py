@@ -220,6 +220,10 @@ def lddlist_libraries(executable):
 		return lddlist_libraries_openbsd(executable)
 	elif (sys.platform[:7] == 'freebsd'):
 		return lddlist_libraries_freebsd(executable)
+	elif (sys.platform[:5] == 'sunos'):
+		retval = lddlist_libraries_linux(executable)
+		retval += ['/lib/ld.so.1']
+		return retval
 	else:
 		retval = lddlist_libraries_linux(executable)
 		retval += ['/usr/libexec/ld.so','/usr/libexec/ld-elf.so.1','/libexec/ld-elf.so.1']
