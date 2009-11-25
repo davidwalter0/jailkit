@@ -31,11 +31,12 @@
 
 import os.path
 import string
-import os
+#import os
 import sys
 import stat
 import shutil
 import glob
+import subprocess
 
 statcache = {}
 
@@ -120,8 +121,10 @@ def gen_library_cache(jail):
 def lddlist_libraries_linux(executable):
 	"""returns a list of libraries that the executable depends on """
 	retval = []
-	pd = os.popen3('ldd '+executable)
-	line = pd[1].readline()
+	p = subprocess.Popen('ldd '+executable, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+	line = p.stdout.readline()
+	#pd = os.popen3('ldd '+executable)
+	#line = pd[1].readline()
 	while (len(line)>0):
 		subl = string.split(line)
 		#print 'parse line',subl,'with len',len(subl)
@@ -149,15 +152,18 @@ def lddlist_libraries_linux(executable):
 				print 'WARNING: failed to parse ldd output '+line[:-1]
 		else:
 			print 'WARNING: failed to parse ldd output '+line[:-1]
-		line = pd[1].readline()
+		#line = pd[1].readline()
+		line = p.stdout.readline()
 	return retval
 
 def lddlist_libraries_openbsd(executable):
 	"""returns a list of libraries that the executable depends on """
 	retval = []
 	mode = 3 # openbsd 4 has new ldd output
-	pd = os.popen3('ldd '+executable)
-	line = pd[1].readline()
+	p = subprocess.Popen('ldd '+executable, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+	line = p.stdout.readline()
+#	pd = os.popen3('ldd '+executable)
+#	line = pd[1].readline()
 	while (len(line)>0):
 		subl = string.split(line)
 		if (len(subl)>0):
@@ -184,14 +190,17 @@ def lddlist_libraries_openbsd(executable):
 				print 'WARNING: failed to parse ldd output '+line[:-1]
 		else:
 			print 'WARNING: failed to parse ldd output '+line[:-1]
-		line = pd[1].readline()
+		line = p.stdout.readline()
+		#line = pd[1].readline()
 	return retval
 
 def lddlist_libraries_freebsd(executable):
 	"""returns a list of libraries that the executable depends on """
 	retval = []
-	pd = os.popen3('ldd '+executable)
-	line = pd[1].readline()
+	p = subprocess.Popen('ldd '+executable, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+	line = p.stdout.readline()
+	#pd = os.popen3('ldd '+executable)
+	#line = pd[1].readline()
 	while (len(line)>0):
 		subl = string.split(line)
 		if (len(subl)>0):
@@ -210,7 +219,8 @@ def lddlist_libraries_freebsd(executable):
 			pass
 		else:
 			print 'WARNING: failed to parse ldd output "'+line[:-1]+'"'
-		line = pd[1].readline()
+		line = p.stdout.readline()
+		#line = pd[1].readline()
 	return retval
 
 def lddlist_libraries(executable):
