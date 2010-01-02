@@ -64,62 +64,61 @@ char *ending_slash(const char *src) {
  */
 int testsafepath(const char *path, int owner, int group) {
 	struct stat sbuf;
+	int retval=0;
 	DEBUG_MSG("testsafepath %s\n",path);
-	if (lstat(path, &sbuf) == 0) {
-		int retval=0;
-		DEBUG_MSG("%s has mode %d  and owned %d:%d\n",path,sbuf.st_mode,sbuf.st_uid,sbuf.st_gid);
-		if (S_ISLNK(sbuf.st_mode)) {
-			syslog(LOG_ERR, "path %s is a symlink", path);
-			retval |= TESTPATH_NOREGPATH;
-		}
-		if (sbuf.st_mode & S_ISUID) {
-			syslog(LOG_ERR, "path %s is setuid", path);
-			retval |= TESTPATH_SETUID;
-		}
-		if (sbuf.st_mode & S_ISGID) {
-			syslog(LOG_ERR, "path %s is setgid", path);
-			retval |= TESTPATH_SETGID;
-		}
-		if (sbuf.st_mode & S_IWGRP) {
-			syslog(LOG_ERR, "path %s is group writable", path);
-			retval |= TESTPATH_GROUPW;
-		}
-		if (sbuf.st_mode & S_IWOTH) {
-			syslog(LOG_ERR, "path %s is writable for others", path);
-			retval |= TESTPATH_OTHERW;
-		}
-		if (sbuf.st_uid != owner){
-			syslog(LOG_ERR, "path %s is not owned by user %d", path, owner);
-			retval |= TESTPATH_OWNER;
-		}
-		if (sbuf.st_gid != group){
-			syslog(LOG_ERR, "path %s is not owned by group %d", path, group);
-			retval |= TESTPATH_GROUP;
-		}
-		return retval;
-	} else {
+	if (lstat(path, &sbuf) != 0) {
 		return TESTPATH_NOREGPATH;
 	}
+	DEBUG_MSG("%s has mode %d  and owned %d:%d\n",path,sbuf.st_mode,sbuf.st_uid,sbuf.st_gid);
+	if (S_ISLNK(sbuf.st_mode)) {
+		syslog(LOG_ERR, "path %s is a symlink", path);
+		retval |= TESTPATH_NOREGPATH;
+	}
+	if (sbuf.st_mode & S_ISUID) {
+		syslog(LOG_ERR, "path %s is setuid", path);
+		retval |= TESTPATH_SETUID;
+	}
+	if (sbuf.st_mode & S_ISGID) {
+		syslog(LOG_ERR, "path %s is setgid", path);
+		retval |= TESTPATH_SETGID;
+	}
+	if (sbuf.st_mode & S_IWGRP) {
+		syslog(LOG_ERR, "path %s is group writable", path);
+		retval |= TESTPATH_GROUPW;
+	}
+	if (sbuf.st_mode & S_IWOTH) {
+		syslog(LOG_ERR, "path %s is writable for others", path);
+		retval |= TESTPATH_OTHERW;
+	}
+	if (sbuf.st_uid != owner){
+		syslog(LOG_ERR, "path %s is not owned by user %d", path, owner);
+		retval |= TESTPATH_OWNER;
+	}
+	if (sbuf.st_gid != group){
+		syslog(LOG_ERR, "path %s is not owned by group %d", path, group);
+		retval |= TESTPATH_GROUP;
+	}
+	return retval;
 }
 
 int basicjailissafe(const char *path) {
-	if (path && testsafepath(path, 0, 0) ==0) {
-		char *tmp, *path_w_slash;
-		int retval = 1;
-		path_w_slash = ending_slash(path);
-		tmp = malloc0(strlen(path_w_slash)+6);
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "dev/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "etc/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "lib/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "usr/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "bin/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
-		if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "sbin/"), 0, 0)&~TESTPATH_NOREGPATH)!=0) retval = 0;
-		free(tmp);
-		free(path_w_slash);
-		DEBUG_MSG("basicjailissafe, returning %d\n",retval);
-		return retval;
+	char *tmp, *path_w_slash;
+	int retval = 1;
+	if (path && testsafepath(path, 0, 0) !=0) {
+		return 0;
 	}
-	return 0;
+	path_w_slash = ending_slash(path);
+	tmp = malloc0(strlen(path_w_slash)+6);
+	if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "dev/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+	if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "etc/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+	if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "lib/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+	if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "usr/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+	if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "bin/"), 0, 0) &~TESTPATH_NOREGPATH)!=0) retval = 0;
+	if (retval == 1 && (testsafepath(strcat(strcpy(tmp,path_w_slash), "sbin/"), 0, 0)&~TESTPATH_NOREGPATH)!=0) retval = 0;
+	free(tmp);
+	free(path_w_slash);
+	DEBUG_MSG("basicjailissafe, returning %d\n",retval);
+	return retval;
 }
 
 /* this function can handle differences in ending slash */
@@ -138,7 +137,6 @@ int dirs_equal(const char *dir1, const char *dir2) {
 	return 0;
 }
 
-
 /* if it returns 1 it will allocate new memory for jaildir and newhomedir
  * else it will return 0
  */
@@ -149,15 +147,11 @@ int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir) {
 	 */
 	while (i > 4) {
 /*		DEBUG_MSG("oldhomedir[%d]=%c\n",i,oldhomedir[i]);*/
-		if (oldhomedir[i] == '/') {
-			if (oldhomedir[i-1] == '.') {
-				if (oldhomedir[i-2] == '/') {
-					DEBUG_MSG("&oldhomedir[%d]=%s\n",i,&oldhomedir[i]);
-					*jaildir = strndup(oldhomedir, i-2);
-					*newhomedir = strdup(&oldhomedir[i]);
-					return 1;
-				}
-			}
+		if (oldhomedir[i] == '/' && oldhomedir[i-1] == '.' && oldhomedir[i-2] == '/') {
+			DEBUG_MSG("&oldhomedir[%d]=%s\n",i,&oldhomedir[i]);
+			*jaildir = strndup(oldhomedir, i-2);
+			*newhomedir = strdup(&oldhomedir[i]);
+			return 1;
 		}
 		i--;
 	}
@@ -166,9 +160,12 @@ int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir) {
 
 char *strip_string(char * string) {
 	int numstartspaces=0, endofcontent=strlen(string)-1;
-	while (isspace(string[numstartspaces]) && numstartspaces < endofcontent) numstartspaces++;
-	while (isspace(string[endofcontent]) && endofcontent > numstartspaces) endofcontent--;
-	if (numstartspaces != 0) memmove(string, &string[numstartspaces], (endofcontent - numstartspaces+1)*sizeof(char));
+	while (isspace(string[numstartspaces]) && numstartspaces < endofcontent) 
+		numstartspaces++;
+	while (isspace(string[endofcontent]) && endofcontent > numstartspaces) 
+		endofcontent--;
+	if (numstartspaces != 0) 
+		memmove(string, &string[numstartspaces], (endofcontent - numstartspaces+1)*sizeof(char));
 	string[(endofcontent - numstartspaces+1)] = '\0';
 	return string;
 }
@@ -176,7 +173,8 @@ char *strip_string(char * string) {
 int count_char(const char *string, char lookfor) {
 	int count=0;
 	while (*string != '\0') {
-		if (*string == lookfor) count++;
+		if (*string == lookfor) 
+			count++;
 		string++;
 	}
 	DEBUG_LOG("count_char, returning %d\n",count);
@@ -215,7 +213,8 @@ char **explode_string(const char *string, char delimiter) {
 int count_array(char **arr) {
 	char **tmp = arr;
 	DEBUG_MSG("count_array, started for %p\n",arr);
-	while (*tmp) tmp++;
+	while (*tmp) 
+		tmp++;
 	return (tmp-arr);
 }
 
