@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
 All rights reserved.
 
 This file is available under two licences, at your own choice
@@ -116,28 +116,29 @@ static char *implode_array(char **arr, int arrlen, const char *delimiter) {
 
 static int executable_is_allowed(Tiniparser *parser, const char *section, const char *executable, int position) {
 	int klen;
+	char **arr, **tmp;
 	char buffer[1024];
 	klen = iniparser_get_string_at_position(parser, section, "executables",position, buffer, 1024);
-	if (klen) {
-		char **arr, **tmp;
-		arr = tmp = explode_string(buffer, ',');
-		while (tmp && *tmp) {
-			DEBUG_MSG("comparing '%s' and '%s'\n",*tmp,executable);
-			if (strcmp(*tmp,executable)==0) {
-				free_array(arr);
-				return 1;
-			}
-			tmp++;
-		}
-		free_array(arr);
-		return 0;
-	} else {
+	if (!klen) {
 		syslog(LOG_ERR, "section %s does not have a key executables", section);
 		exit(5);
-	}		
+	}
+	arr = tmp = explode_string(buffer, ',');
+	while (tmp && *tmp) {
+		DEBUG_MSG("comparing '%s' and '%s'\n",*tmp,executable);
+		if (strcmp(*tmp,executable)==0) {
+			free_array(arr);
+			return 1;
+		}
+		tmp++;
+	}
+	free_array(arr);
+	return 0;
 }
 
 static int file_exists(const char *path) {
+	/* where is this function used? access() is more light than stat() but it 
+	does not equal a 'file exist', but 'file exists and can be accessed' */
 	struct stat sb;
 	if (stat(path, &sb) == -1 && errno == ENOENT) {
 		return 0;
