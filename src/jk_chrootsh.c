@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -127,12 +127,8 @@ static void unset_environ_except(char **except) {
 		char* pos = strchr(*tmp, '=');
 		if (pos != NULL) {
 			char *key = strndup(*tmp, pos-*tmp);
-			if (in_array(except, key)) {
-				DEBUG_MSG("%s is in except, with value %s\n",key,getenv(key));
-			} else {
-				DEBUG_MSG("%s is NOT in except\n",key);
+			if (!in_array(except, key))
 				unsetenv(key);
-			}
 			free(key);
 		} else {
 			DEBUG_MSG("problem with %s\n",*tmp);
@@ -162,6 +158,8 @@ void signal_handler(int signum) {
 int main (int argc, char **argv) {
 	unsigned int i;
 	unsigned int use_capabilities=0;
+	int ret;
+	char **newargv;
 	char *user=NULL, *tmp=NULL;
 	
 	struct passwd *pw=NULL;
@@ -189,19 +187,17 @@ int main (int argc, char **argv) {
 	signal(SIGTERM,signal_handler);
 	signal(SIGFPE,signal_handler);
 	
-	/* check if it us that the user wants */
-	{
-		tmp = strrchr(argv[0], '/');
-		if (!tmp) {
-			tmp = argv[0];
-		} else {
-			tmp++;
-		}
-		if (strcmp(tmp, PROGRAMNAME) && (tmp[0] != '-' || strcmp(&tmp[1], PROGRAMNAME))) {
-			DEBUG_MSG("wrong name, tmp=%s, &tmp[1]=%s\n", tmp, &tmp[1]);
-			syslog(LOG_ERR, "abort, "PROGRAMNAME" is called as %s", argv[0]);
-			exit(1);
-		}
+	/* check if it PRORAMNAME that the user wants */
+	tmp = strrchr(argv[0], '/');
+	if (!tmp) {
+		tmp = argv[0];
+	} else {
+		tmp++;
+	}
+	if (strcmp(tmp, PROGRAMNAME) && (tmp[0] != '-' || strcmp(&tmp[1], PROGRAMNAME))) {
+		DEBUG_MSG("wrong name, tmp=%s, &tmp[1]=%s\n", tmp, &tmp[1]);
+		syslog(LOG_ERR, "abort, "PROGRAMNAME" is called as %s", argv[0]);
+		exit(1);
 	}
 
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
@@ -261,13 +257,11 @@ int main (int argc, char **argv) {
 		exit(13);
 	}
 #ifdef DEBUG
-	{
-		printf("got additional groups ");
-		for (i=0;i<ngroups;i++) {
-			printf("%d, ",gids[i]);
-		}
-		printf("\n");
+	printf("got additional groups ");
+	for (i=0;i<ngroups;i++) {
+		printf("%d, ",gids[i]);
 	}
+	printf("\n");
 #endif
 
 	/* make sure the jailkit config directory is owned root:root and not writable for others */
@@ -276,7 +270,6 @@ int main (int argc, char **argv) {
 		exit(14);
 	}
 	parser = new_iniparser(CONFIGFILE);
-	
 	if (parser) {
 		char *groupsec, *section=NULL, buffer[1024]; /* openbsd complains if this is <1024 */
 		groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
@@ -381,32 +374,29 @@ int main (int argc, char **argv) {
 	
 	/* here do test the ownership of the jail and the homedir and such
 	the function testsafepath doe exit itself on any failure */
-	if (basicjailissafe(jaildir)) { 
-		int ret;
-
-		ret = testsafepath(pw->pw_dir, getuid(), getgid());
-		if ((ret & TESTPATH_NOREGPATH) ) {
-			syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
-			exit(53);	
-		}
-		if ((ret & TESTPATH_OWNER) ) {
-			syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
-			exit(53);
-		}
-		if (!relax_home_group && (ret & TESTPATH_GROUP)) {
-			syslog(LOG_ERR, "abort, path %s does not have group owner %d, set option 'relax_home_group' to relax this check", pw->pw_dir,getgid());
-			exit(53);
-		}
-		if (!relax_home_group_permissions && (ret & TESTPATH_GROUPW)) {
-			syslog(LOG_ERR, "abort, path %s is group writable, set option 'relax_home_group_permissions' to relax this check", pw->pw_dir);
-			exit(53);
-		}
-		if (!relax_home_other_permissions && (ret & TESTPATH_OTHERW)) {
-			syslog(LOG_ERR, "abort, path %s is writable for other, set option 'relax_home_other_permissions' to relax this check", pw->pw_dir);
-			exit(53);
-		}
-	} else {
+	if (!basicjailissafe(jaildir)) {
 		syslog(LOG_ERR, "abort, %s is not a safe chroot jail.", jaildir);
+		exit(53);
+	} 
+	ret = testsafepath(pw->pw_dir, getuid(), getgid());
+	if ((ret & TESTPATH_NOREGPATH) ) {
+		syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
+		exit(53);	
+	}
+	if ((ret & TESTPATH_OWNER) ) {
+		syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
+		exit(53);
+	}
+	if (!relax_home_group && (ret & TESTPATH_GROUP)) {
+		syslog(LOG_ERR, "abort, path %s does not have group owner %d, set option 'relax_home_group' to relax this check", pw->pw_dir,getgid());
+		exit(53);
+	}
+	if (!relax_home_group_permissions && (ret & TESTPATH_GROUPW)) {
+		syslog(LOG_ERR, "abort, path %s is group writable, set option 'relax_home_group_permissions' to relax this check", pw->pw_dir);
+		exit(53);
+	}
+	if (!relax_home_other_permissions && (ret & TESTPATH_OTHERW)) {
+		syslog(LOG_ERR, "abort, path %s is writable for other, set option 'relax_home_other_permissions' to relax this check", pw->pw_dir);
 		exit(53);
 	}
 	/* do a final log message */
@@ -551,16 +541,12 @@ int main (int argc, char **argv) {
 	
 	/* now execute the jailed shell */
 	/*execl(pw->pw_shell, pw->pw_shell, NULL);*/
-	{
-		char **newargv;
-		int i;
-		newargv = malloc0((argc+1)*sizeof(char *));
-		newargv[0] = shell;
-		for (i=1;i<argc;i++) {
-			newargv[i] = argv[i];
-		}
-		execv(shell, newargv);
+	newargv = malloc0((argc+1)*sizeof(char *));
+	newargv[0] = shell;
+	for (i=1;i<argc;i++) {
+		newargv[i] = argv[i];
 	}
+	execv(shell, newargv);
 	DEBUG_MSG(strerror(errno));
 	syslog(LOG_ERR, "ERROR: failed to execute shell %s for user %s (%d), check the permissions and libraries of %s/%s",shell,pw->pw_name,getuid(),jaildir,shell);
 
