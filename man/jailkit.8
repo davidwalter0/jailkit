@@ -35,17 +35,12 @@ flag.
 This section gives summary sketches of the various programs that comprise jailkit. For details on how a program operates and is configured, read the reference pages of each program.
 
 .BR jk_init
-can be used to quickly create a jail with several files or directories needed for a specific task. There are many tasks in
+can be used to quickly create a jail with several files or directories needed for a specific task or profile. Creating the same jail over and over again is easily automated with jk_init. There are many tasks in
 .I /etc/jailkit/jk_init.ini
 predefined that work on Debian or Ubuntu systems. For other platforms you might need to update the predefined configuration. For example, you can use jk_init to quickly set up a limited shell, a jail to run apache, or a jail for just sftp and scp. It will copy the binaries, the required libraries (and related symlinks) as well as other files such as /etc/passwd. These are all copied into the jail directory so that a jailed process can run them.
 
 .BR jk_cp
-can be used to copy a file or device into a jail. Each file or device is copied with the same permissions with the exception that any setuid or setgid permissions are removed. If the file is a binary executable, the libraries required to execute it are copied as well.
-
-.BR jk_check
-is a jail integrity checker. It checks a jail for some of the potential security problems. (Obviously it does not check all possible weaknesses.) It reports any setuid and setgid programs, checks for any modified programs, checks for world writable directories, and more. It is very convenient to use; it's recommended to run it daily from as a cron task. It is configured by 
-.I /etc/jailkit/jk_check.ini
-.
+can be used to copy a file or device into a jail. Each file or device is copied with the same permissions with the exception that any setuid or setgid permissions are removed. If the file is a binary executable, the libraries required to execute it (as reported by ldd) are copied as well.
 
 .BR jk_chrootsh
 is a shell that jails a user in a specific directory, called the JAIL. It does this using the 
@@ -88,6 +83,11 @@ call itself in a jail. It can change the user and group id after jailing the pro
 
 .BR jk_jailuser
 is a tool to move an existing user account into a jail. This moves the user's entire home directory (and subdirectories) into the appropriate place in the JAIL directory (e.g., JAIL/home/someuser).
+
+.BR jk_check
+is a jail integrity checker. It checks a jail for some of the potential security problems. (Obviously it does not check all possible weaknesses.) It reports any setuid and setgid programs, checks for any modified programs, checks for world writable directories, and more. It is configured by 
+.I /etc/jailkit/jk_check.ini
+.
 
 .BR jk_list
 lists all jailed processes on a system, showing the PID, UID, and the jail directory.
