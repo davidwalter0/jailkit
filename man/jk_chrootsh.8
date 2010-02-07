@@ -1,4 +1,4 @@
-.TH jk_chrootsh 8 17-07-2007 JAILKIT jk_chrootsh
+.TH jk_chrootsh 8 07-02-2010 JAILKIT jk_chrootsh
 
 .SH NAME
 jk_chrootsh \- a shell that will put the user inside a changed root
@@ -9,7 +9,7 @@ jk_chrootsh \- a shell that will put the user inside a changed root
 
 .SH DESCRIPTION
 
-jk_chrootsh can be used as a shell for a user. That user will be put into a changed root. The directory where to put the user in is read from the users home directory, the last occuring /./ sequence is used to mark the location of the changed root. An example line in /etc/passwd would look like
+jk_chrootsh can be used as a shell for a user (e.g. in /etc/passwd or your ldap store). That user will be put into a changed root. The directory where to put the user in is read from the users home directory, the last occurring /./ sequence is used to mark the location of the changed root. An example line in /etc/passwd would look like
 
 test:x:10000:10000::/home/testchroot/./home/test:/usr/sbin/jk_chrootsh
 
@@ -93,7 +93,7 @@ referring to a file outside the chroot
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

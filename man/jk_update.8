@@ -1,4 +1,4 @@
-.TH jk_update 8 17-07-2007 JAILKIT jk_update
+.TH jk_update 8 07-02-2010 JAILKIT jk_update
 
 .SH NAME
 jk_update \- a utility to update and cleanup a jail according to changes on the real system 
@@ -17,7 +17,7 @@ jk_update \- a utility to update and cleanup a jail according to changes on the 
 
 jk_update will compare the files in a jail with the corresponding files on the real system. If the corresponding file on the real system is newer, and the file on the real system is different, the file from the real system will be copied to the jail including any required libraries just like jk_cp would do. Files that do not exist on the real system will be deleted in the jail.
 
-jk_update works well to pass security updates on the real system to a jail. jk_update does not work well with larger upgrades on the real system. In that case files are often replaced by other files, so simply looking for file modifications is not going to work.
+jk_update works well to pass security updates on the real system to a jail. jk_update does not work well with larger upgrades on the real system. In that case files are often replaced by other files in which case jk_update will delete the old file but not copy the new file.
 
 .SS "Avoid unwanted updates or cleanups"
 
@@ -107,7 +107,7 @@ Do not update this file. The argument can either be the path in the jail or the 
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
