@@ -1,3 +1,11 @@
+jailkit (2.11-1) hardy; urgency=low
+
+  * mostly documentation updates
+  * minor Solaris specific improvements
+  * fixed possible jk_lsh crash
+
+ -- Olivier <olivier@cort.fakenet>  Sun, 07 Feb 2010 17:23:16 +0100
+
 jailkit (2.10-1) hardy; urgency=low
 
   * 2.9 fix was incompatible with jk_jailuser, fixed now
