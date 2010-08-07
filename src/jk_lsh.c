@@ -253,13 +253,9 @@ int main (int argc, char **argv) {
 		DEBUG_MSG(PROGRAMNAME" configfile missing\n");
 		exit(1);
 	}
-	/* check if this user has a section */
-	if (asprintf(&groupsec, "group %s", gr->gr_name)==-1) {
-		syslog(LOG_ERR, "memory allocation failure");
-		DEBUG_MSG(PROGRAMNAME" memory allocation failure\n");
-		exit(2);
-	}
-	/*groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);*/
+	/* check if this user has a section. asprintf() is a GNU extension which is 
+	not available on Solaris */
+	groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
 	if (iniparser_has_section(parser, pw->pw_name)) {
 		section = pw->pw_name;
 	} else if (iniparser_has_section(parser, groupsec)) {
