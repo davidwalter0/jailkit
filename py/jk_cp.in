@@ -43,7 +43,8 @@ sys.path.append(LIBDIR)
 import jk_lib
 
 def startcopy(config, chroot, filestocopy, checklibs=1):
-	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'], retain_owner=config['retainowner'])
+	f2c2 = jk_lib.find_files_in_path(filestocopy)
+	jk_lib.copy_binaries_and_libs(chroot,f2c2,config['force'] , config['verbose'], try_hardlink=config['hardlink'], retain_owner=config['retainowner'])
 	jk_lib.gen_library_cache(chroot)
 
 def usage():
