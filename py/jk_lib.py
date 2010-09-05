@@ -814,3 +814,23 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 			line = fd.readline()
 		fd.close()
 	fd2.close()
+
+def find_file_in_path(filename):
+	search_path = os.getenv('PATH')
+	paths = string.split(search_path, ':')
+	for path in paths:
+		joined = os.path.join(path, filename)
+		if os.path.exists(joined):
+			return os.path.abspath(joined)
+	return None
+
+def find_files_in_path(paths):
+	paths2 = []
+	for tmp in paths:
+		if (tmp[0] == '/'):
+			paths2.append(tmp)
+		else:
+			tmp2 = find_file_in_path(tmp)
+			if (tmp2):
+				paths2.append(tmp2)
+	return paths2

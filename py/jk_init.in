@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#Copyright (c) 2003, 2004, 2005, 2006, 2007, Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -103,19 +103,13 @@ class jk_init:
 		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'executables')
 		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
 		paths = paths + jk_lib.config_get_option_as_list(cfg,section,'directories')
-		self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'],try_glob_matching=1,handledfiles=self.didfiles)
+		paths2 = jk_lib.find_files_in_path(paths)
+		self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths2, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'],try_glob_matching=1,handledfiles=self.didfiles)
 		
 		paths_w_owner = jk_lib.config_get_option_as_list(cfg,section,'paths_w_owner')
 		if (len(paths_w_owner)>0):
 			self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths_w_owner, config['force'], config['verbose'], check_libs=1, try_hardlink=config['hardlink'], retain_owner=1,try_glob_matching=1, handledfiles=self.didfiles)
 		
-		#jk_lib.copy_binaries_and_libs(chroot, libs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
-	 	#execs = jk_lib.config_get_option_as_list(cfg,section,'executables')
-		#jk_lib.copy_binaries_and_libs(chroot, execs, config['force'], config['verbose'], 1, try_hardlink=config['hardlink'])
-	 	#regulars = jk_lib.config_get_option_as_list(cfg,section,'regularfiles')
-		#init_files(config,chroot,regulars)
-		#dirs = jk_lib.config_get_option_as_list(cfg,section,'directories')
-		#init_directory(config,chroot,dirs)
 		emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
 		for edir in emptydirs:
 	#		print 'DEBUG emptydir='+edir
