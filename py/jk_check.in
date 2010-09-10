@@ -42,6 +42,7 @@ import stat
 
 INIPREFIX='/etc/jailkit'
 LIBDIR='/usr/share/jailkit'
+PREFIX='/usr'
 sys.path.append(LIBDIR)
 import jk_lib
 
@@ -210,8 +211,9 @@ def testrealpasswd():
 				# test if the user actually exists in the chroot
 				if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
 					print 'ERROR: user '+rpw[0]+' does not exist in '+chroot+'/etc/passwd'
-				if (rpw[6] != '/usr/sbin/jk_chrootsh\n'):
-					print 'ERROR: user '+rpw[0]+' has a /./ but does not have the /usr/sbin/jk_chrootsh shell'
+				chrootsh = os.path.join(PREFIX, '/sbin/jk_chrootsh')
+				if (rpw[6].trim() != chrootsh):
+					print 'ERROR: user '+rpw[0]+' has a /./ but does not have the '+chrootsh+' shell'
 		rline = rep.readline()
 	return retval
 			
