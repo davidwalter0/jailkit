@@ -1,4 +1,4 @@
-#Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
+#Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
 #All rights reserved.
 #
 #Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@ distclean: clean
 install:
 	${INSTALL} -d -m 755 ${DESTDIR}${iniprefix}
 	for file in ${INIFILES} ; do \
-		if [ -f ${iniprefix}$${file} ]; then \
+		if [ -f ${DESTDIR}${iniprefix}$${file} ]; then \
 			${INSTALL} -m 0644 ini/$${file} ${DESTDIR}${iniprefix}$${file}.dist ;\
 		else \
 			${INSTALL} -m 0644 ini/$${file} ${DESTDIR}${iniprefix} ;\
