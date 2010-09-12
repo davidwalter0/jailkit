@@ -1,3 +1,9 @@
+jailkit (2.12-1) lucid; urgency=low
+
+  * jk_init and jk_cp can now resolve binaries using PATH
+
+ -- Olivier Sessink <olivier@cort.fakenet>  Sun, 12 Sep 2010 21:30:23 +0200
+
 jailkit (2.11-1) hardy; urgency=low
 
   * mostly documentation updates
