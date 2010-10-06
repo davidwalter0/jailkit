@@ -42,7 +42,7 @@ import stat
 
 INIPREFIX='/etc/jailkit'
 LIBDIR='/usr/share/jailkit'
-PREFIX='/usr'
+EXEPREFIX='/usr'
 sys.path.append(LIBDIR)
 import jk_lib
 
