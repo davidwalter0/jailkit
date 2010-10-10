@@ -1,3 +1,9 @@
+jailkit (2.13-1) lucid; urgency=low
+
+  * fixes a regression in 2.12 - INIPREFIX was updated incorrectly in some cases 
+
+ -- Olivier Sessink <olivier@cort.fakenet>  Sun, 10 Oct 2010 22:35:24 +0200
+
 jailkit (2.12-1) lucid; urgency=low
 
   * jk_init and jk_cp can now resolve binaries using PATH
