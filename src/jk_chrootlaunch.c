@@ -140,7 +140,7 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 		tmpstr = strdup(exec);
 	} else {
 		/* the executable was specified as relative path to the jail, combine them together */
-		tmpstr = malloc0((strlen(exec)+strlen(jail))*sizeof(char));
+		tmpstr = malloc0((strlen(exec)+strlen(jail)+1)*sizeof(char));
 		tmpstr = strcat(strcat(tmpstr, jail), exec);
 	}
 	if (lstat(tmpstr, &sbuf) == 0) {
