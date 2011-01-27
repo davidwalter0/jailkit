@@ -35,7 +35,7 @@ import sys
 import os
 import string
 from stat import *
-import md5
+import hashlib
 import getopt
 import random
 import stat
@@ -54,7 +54,7 @@ def testchrootdir(config, path):
 def md5Digest(filename, startAt):
 	"""Returns md5 digest of a 1024 bytes blobk in filename, at position startAt."""
 	t = 0
-	m = md5.md5()
+	m = hashlib.md5()
 	f=open(filename, 'rb')
 	f.seek(startAt)
 	buf = f.read(1024)
@@ -211,8 +211,8 @@ def testrealpasswd():
 				# test if the user actually exists in the chroot
 				if (not jk_lib.test_user_exist(rpw[0], chroot+'/etc/passwd')):
 					print 'ERROR: user '+rpw[0]+' does not exist in '+chroot+'/etc/passwd'
-				chrootsh = os.path.join(PREFIX, '/sbin/jk_chrootsh')
-				if (rpw[6].trim() != chrootsh):
+				chrootsh = os.path.join(EXEPREFIX, 'sbin/jk_chrootsh')
+				if (rpw[6].strip() != chrootsh):
 					print 'ERROR: user '+rpw[0]+' has a /./ but does not have the '+chrootsh+' shell'
 		rline = rep.readline()
 	return retval

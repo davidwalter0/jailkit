@@ -97,7 +97,7 @@ def chroot_is_safe(path, failquiet=0):
 			return retval
 	npath = os.path.dirname(path)
 	while (npath != '/'):
-		print npath
+		#print npath
 		retval = path_is_safe(npath,0)
 		if (retval != 1):
 #			print 'testing path='+npath+'returned '+str(retval)
