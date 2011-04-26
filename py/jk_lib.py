@@ -392,9 +392,21 @@ def OLD_create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow
 			if (indx==-1):
 				indx=len(directory)
 
+def fix_double_slashes(instring):
+	outstring=''
+	slash=0
+	for i in instring:
+		if (slash==0 or i!= '/'):
+			outstring += i
+		if (i == '/'):
+			slash=1
+		else:
+			slash=0
+	return outstring
+
 def split_path(path):
 	ret = []
-	next=path
+	next=fix_double_slashes(os.path.normpath(path))
 	while (next != '/'):
 		ret.insert(0,os.path.basename(next))
 		next=os.path.dirname(next)
