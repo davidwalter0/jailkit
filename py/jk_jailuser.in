@@ -274,7 +274,7 @@ def getjail(jail, config):
 			tmp = os.getcwd()+'/'+jail
 			if (os.path.exists(tmp)):
 				jail = tmp
-		if (jail[-1] != '/'):
+		if (type(jail) == str and len(jail)>0 and jail[-1] != '/'):
 			jail=jail+'/'
 		test = testjail(jail, config['shell'])
 		if (test == 1):
