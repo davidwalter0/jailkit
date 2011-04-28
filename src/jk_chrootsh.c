@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

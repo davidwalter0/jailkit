@@ -1,3 +1,11 @@
+jailkit (2.14-1) lucid; urgency=low
+
+  * move jk_check to hashlib
+  * fix for the prefix directory of jk_check
+  * enable jk_chrootsh to be called su
+
+ -- Olivier Sessink <olivier@cort.fakenet>  Thu, 28 Apr 2011 10:25:24 +0200
+
 jailkit (2.13-1) lucid; urgency=low
 
   * fixes a regression in 2.12 - INIPREFIX was updated incorrectly in some cases 

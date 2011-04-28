@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Olivier Sessink
 All rights reserved.
 
 This file is available under two licences, at your own choice
