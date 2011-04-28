@@ -401,7 +401,9 @@ int main (int argc, char **argv) {
 		exit(53);
 	}
 	/* do a final log message */
-	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jaildir, pw->pw_name, getuid());
+	tmp = implode_array(&argv[1], argc-1, " ");
+	syslog(LOG_INFO, "now entering jail %s for user %s (%d) with arguments %s", jaildir, pw->pw_name, getuid(), tmp);
+	free(tmp);
 	
 	DEBUG_MSG("chroot()\n");
 	/* do the chroot() call */

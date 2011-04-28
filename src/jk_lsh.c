@@ -88,32 +88,6 @@ char **libc_argv;
 /* doesn't compile on FreeBSD without this */
 extern char **environ;
 
-/* creates a string from an array of strings, with the delimiter inbetween
-use arrlen -1 if the array is NULL terminated.
-the strings should all be '\0' terminated*/
-static char *implode_array(char **arr, int arrlen, const char *delimiter) {
-	int count=0,i=0,reqsize=1, delsize=strlen(delimiter);
-	char **tmp = arr;
-	char *retval;	
-	/* find required memory length */
-	while (*tmp && (count != arrlen)) {
-		count++;
-		reqsize += delsize + strlen(*tmp);
-		tmp++;
-	}
-	retval = malloc(reqsize*sizeof(char));
-	retval[0] = '\0';
-	for (i=0;i<count;i++) {
-		DEBUG_MSG("apending %s\n",arr[i]);
-		if (i != 0) {
-			retval = strcat(retval, delimiter);
-		}
-		retval = strcat(retval, arr[i]);
-		
-	}
-	return retval;
-}
-
 static int executable_is_allowed(Tiniparser *parser, const char *section, const char *executable, int position) {
 	int klen;
 	char **arr, **tmp;

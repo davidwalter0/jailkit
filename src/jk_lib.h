@@ -63,6 +63,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define TESTPATH_OWNER    32    // (0010 0000)
 #define TESTPATH_GROUP    64    // (0100 0000)
 
+char *implode_array(char **arr, int arrlen, const char *delimiter);
 char *ending_slash(const char *src);
 int testsafepath(const char *path, int owner, int group);
 int basicjailissafe(const char *path);
