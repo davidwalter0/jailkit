@@ -194,7 +194,8 @@ int main (int argc, char **argv) {
 	} else {
 		tmp++;
 	}
-	if (strcmp(tmp, PROGRAMNAME) && (tmp[0] != '-' || strcmp(&tmp[1], PROGRAMNAME))) {
+	
+	if (strcmp(tmp, PROGRAMNAME) != 0 && strcmp(tmp, "su")!= 0 && (tmp[0] != '-' || strcmp(&tmp[1], PROGRAMNAME))) {
 		DEBUG_MSG("wrong name, tmp=%s, &tmp[1]=%s\n", tmp, &tmp[1]);
 		syslog(LOG_ERR, "abort, "PROGRAMNAME" is called as %s", argv[0]);
 		exit(1);
