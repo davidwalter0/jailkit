@@ -1,4 +1,13 @@
 #!/bin/sh
+### BEGIN INIT INFO
+# Provides:          jailkit
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start jk_socketd at boot time
+# Description:       Enable jk_socketd
+### END INIT INFO
 #
 # start/stop jailkit logging daemon.
 #
