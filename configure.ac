@@ -88,14 +88,31 @@ AC_CHECK_FUNCS(
 	AC_CHECK_LIB([iberty], [stpcpy])
 )
 
-AC_CHECK_LIB(
+# Check if -pthread is available
+# if not try -lpthread 
+OLDCFLAGS=$CFLAGS
+OLDLDFLAGS=$LDFLAGS
+CFLAGS="$CFLAGS -pthread"
+LDFLAGS="$LDFLAGS -pthread"
+AC_MSG_CHECKING([for pthread support...])
+AC_LINK_IFELSE(
+ [AC_LANG_PROGRAM(
+  [#include <pthread.h>
+   void *g(void *d) { return NULL; }],
+  [pthread_t t; pthread_create(&t,NULL,g,NULL);])],
+  [AC_MSG_RESULT([use -pthread])]
+	,
+	CFLAGS=$OLDCFLAGS
+	LDFLAGS=$OLDLDFLAGS
+	[AC_CHECK_LIB(
 	[pthread],
 	[pthread_create],,
 	AC_CHECK_LIB(
 		[c_r],
 		[pthread_create],,
 		AC_MSG_ERROR([libpthread not found])
-	)
+	  )
+  )]
 )
 
 # solaris has -lsocket or -lxnet for various socket functions
