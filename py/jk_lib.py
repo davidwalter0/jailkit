@@ -65,12 +65,6 @@ def path_is_safe(path, failquiet=0):
 		if (failquiet == 0):
 			sys.stderr.write('ERROR: cannot lstat() '+path+'\n')
 		return -1
-	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
-		if (stat.S_ISLNK(statbuf[stat.ST_MODE])):
-			sys.stderr.write('ERROR: '+path+' is a symlink, please point to the real directory\n')
-		else:
-			sys.stderr.write('ERROR: '+path+' is not a directory!\n')
-		return -2
 	if (sys.platform[-3:] == 'bsd'):
 		# on freebsd root is in group wheel
 		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != grp.getgrnam('wheel').gr_gid):
@@ -83,6 +77,16 @@ def path_is_safe(path, failquiet=0):
 	if (statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP):
 		sys.stderr.write('ERROR: '+path+' is writable by group or others!')
 		return -4
+	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
+		if (stat.S_ISLNK(statbuf[stat.ST_MODE])):
+			# Fedora has moved /sbin /lib and /bin into /usr
+			target = os.readlink(path)
+			if ('/usr'+path != target)
+				sys.stderr.write('ERROR: '+path+' is a symlink, please point to the real directory\n')
+				return -2
+		else:
+			sys.stderr.write('ERROR: '+path+' is not a directory!\n')
+			return -2
 	return 1
 
 def chroot_is_safe(path, failquiet=0):
