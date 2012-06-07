@@ -81,7 +81,8 @@ def path_is_safe(path, failquiet=0):
 		if (stat.S_ISLNK(statbuf[stat.ST_MODE])):
 			# Fedora has moved /sbin /lib and /bin into /usr
 			target = os.readlink(path)
-			if ('/usr'+path != target):
+			print target, path
+			if (target[:4] != 'usr/'):
 				sys.stderr.write('ERROR: '+path+' is a symlink, please point to the real directory\n')
 				return -2
 		else:
