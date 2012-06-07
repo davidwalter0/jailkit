@@ -74,7 +74,7 @@ def path_is_safe(path, failquiet=0):
 		if (statbuf[stat.ST_UID] != 0 or statbuf[stat.ST_GID] != 0):
 			sys.stderr.write('ERROR: '+path+' is not owned by root:root!\n')
 			return -3
-	if (statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP):
+	if ((statbuf[stat.ST_MODE] & stat.S_IWOTH or statbuf[stat.ST_MODE] & stat.S_IWGRP)and not stat.S_ISLNK(statbuf[stat.ST_MODE])):
 		sys.stderr.write('ERROR: '+path+' is writable by group or others!')
 		return -4
 	if (not stat.S_ISDIR(statbuf[stat.ST_MODE])):
