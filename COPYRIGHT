@@ -1,7 +1,7 @@
 For all files in Jailkit except src/wordexp.c and src/wordexp.h 
 the following licence for use applies:
 ------------
-Copyright (C) 2003, 2004, 2005, 2006, 2007 Olivier Sessink
+Copyright (C) 2003 - 2012 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
