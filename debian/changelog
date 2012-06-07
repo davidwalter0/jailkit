@@ -1,3 +1,10 @@
+jailkit (2.15-1) lucid; urgency=low
+
+  * use -pthreads if available instead of -lpthread
+  * allow symlinks for /bin /lib and /sbin if they are moved into /usr/ (as fedora 17 has)
+
+ -- Olivier Sessink <olivier@cort.fakenet>  Thu, 07 Jun 2012 23:20:26 +0200
+
 jailkit (2.14-1) lucid; urgency=low
 
   * move jk_check to hashlib
