@@ -1,4 +1,4 @@
-.TH jk_socketd 8 07-02-2010 JAILKIT jk_socketd
+.TH jk_socketd 8 02-08-2012 JAILKIT jk_socketd
 
 .SH NAME
 jk_socketd \- a daemon to create a rate-limited /dev/log socket inside a chroot
@@ -48,7 +48,7 @@ interval = 5.0
 The title of the section is the socket to be created. The directory to create the socket in should exist.
 
 .SS "Security"
-The jailkit socket daemon will change to user nobody and will chroot() into an empty dir once all sockets are opened.
+The jailkit socket daemon will change to user nobody and will chroot() into an empty dir once all sockets are opened. If the /dev/log socket is closed by the syslog daemon (for example during log rotation), jk_socketd needs a restart to open it again.
 
 .SH OPTIONS
 .TP
@@ -101,7 +101,7 @@ otherwise run jk_socketd -n and it will not detach from the terminal, and it wil
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
