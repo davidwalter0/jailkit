@@ -94,7 +94,7 @@ OLDCFLAGS=$CFLAGS
 OLDLDFLAGS=$LDFLAGS
 CFLAGS="$CFLAGS -pthread"
 LDFLAGS="$LDFLAGS -pthread"
-AC_MSG_CHECKING([for pthread support...])
+AC_MSG_CHECKING([for pthread support])
 AC_LINK_IFELSE(
  [AC_LANG_PROGRAM(
   [#include <pthread.h>
