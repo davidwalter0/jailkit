@@ -43,7 +43,8 @@ sys.path.append(LIBDIR)
 import jk_lib
 
 def startcopy(config, chroot, filestocopy, checklibs=1):
-	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'], retain_owner=config['retainowner'])
+	jk_lib.copy_binaries_and_libs(chroot,filestocopy,config['force'] , config['verbose'], try_hardlink=config['hardlink'], 
+        allow_suid=config['retainsetuid'], retain_owner=config['retainowner'])
 	jk_lib.gen_library_cache(chroot)
 
 def usage():
@@ -55,6 +56,7 @@ def usage():
 	print "-f, --force        : overwrite existing files"
 	print "-k, --hardlink     : use hardlinks if possible"
 	print "-o, --owner        : retain file ownership and group"
+	print "-s, --setuid       : retain file setuid/setgid bits"
 	print "\nNote: if no jail is specified, the first argument is\nconsidered to be the jail\n"
 
 def testargs(jail, args):
@@ -78,7 +80,7 @@ def main():
 		print 'cannot run without root privileges'
 		sys.exit(5)
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'fh?vkoj:', ['help', 'verbose', 'force', 'hardlink', 'owner', 'jail'])
+		opts, args = getopt.getopt(sys.argv[1:], 'fh?vkojs:', ['help', 'verbose', 'force', 'hardlink', 'owner', 'jail', 'setuid'])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
@@ -87,6 +89,7 @@ def main():
 	config['force'] = 0
 	config['hardlink'] = 0
 	config['retainowner'] = 0
+	config['retainsetuid'] = 0
 	jail = None
 	for o, a in opts:
 		if o in ("-h",'?', "--help"):
@@ -102,6 +105,8 @@ def main():
 			config['hardlink'] = 1
 		if o in ("-o", "--owner"):
 			config['retainowner'] = 1
+		if o in ("-s", "--setuid"):
+			config['retainsetuid'] = 1
 	if (jail == None and len(args)>0 ):
 		jail = args[0]
 		args = args[1:]

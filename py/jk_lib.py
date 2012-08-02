@@ -320,10 +320,12 @@ def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownersh
 			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
 #			print 'setuid!!! after mode='+str(mode)
 #		print 'mode='+str(mode)
-	os.chmod(dst, mode)
 	os.utime(dst, (sbuf[stat.ST_ATIME], sbuf[stat.ST_MTIME]))
 	if (copy_ownership):
 		os.chown(dst, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
+	#WARNING: chmod must be AFTER chown to preserve setuid/setgid bits
+	os.chmod(dst, mode)
+
 
 def OLDreturn_existing_base_directory(path):
 	"""This function tests if a directory exists, if not tries the parent etc. etc. until it finds a directory that exists"""
@@ -523,8 +525,8 @@ def move_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	else:
 		print 'Not everything was copied to '+dstdir+', keeping the old directory '+srcdir
 
-def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0):
-	"""copies/links the file and the permissions, except any setuid or setgid bits"""
+def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, allow_suid=0, retain_owner=0):
+	"""copies/links the file and the permissions (and possibly ownership and setuid/setgid bits"""
 	do_normal_copy = 1
 	if (try_hardlink==1):
 		try:
@@ -536,7 +538,7 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, retain_owner=0
 	if (do_normal_copy == 1):
 		try:
 			shutil.copyfile(src,dst)
-			copy_time_and_permissions(src, dst, be_verbose, allow_suid=0, copy_ownership=retain_owner)
+			copy_time_and_permissions(src, dst, be_verbose, allow_suid=allow_suid, copy_ownership=retain_owner)
 		except (IOError, OSError), (errno,strerror):
 			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 
@@ -580,21 +582,21 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 		print 'use "mknod '+chrootpath+' mode major minor" to create the device'
 		print 'use chmod and chown to set the permissions as found by ls -l'
 
-def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, handledfiles=[]):
-	"""copies a directory and the permissions recursive, except any setuid or setgid bits"""
+def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, allow_suid=0, retain_owner=0, handledfiles=[]):
+	"""copies a directory and the permissions recursively, possibly with ownership and setuid/setgid bits"""
 	files2 = ()
 	for entry in os.listdir(dir):
 		tmp = os.path.join(dir, entry)
 		try:
 			sbuf = cachedlstat(tmp)
 			if (stat.S_ISDIR(sbuf.st_mode)):
-				create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)			
-				handledfiles = copy_dir_recursive(chroot,tmp,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+				create_parent_path(chroot, tmp, be_verbose=be_verbose, copy_permissions=1, allow_suid=allow_suid, copy_ownership=retain_owner)			
+				handledfiles = copy_dir_recursive(chroot,tmp,force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 			else:
 				files2 += os.path.join(dir, entry),
 		except OSError, e:
 			sys.stderr.write('ERROR: failed to investigate source file '+tmp+': '+e.strerror+'\n')
-	handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+	handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 	return handledfiles 
 #	for root, dirs, files in os.walk(dir):
 #		files2 = ()
@@ -613,7 +615,7 @@ def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1,
 # try to lstat(/srv/jail/opt/bin/foo) and you get the result for /usr/bin/foo
 # so use resolve_realpath to find you want lstat(/srv/jail/usr/bin/foo)
 #
-def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, retain_owner=0, try_glob_matching=0, handledfiles=[]):
+def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, allow_suid=0, retain_owner=0, try_glob_matching=0, handledfiles=[]):
 	"""copies a list of executables and their libraries to the chroot"""
 	if (chroot[-1] == '/'):
 		chroot = chroot[:-1]
@@ -637,7 +639,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
 		# source file exists, resolve the chroot realfile
-		create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
+		create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=allow_suid, copy_ownership=retain_owner)
 		chrootrfile = resolve_realpath(os.path.normpath(chroot+'/'+file),chroot)
 		#if (rfile in handledfiles):
 		#	create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
@@ -678,7 +680,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						if (be_verbose):
 							print 'Destination file '+chrootrfile+' exists'
 						continue
-			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=retain_owner)
+			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=allow_suid, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
 				try:
@@ -690,15 +692,15 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				handledfiles.append(file)
 				if (realfile[0] != '/'):
 					realfile = os.path.normpath(os.path.join(os.path.dirname(file),realfile))
-				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+				handledfiles = copy_binaries_and_libs(chroot, [realfile], force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 			elif (stat.S_ISDIR(sb.st_mode)):
-				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, retain_owner, handledfiles)
+				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
 				if (try_hardlink):
 					print 'Trying to link '+file+' to '+chrootrfile
 				else:
 					print 'Copying '+file+' to '+chrootrfile
-				copy_with_permissions(file,chrootrfile,be_verbose, try_hardlink, retain_owner)
+				copy_with_permissions(file,chrootrfile,be_verbose, try_hardlink, allow_suid, retain_owner)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
 				copy_device(chroot, file, be_verbose, retain_owner)
@@ -709,7 +711,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 			mode = stat.S_IMODE(sb[stat.ST_MODE])
 			if (check_libs and (string.find(file, 'lib') != -1 or string.find(file,'.so') != -1 or (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)))):
 				libs = lddlist_libraries(file)
-				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, try_hardlink, handledfiles)
+				handledfiles = copy_binaries_and_libs(chroot, libs, force_overwrite, be_verbose, 0, try_hardlink, handledfiles=handledfiles)
 	return handledfiles
 
 def config_get_option_as_list(cfgparser, sectionname, optionname):

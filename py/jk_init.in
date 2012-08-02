@@ -110,6 +110,10 @@ class jk_init:
 		if (len(paths_w_owner)>0):
 			self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths_w_owner, config['force'], config['verbose'], check_libs=1, try_hardlink=config['hardlink'], retain_owner=1,try_glob_matching=1, handledfiles=self.didfiles)
 		
+		paths_w_setuid = jk_lib.config_get_option_as_list(cfg,section,'paths_w_setuid')
+		if (len(paths_w_setuid)>0):
+			self.didfiles = jk_lib.copy_binaries_and_libs(chroot, paths_w_setuid, config['force'], config['verbose'], check_libs=1, try_hardlink=config['hardlink'], allow_suid=1, retain_owner=1, try_glob_matching=3, handledfiles=self.didfiles)
+		
 		emptydirs = jk_lib.config_get_option_as_list(cfg,section,'emptydirs')
 		for edir in emptydirs:
 	#		print 'DEBUG emptydir='+edir
