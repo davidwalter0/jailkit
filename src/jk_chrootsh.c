@@ -110,11 +110,11 @@ static void savedenv_free(Tsavedenv *savedenv) {
 }
 */
 
-static int in_array(char **haystack, char * needle) {
+static int in_array(char **haystack, char * needle, int needlelen) {
 	if (haystack && needle) {
 		char **tmp = haystack;
 		while (*tmp) {
-			if (strcmp(*tmp, needle)==0) return 1;
+			if (strlen(*tmp)==needlelen && strncmp(*tmp, needle, needlelen)==0) return 1;
 			tmp++;
 		}
 	}
@@ -125,13 +125,17 @@ static void unset_environ_except(char **except) {
 	char **tmp = environ;
 	while (*tmp) {
 		char* pos = strchr(*tmp, '=');
-		if (pos != NULL) {
+		if (pos == NULL) {
+			/* invalid environment variable, are we being hacked? clear them all! */
+			clearenv();
+			return;
+		}
+		if (!in_array(except, *tmp, pos-*tmp)) {
 			char *key = strndup(*tmp, pos-*tmp);
-			if (!in_array(except, key))
-				unsetenv(key);
+			unsetenv(key);
 			free(key);
-		} else {
-			DEBUG_MSG("problem with %s\n",*tmp);
+			tmp = environ;
+			continue;
 		}
 		tmp++;
 	}
