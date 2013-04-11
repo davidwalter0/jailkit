@@ -117,12 +117,15 @@ static int file_exists(const char *path) {
 	if (stat(path, &sb) == -1 && errno == ENOENT) {
 		return 0;
 	}
+	if (!S_ISREG(sb.st_mode)) {
+		return 0;
+	}
 	return 1;
 }
 
 static char *expand_executable_w_path(const char *executable, char **allowed_paths) {
 	DEBUG_LOG("expand_executable_w_path, executable=%s",executable);
-	if (file_exists(executable)) {
+	if (executable[0] == '/' && file_exists(executable)) {
 		return strdup(executable);
 	}
 	if (!allowed_paths) {
@@ -249,7 +252,7 @@ int main (int argc, char **argv) {
 	if (umaskval != -1) {
 		mode_t oldumask;
 		oldumask = umask(umaskval);
-/*		syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);*/
+		/*syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);*/
 	}
 	if (iniparser_get_string_at_position(parser, section, "environment", section_pos, buffer, 1024) > 0) {
 		char **envs, **tmp;
