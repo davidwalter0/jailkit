@@ -159,7 +159,7 @@ AC_CHECK_FUNCS(
 	[cap_get_proc],,
 	AC_CHECK_LIB([cap], [cap_get_proc],
 		AC_DEFINE(HAVE_CAP_GET_PROC)
-		LDFLAGS="$LDLAGS -lcap",
+		LDFLAGS="$LDFLAGS -lcap",
 	)
 )
 
