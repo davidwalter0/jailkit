@@ -2,37 +2,37 @@
  * the jailkit chroot() launcher
  * this program does a chroot(), changes uid and gid and then executes the daemon
  *
- * I tried to merge some of the ideas from chrsh by Aaron D. Gifford, 
- * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache 
+ * I tried to merge some of the ideas from chrsh by Aaron D. Gifford,
+ * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache
  * group in this utility
  *
 Copyright (c) 2003, 2004, 2005, 2006 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
+modification, are permitted provided that the following conditions
 are met:
-  * Redistributions of source code must retain the above copyright 
+  * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above 
-    copyright notice, this list of conditions and the following 
-    disclaimer in the documentation and/or other materials provided 
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
     with the distribution.
-  * The names of its contributors may not be used to endorse or 
-    promote products derived from this software without specific 
+  * The names of its contributors may not be used to endorse or
+    promote products derived from this software without specific
     prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 
@@ -111,8 +111,8 @@ static int parse_gid(char *tmpstr) {
 	return gr->gr_gid;
 }
 
-/* tests the jail and executable, if they exists etc. 
-returns a newly allocated executable relative to the chroot, 
+/* tests the jail and executable, if they exists etc.
+returns a newly allocated executable relative to the chroot,
 so it can be used during exec() */
 static char *test_jail_and_exec(char *jail, char *exec) {
 	struct stat sbuf;
@@ -131,7 +131,7 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 	}
 	/* test the jail existance */
 	if (!basicjailissafe(jail)) {
-		syslog(LOG_ERR, "abort, jail directory %s is not a safe jail",jail);
+		syslog(LOG_ERR, "abort, jail directory %s is not a safe jail, check ownership and permissions",jail);
 		exit(25);
 	}
 	/* test the executable, first we test if the executable was specified relative in the jail or absolute */
@@ -242,7 +242,7 @@ int main (int argc, char **argv) {
 		free(tgroup);
 		free(texec);
 	}
-	
+
 	if (pidfile) {
 		FILE *pidfilefd = fopen(pidfile, "w");
 		int pid = getpid();
@@ -252,7 +252,7 @@ int main (int argc, char **argv) {
 			syslog(LOG_NOTICE, "failed to write PID into %s", pidfile);
 		}
 	}
-	
+
 	/* open file descriptors can be used to break out of a chroot, so we close all of them, except for stdin,stdout and stderr */
 #ifdef OPEN_MAX
     i = OPEN_MAX;
@@ -264,7 +264,7 @@ int main (int argc, char **argv) {
 	while (--i > 2) {
 		while (close(i) != 0 && errno == EINTR);
 	}
-	
+
 	if (chdir(jail)) {
 		syslog(LOG_ERR, "abort, could not change directory chdir() to the jail %s: %s", jail,strerror(errno));
 		exit(33);

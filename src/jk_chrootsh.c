@@ -3,8 +3,8 @@
  * this program does a safe chroot() and then executes the shell
  * that the user has within that new root (according to newroot/etc/passwd)
  *
- * I tried to merge some of the ideas from chrsh by Aaron D. Gifford, 
- * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache 
+ * I tried to merge some of the ideas from chrsh by Aaron D. Gifford,
+ * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache
  * group in this shell
  *
 
@@ -12,29 +12,29 @@ Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013 Olivier
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
+modification, are permitted provided that the following conditions
 are met:
-  * Redistributions of source code must retain the above copyright 
+  * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above 
-    copyright notice, this list of conditions and the following 
-    disclaimer in the documentation and/or other materials provided 
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
     with the distribution.
-  * The names of its contributors may not be used to endorse or 
-    promote products derived from this software without specific 
+  * The names of its contributors may not be used to endorse or
+    promote products derived from this software without specific
     prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -169,7 +169,7 @@ int main (int argc, char **argv) {
 	int ret;
 	char **newargv;
 	char *user=NULL, *tmp=NULL;
-	
+
 	struct passwd *pw=NULL;
 	struct group *gr=NULL;
 	unsigned long ngroups_max=NGROUPS_MAX;
@@ -188,13 +188,13 @@ int main (int argc, char **argv) {
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	/* open the log facility */
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
-	
+
 	/* attach signal handler */
 	signal(SIGILL,signal_handler);
 	signal(SIGSEGV,signal_handler);
 	signal(SIGTERM,signal_handler);
 	signal(SIGFPE,signal_handler);
-	
+
 	/* check if it PRORAMNAME that the user wants */
 	tmp = strrchr(argv[0], '/');
 	if (!tmp) {
@@ -202,7 +202,7 @@ int main (int argc, char **argv) {
 	} else {
 		tmp++;
 	}
-	
+
 	if (strcmp(tmp, PROGRAMNAME) != 0 && strcmp(tmp, "su")!= 0 && (tmp[0] != '-' || strcmp(&tmp[1], PROGRAMNAME))) {
 		DEBUG_MSG("wrong name, tmp=%s, &tmp[1]=%s\n", tmp, &tmp[1]);
 		syslog(LOG_ERR, "abort, "PROGRAMNAME" is called as %s", argv[0]);
@@ -225,7 +225,7 @@ int main (int argc, char **argv) {
 
 	DEBUG_MSG("get user info\n");
 	/* get user info based on the users name and not on the uid. this enables support
-	for systems with multiple users with the same user id */ 
+	for systems with multiple users with the same user id */
 	tmp = getenv("USER");
 	if (tmp && strlen(tmp)) {
 		user = strdup(tmp);
@@ -292,7 +292,7 @@ int main (int argc, char **argv) {
 		if (section != groupsec) free(groupsec);
 		if (section) {
 			unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
-			
+
 			if (iniparser_get_string_at_position(parser, section, "env", pos, buffer, 1024) > 0) {
 				envs = explode_string(buffer, ',');
 			}
@@ -306,7 +306,7 @@ int main (int argc, char **argv) {
 				skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
 			}
 			DEBUG_MSG("section %s: relax_home_group_permissions=%d, relax_home_other_permissions=%d, relax_home_group=%d, injail_shell=%s, skip_injail_passwd_check=%d\n",
-					section, relax_home_group_permissions, relax_home_other_permissions, 
+					section, relax_home_group_permissions, relax_home_other_permissions,
 					relax_home_group, injail_shell, skip_injail_passwd_check);
 			free(section);
 		} else {
@@ -344,12 +344,12 @@ int main (int argc, char **argv) {
 		}
 	}
 
-	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */	
+	/* now we clear the environment, except for values allowed in /etc/jailkit/jk_chrootsh.ini */
 	unset_environ_except(envs);
 	if (envs) {
 		free_array(envs);
 	}
-	
+
 	if (pw->pw_gid != getgid()) {
 		syslog(LOG_ERR, "abort, the group ID from /etc/passwd (%d) does not match the group ID we run with (%d)", pw->pw_gid, getgid());
 		exit(15);
@@ -378,19 +378,19 @@ int main (int argc, char **argv) {
 		if (getcwd(test, 1024)==NULL || !dirs_equal(jaildir, test)) {
 			syslog(LOG_ERR, "abort, the current dir is %s after chdir(%s), but it should be %s",test,jaildir,jaildir);
 			exit(21);
-		}		
-	}		
-	
+		}
+	}
+
 	/* here do test the ownership of the jail and the homedir and such
 	the function testsafepath doe exit itself on any failure */
 	if (!basicjailissafe(jaildir)) {
-		syslog(LOG_ERR, "abort, %s is not a safe chroot jail.", jaildir);
+		syslog(LOG_ERR, "abort, %s is not a safe jail, check ownership and permissions.", jaildir);
 		exit(53);
-	} 
+	}
 	ret = testsafepath(pw->pw_dir, getuid(), getgid());
 	if ((ret & TESTPATH_NOREGPATH) ) {
 		syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
-		exit(53);	
+		exit(53);
 	}
 	if ((ret & TESTPATH_OWNER) ) {
 		syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
@@ -412,14 +412,14 @@ int main (int argc, char **argv) {
 	tmp = implode_array(&argv[1], argc-1, " ");
 	syslog(LOG_INFO, "now entering jail %s for user %s (%d) with arguments %s", jaildir, pw->pw_name, getuid(), tmp);
 	free(tmp);
-	
+
 	DEBUG_MSG("chroot()\n");
 	/* do the chroot() call */
 	if (chroot(jaildir)) {
 		syslog(LOG_ERR, "abort, chroot(%s) failed: %s, check the permissions for %s", jaildir, strerror(errno), jaildir);
 		exit(33);
 	}
-	
+
 	if (use_capabilities) {
 #ifdef HAVE_CAP_GET_PROC
 		cap_t caps;
@@ -453,8 +453,8 @@ int main (int argc, char **argv) {
 		exit(333);
 #endif
 	} else {
-		/* drop all privileges, it seems that we first have to setgid(), 
-			then we have to call initgroups(), 
+		/* drop all privileges, it seems that we first have to setgid(),
+			then we have to call initgroups(),
 			then we call setuid() */
 		if (setgid(getgid())) {
 			syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
@@ -479,7 +479,7 @@ int main (int argc, char **argv) {
 		char *oldpw_name,*oldgr_name;
 		oldpw_name = strdup(pw->pw_name);
 		oldgr_name = strdup(gr->gr_name);
-		
+
 		if (user) {
 			pw = getpwnam(user);
 		} else {
@@ -509,8 +509,8 @@ int main (int argc, char **argv) {
 		}
 		if (strcmp(pw->pw_dir, newhome)!=0) {
 			DEBUG_MSG("%s!=%s\n",pw->pw_dir, newhome);
-			/* if these are different, it could be that getpwuid() gets the real user 
-			info (from for example ldap or nscd), and not the info inside the jail, lets 
+			/* if these are different, it could be that getpwuid() gets the real user
+			info (from for example ldap or nscd), and not the info inside the jail, lets
 			test that, and if true, we should use the	shell from the internal function as well*/
 			intpw = internal_getpwuid("/etc/passwd", getuid());
 			if (!intpw) {
@@ -549,7 +549,7 @@ int main (int argc, char **argv) {
 
 	/* cleanup before execution */
 	free(newhome);
-	
+
 	/* now execute the jailed shell */
 	/*execl(pw->pw_shell, pw->pw_shell, NULL);*/
 	newargv = malloc0((argc+1)*sizeof(char *));
