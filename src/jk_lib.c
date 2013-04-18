@@ -1,31 +1,31 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
+modification, are permitted provided that the following conditions
 are met:
-  * Redistributions of source code must retain the above copyright 
+  * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above 
-    copyright notice, this list of conditions and the following 
-    disclaimer in the documentation and/or other materials provided 
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
     with the distribution.
-  * The names of its contributors may not be used to endorse or 
-    promote products derived from this software without specific 
+  * The names of its contributors may not be used to endorse or
+    promote products derived from this software without specific
     prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -40,9 +40,23 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "jk_lib.h"
 #include "utils.h"
+
+int file_exists(const char *path) {
+	/* where is this function used? access() is more light than stat() but it
+	does not equal a 'file exist', but 'file exists and can be accessed' */
+	struct stat sb;
+	if (stat(path, &sb) == -1 && errno == ENOENT) {
+		return 0;
+	}
+	if (!S_ISREG(sb.st_mode)) {
+		return 0;
+	}
+	return 1;
+}
 
 /* creates a string from an array of strings, with the delimiter inbetween
 use arrlen -1 if the array is NULL terminated.
@@ -50,7 +64,7 @@ the strings should all be '\0' terminated*/
 char *implode_array(char **arr, int arrlen, const char *delimiter) {
 	int count=0,i=0,reqsize=1, delsize=strlen(delimiter);
 	char **tmp = arr;
-	char *retval;	
+	char *retval;
 	/* find required memory length */
 	while (*tmp && (count != arrlen)) {
 		count++;
@@ -65,7 +79,7 @@ char *implode_array(char **arr, int arrlen, const char *delimiter) {
 			retval = strcat(retval, delimiter);
 		}
 		retval = strcat(retval, arr[i]);
-		
+
 	}
 	return retval;
 }
@@ -169,7 +183,7 @@ int dirs_equal(const char *dir1, const char *dir2) {
 int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir) {
 	int i=strlen(oldhomedir);
 	/* we will not accept /./ as jail, so we continue looking while i > 4 (minimum then is /a/./ )
-	 * we start at the end so if there are multiple /path/./path2/./path3 the user will be jailed in the most minimized path 
+	 * we start at the end so if there are multiple /path/./path2/./path3 the user will be jailed in the most minimized path
 	 */
 	while (i > 4) {
 /*		DEBUG_MSG("oldhomedir[%d]=%c\n",i,oldhomedir[i]);*/
@@ -186,11 +200,11 @@ int getjaildir(const char *oldhomedir, char **jaildir, char **newhomedir) {
 
 char *strip_string(char * string) {
 	int numstartspaces=0, endofcontent=strlen(string)-1;
-	while (isspace(string[numstartspaces]) && numstartspaces < endofcontent) 
+	while (isspace(string[numstartspaces]) && numstartspaces < endofcontent)
 		numstartspaces++;
-	while (isspace(string[endofcontent]) && endofcontent > numstartspaces) 
+	while (isspace(string[endofcontent]) && endofcontent > numstartspaces)
 		endofcontent--;
-	if (numstartspaces != 0) 
+	if (numstartspaces != 0)
 		memmove(string, &string[numstartspaces], (endofcontent - numstartspaces+1)*sizeof(char));
 	string[(endofcontent - numstartspaces+1)] = '\0';
 	return string;
@@ -199,7 +213,7 @@ char *strip_string(char * string) {
 int count_char(const char *string, char lookfor) {
 	int count=0;
 	while (*string != '\0') {
-		if (*string == lookfor) 
+		if (*string == lookfor)
 			count++;
 		string++;
 	}
@@ -213,7 +227,7 @@ char **explode_string(const char *string, char delimiter) {
 	int cur= 0;
 	int size = ((count_char(string, delimiter) + 2)*sizeof(char*));
 	arr = malloc(size);
-	
+
 	DEBUG_LOG("exploding string '%s', arr=%p with size %d, sizeof(char*)=%d\n",string,arr,size,sizeof(char*));
 
 	while (tmp) {
@@ -239,7 +253,7 @@ char **explode_string(const char *string, char delimiter) {
 int count_array(char **arr) {
 	char **tmp = arr;
 	DEBUG_MSG("count_array, started for %p\n",arr);
-	while (*tmp) 
+	while (*tmp)
 		tmp++;
 	return (tmp-arr);
 }

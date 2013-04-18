@@ -3,29 +3,29 @@ Copyright (c) 2003, 2004, 2005, Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
+modification, are permitted provided that the following conditions
 are met:
-  * Redistributions of source code must retain the above copyright 
+  * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above 
-    copyright notice, this list of conditions and the following 
-    disclaimer in the documentation and/or other materials provided 
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
     with the distribution.
-  * The names of its contributors may not be used to endorse or 
-    promote products derived from this software without specific 
+  * The names of its contributors may not be used to endorse or
+    promote products derived from this software without specific
     prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 #include "config.h"
@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h> /* malloc() */
 #include <string.h> /* memset() */
 #include <fcntl.h> /* fcntl() */
-/* #define DEBUG */
+/*#define DEBUG*/
 
 #ifdef DEBUG
 #include <syslog.h>
@@ -51,7 +51,7 @@ Tiniparser *new_iniparser(char *filename) {
 		Tiniparser *ip = malloc(sizeof(Tiniparser));
 		ip->filename = strdup(filename);
 		ip->fd = tmp;
-		/* set close-on-exec so this file descriptor will not be passed 
+		/* set close-on-exec so this file descriptor will not be passed
 		to the a process after an exec() call */
 		fcntl(fileno(ip->fd), F_SETFD, FD_CLOEXEC);
 		DEBUG_MSG("new_iniparser, ip=%p for filename %s\n",ip,filename);
@@ -61,9 +61,13 @@ Tiniparser *new_iniparser(char *filename) {
 }
 
 void iniparser_close(Tiniparser *ip) {
+	DEBUG_MSG("close fd\n");
 	fclose(ip->fd);
+	DEBUG_MSG("free filename=%p\n",ip->filename);
 	free(ip->filename);
+	DEBUG_MSG("free ip=%p\n",ip->filename);
 	free(ip);
+	DEBUG_MSG("done\n");
 }
 
 char *iniparser_next_section(Tiniparser *ip, char *buf, int buflen) {
@@ -124,7 +128,7 @@ int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const c
 	}
 	DEBUG_MSG("current position of the stream is %ld\n",ftell(ip->fd));
 	while (!feof(ip->fd)){
-		prevch = ch;		
+		prevch = ch;
 		ch=fgetc(ip->fd);
 
 		if (inComment == 1) {
@@ -160,7 +164,7 @@ int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const c
 				DEBUG_MSG("Oops, wrong section, %c is not in position %d of %s\n", ch,sectionNameChar,section);
 				sectionStart=0;
 				sectionNameChar=0;
-			}	
+			}
 		} else if (inWrongKey/* && inSection is implied */) {
 			if (ch == '\n') {
 				DEBUG_MSG("inWrongKey, found end of line!\n");
@@ -187,7 +191,7 @@ int iniparser_get_string_at_position(Tiniparser*ip, const char *section, const c
 			} else if (ch=='[') {
 				DEBUG_MSG("Found the start of a new section, abort, the key does not exist\n");
 				buffer[0]='\0';
-				return -1;				
+				return -1;
 			} else {
 				DEBUG_MSG("if all else fails: %c must be a character that is not on position %d of key %s, set inWrongKey\n",ch,keyNameChar,key);
 				inWrongKey=1;
@@ -224,7 +228,7 @@ int iniparser_get_int_at_position(Tiniparser *ip, const char *section, const cha
 	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
 		return -1;
 	}
-	strip_string(data);	
+	strip_string(data);
 	sscanf(data, "%u", &buffer);
 	return buffer;
 }
@@ -236,7 +240,7 @@ int iniparser_get_octalint_at_position(Tiniparser *ip, const char *section, cons
 	if (iniparser_get_string_at_position(ip, section, key, position, data, 25)==-1){
 		return -1;
 	}
-	strip_string(data);	
+	strip_string(data);
 	sscanf(data, "%o", &buffer);
 	return buffer;
 }
@@ -249,7 +253,7 @@ float iniparser_get_float_at_position(Tiniparser *ip, const char *section, const
 		DEBUG_MSG("iniparser_get_float_at_position, no string found\n");
 		return 0.0;
 	}
-	strip_string(data);	
+	strip_string(data);
 	sscanf(data, "%f", &ret);
 	return ret;
 }
@@ -276,7 +280,7 @@ int iniparser_value_len(Tiniparser *ip, const char *section, const char *key){
 			sectionStart=0;
 			sectionNameChar=0;
 		}
-		
+
 		if (inSection && !foundKey && ch==key[keyNameChar]){
 			keyNameChar++;
 		} else if (inSection && !foundKey && keyNameChar != 0 && ch == '='){

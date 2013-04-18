@@ -1,34 +1,34 @@
 /*
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013 Olivier Sessink
 All rights reserved.
 
 This file is available under two licences, at your own choice
 
 --------
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
+modification, are permitted provided that the following conditions
 are met:
-  * Redistributions of source code must retain the above copyright 
+  * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above 
-    copyright notice, this list of conditions and the following 
-    disclaimer in the documentation and/or other materials provided 
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
     with the distribution.
-  * The names of its contributors may not be used to endorse or 
-    promote products derived from this software without specific 
+  * The names of its contributors may not be used to endorse or
+    promote products derived from this software without specific
     prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 --------
@@ -49,7 +49,7 @@ Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 Boston, MA  02110-1301, USA.
 
  */
- 
+
 /*
  * Limited shell, will only execute files that are configured in /etc/jailkit/jk_lsh.ini
  */
@@ -110,19 +110,6 @@ static int executable_is_allowed(Tiniparser *parser, const char *section, const 
 	return 0;
 }
 
-static int file_exists(const char *path) {
-	/* where is this function used? access() is more light than stat() but it 
-	does not equal a 'file exist', but 'file exists and can be accessed' */
-	struct stat sb;
-	if (stat(path, &sb) == -1 && errno == ENOENT) {
-		return 0;
-	}
-	if (!S_ISREG(sb.st_mode)) {
-		return 0;
-	}
-	return 1;
-}
-
 static char *expand_executable_w_path(const char *executable, char **allowed_paths) {
 	DEBUG_LOG("expand_executable_w_path, executable=%s",executable);
 	if (executable[0] == '/' && file_exists(executable)) {
@@ -174,7 +161,7 @@ int main (int argc, char **argv) {
 	char *groupsec=NULL;
 	int retval;
 	char *logstring;
-	
+
 	DEBUG_MSG(PROGRAMNAME" version "VERSION", started\n");
 #ifndef HAVE_WORDEXP_H
 	libc_argc = argc;
@@ -195,7 +182,7 @@ int main (int argc, char **argv) {
 		pw = getpwuid(getuid());
 	}
 	if (!pw) {
-		if (user) 
+		if (user)
 			syslog(LOG_ERR, "cannot find user info for USER %s: %s", user, strerror(errno));
 		else
 			syslog(LOG_ERR, "cannot find user info for uid %d: %s", getuid(), strerror(errno));
@@ -204,7 +191,7 @@ int main (int argc, char **argv) {
 	}
 	if (user && pw->pw_uid != getuid()) {
 		syslog(LOG_ERR, "abort, running as UID %d, but environment variable USER %s has UID %d", getuid(), user, pw->pw_uid);
-		exit(2);	
+		exit(2);
 	}
 	gr = getgrgid(getgid());
 	if (!gr || !gr->gr_name || gr->gr_name[0]=='\0') {
@@ -212,7 +199,7 @@ int main (int argc, char **argv) {
 		DEBUG_MSG(PROGRAMNAME" cannot find group name for uid %d: %s", getuid(), strerror(errno));
 		exit(3);
 	}
-	
+
 	/* the last argument should be the commandstring, and the one before should be -c
 	before that there could be an argument like --login that we simply ignore */
 	if (argc < 3 || strcmp(argv[argc - 2],"-c")!=0) {
@@ -222,7 +209,7 @@ int main (int argc, char **argv) {
 		free(requeststring);
 		exit(7);
 	}
-	
+
 	/* start the config parser */
 	parser = new_iniparser(CONFIGFILE);
 	if (!parser) {
@@ -230,7 +217,7 @@ int main (int argc, char **argv) {
 		DEBUG_MSG(PROGRAMNAME" configfile missing\n");
 		exit(1);
 	}
-	/* check if this user has a section. asprintf() is a GNU extension which is 
+	/* check if this user has a section. asprintf() is a GNU extension which is
 	not available on Solaris */
 	groupsec = strcat(strcpy(malloc0(strlen(gr->gr_name)+7), "group "), gr->gr_name);
 	if (iniparser_has_section(parser, pw->pw_name)) {
@@ -246,7 +233,7 @@ int main (int argc, char **argv) {
 	section_pos = iniparser_get_position(parser) - strlen(section) - 2;
 	section_pos = section_pos >= 0 ? section_pos : 0;
 	DEBUG_MSG("using section %s\n",section);
-	
+
 	DEBUG_MSG("setting umask\n");
 	umaskval = iniparser_get_octalint_at_position(parser, section, "umask", section_pos);
 	if (umaskval != -1) {
@@ -268,7 +255,7 @@ int main (int argc, char **argv) {
 		}
 		free_array(envs);
 	}
-	
+
 	DEBUG_MSG("exploding string '%s'\n",argv[argc-1]);
 	if (iniparser_get_int_at_position(parser, section, "allow_word_expansion", section_pos)) {
 		newargv = expand_newargv(argv[argc-1]);
@@ -281,7 +268,7 @@ int main (int argc, char **argv) {
 	} else {
 		DEBUG_LOG("no key paths found\n");
 	}
-	
+
 	DEBUG_LOG("paths=%p, newargv[0]=%s",paths,newargv[0]);
 	new = expand_executable_w_path(newargv[0], paths);
 	free_array(paths);
@@ -297,7 +284,7 @@ int main (int argc, char **argv) {
 		free(logstring);
 		exit(4);
 	}
-	
+
 	iniparser_close(parser);
 
 	logstring = implode_array(newargv,-1," ");

@@ -3,8 +3,8 @@
  * this program does a safe chroot() and then executes the shell
  * that the user has within that new root (according to newroot/etc/passwd)
  *
- * I tried to merge some of the ideas from chrsh by Aaron D. Gifford, 
- * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache 
+ * I tried to merge some of the ideas from chrsh by Aaron D. Gifford,
+ * start-stop-daemon from Marek Michalkiewicz and suexec by the Apache
  * group in this shell
  *
 
@@ -12,29 +12,29 @@ Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions 
+modification, are permitted provided that the following conditions
 are met:
-  * Redistributions of source code must retain the above copyright 
+  * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above 
-    copyright notice, this list of conditions and the following 
-    disclaimer in the documentation and/or other materials provided 
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
     with the distribution.
-  * The names of its contributors may not be used to endorse or 
-    promote products derived from this software without specific 
+  * The names of its contributors may not be used to endorse or
+    promote products derived from this software without specific
     prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 	unsigned int use_capabilities=0;
 
 	openlog(PROGRAMNAME, LOG_PID, LOG_AUTH);
-	
+
 	/* check if it us that the user wants */
 	{
 		char *tmp = strrchr(argv[0], '/');
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 			exit(1);
 		}
 	}
-	
+
 	/* now test if we are setuid root (the effective user id must be 0, and the real user id > 0 */
 #ifndef DEVELOPMENT
 	if (geteuid() != 0) {
@@ -154,8 +154,8 @@ int main(int argc, char **argv) {
 		syslog(LOG_ERR, "abort, "PROGRAMNAME" is run by root, which does not make sense because user root can use the chroot utility");
 		exit(12);
 	}
-	
-	
+
+
 
 	DEBUG_MSG("get user info\n");
 	/* get user info based on the users name and not on the uid. this enables support
@@ -195,6 +195,8 @@ int main(int argc, char **argv) {
 
 	{
 		int c=0;
+		int len;
+		char *execplusjailpath;
 		while (c != -1) {
 			int option_index = 0;
 			static struct option long_options[] = {
@@ -228,12 +230,26 @@ int main(int argc, char **argv) {
 			c++;
 			optind++;
 		}
-		
+
 		if (jail == NULL) {
 			printf("ERROR: No jail path specified. Use -j or --jail\n");
 			print_usage();
 			exit(1);
 		}
+		if (executable == NULL) {
+			printf("ERROR: No executable path specified. Use -x or --executable\n");
+			print_usage();
+			exit(1);
+		}
+		len = strlen(jail)+strlen(executable)+2;
+		execplusjailpath = malloc(len+1);
+		snprintf(execplusjailpath, len, "%s/%s",jail, executable);
+		if (!file_exists(execplusjailpath)) {
+			printf("ERROR: Executable path %s does not exist or is not a regular file\n", execplusjailpath);
+			print_usage();
+			exit(1);
+		}
+		free(execplusjailpath);
 	}
 	/* make sure the jailkit config directory is owned root:root and not writable for others */
 	if ( (testsafepath(INIPREFIX, 0, 0) &~TESTPATH_GROUPW) != 0 ) {
@@ -254,7 +270,7 @@ int main(int argc, char **argv) {
 		}
 		if (section != groupsec) free(groupsec);
 		if (section) {
-			/* from this section, retrieve the options 
+			/* from this section, retrieve the options
 			 - which jails are allowed
 			 - which shell to use
 			 - if the user has to be in <jail>/etc/passwd (only if shell is given)
@@ -268,13 +284,12 @@ int main(int argc, char **argv) {
 			skip_injail_passwd_check = iniparser_get_int_at_position(parser, section, "skip_injail_passwd_check", pos);
 
 			free(section);
-			
-			if (allowed_jails == NULL) {
-				syslog(LOG_ERR,"abort, no relevant section for user %s (%d) or group %s (%d) found in "CONFIGFILE, pw->pw_name,getuid(),gr->gr_name,getgid());
-				exit(1);
-			}
 		} else {
 			DEBUG_MSG("no relevant section found in configfile\n");
+		}
+		if (allowed_jails == NULL) {
+			syslog(LOG_ERR,"abort, no relevant section for user %s (%d) or group %s (%d) or DEFAULT found in "CONFIGFILE, pw->pw_name,getuid(),gr->gr_name,getgid());
+			exit(1);
 		}
 		iniparser_close(parser);
 	} else {
@@ -282,7 +297,7 @@ int main(int argc, char **argv) {
 		syslog(LOG_ERR,"abort, no config file "CONFIGFILE);
 		exit(1);
 	}
-	
+
 #ifdef OPEN_MAX
     i = OPEN_MAX;
 #elif defined(NOFILE)
@@ -304,8 +319,8 @@ int main(int argc, char **argv) {
 			break;
 		}
 	}
-	
-	
+
+
 	/* check if the requested jail is allowed */
 	{
 		unsigned int allowed = 0;
@@ -324,7 +339,7 @@ int main(int argc, char **argv) {
 		syslog(LOG_ERR, "abort, jail %s is not safe, check ownership and permissions for the jail inclusing system directories such as /etc, /lib, /usr, /dev, /sbin, and /bin", jail);
 		exit(53);
 	}
-	
+
 	if (chdir(jail) != 0) {
 		syslog(LOG_ERR, "abort, chdir(%s) failed: %s",jail,strerror(errno));
 		exit(19);
@@ -336,15 +351,15 @@ int main(int argc, char **argv) {
 			exit(21);
 		}
 	}
-	
-	syslog(LOG_INFO, "now entering jail %s for user %s (%d)", jail, pw->pw_name, getuid());
-	
+
+	syslog(LOG_INFO, "entering jail %s for user %s (%d) in order to execute %s", jail, pw->pw_name, getuid(), executable);
+
 	/* do the chroot() call */
 	if (chroot(jail)) {
 		syslog(LOG_ERR, "abort, chroot(%s) failed: %s", jail, strerror(errno));
 		exit(33);
 	}
-	
+
 	if (use_capabilities) {
 #ifdef HAVE_CAP_GET_PROC
 		cap_t caps;
@@ -376,9 +391,9 @@ int main(int argc, char **argv) {
 #else
 		/* we should never get here */
 		exit(333);
-#endif		
+#endif
 	} else {
-		/* drop all privileges, we first have to setgid(), 
+		/* drop all privileges, we first have to setgid(),
 			then we call setuid() */
 		if (setgid(getgid())) {
 			syslog(LOG_ERR, "abort, failed to set effective group ID %d: %s", getgid(), strerror(errno));
@@ -394,7 +409,7 @@ int main(int argc, char **argv) {
 		char *oldpw_name,*oldgr_name;
 		oldpw_name = strdup(pw->pw_name);
 		oldgr_name = strdup(gr->gr_name);
-		
+
 		if (user) {
 			pw = getpwnam(user);
 		} else {
