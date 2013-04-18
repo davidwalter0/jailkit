@@ -1,3 +1,12 @@
+jailkit (2.16-1) precise; urgency=low
+
+  * fix compiling if -pthread and -lcap are both needed
+  * fix bug in environment cleaning function
+  * improve jk_init.ini for some 64bit linux distributions
+  * improve error messages
+
+ -- Olivier <olivier@cort.fakenet>  Thu, 18 Apr 2013 21:57:34 +0200
+
 jailkit (2.15-1) lucid; urgency=low
 
   * use -pthreads if available instead of -lpthread
