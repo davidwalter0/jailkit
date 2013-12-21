@@ -49,7 +49,7 @@ is a shell that jails a user in a specific directory, called the JAIL. It does t
 .I /etc/passwd
 file. When the user logs in, jk_chrootsh is executed as the user's shell. The jk_chrootsh enacts the chroot into the JAIL directory. It then reads the passwd file found within the JAIL (i.e.,
 .I JAIL/etc/passwd
-), obtains the program to be run as the user's shell (typically jk_lsh, the limited shell), and executes in within the jail. This combination limits the user's file system access to the JAIL directory (implemented by jk_chrootsh) and limits which programs the user is allowed to execute (implemented by jk_lsh).
+), obtains the program to be run as the user's shell (typically jk_lsh, the limited shell), and executes it within the jail. This combination limits the user's file system access to the JAIL directory (implemented by jk_chrootsh) and limits which programs the user is allowed to execute (implemented by jk_lsh).
 
 .BR jk_lsh
 is a limited shell that allows only those commands to be executed as specified in its configuration file.
