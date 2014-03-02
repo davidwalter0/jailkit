@@ -29,7 +29,7 @@ By default jk_chrootsh does not copy any environment variables. For some functio
 .I /etc/jailkit/jk_chrootsh.ini
 the required environment variables can be listed. An example config file is shown below. In the example, user bill will get the DISPLAY variable, and all users in group jail will get the TERM and PATH variables.
 
-By default jk_chrootsh requires a home directory that has the same group as the primary group from the user, and requires the home directory to be non-writable for group and others. You can relax these requirements in the configfile as shown below. 
+By default jk_chrootsh requires a home directory owned by the user with the same group as the primary group from the user, and requires the home directory to be non-writable for group and others. You can relax these requirements in the configfile as shown below. 
 
 .nf
 .sp
@@ -38,6 +38,7 @@ relax_home_group=1
 
 [bill]
 env= DISPLAY
+relax_home_owner=1
 relax_home_group_permissions=1
 relax_home_other_permissions=1
 
@@ -45,7 +46,7 @@ relax_home_other_permissions=1
 env = TERM, PATH
 .fi
 
-If user bill is in group jail, however, he will not get the TERM variable in the above example. Neither will any user with primary group jail get relaxed requirements for the group of the home directory. First the user is checked, and only if no user section is found the primary group section is looked for, and if no group section is found, the DEFAULT section is used.
+If user bill is in group jail, however, he will not get the TERM variable in the above example. Neither will any user with primary group jail get relaxed requirements for the ownership and the permissions of the home directory. First the user is checked, and only if no user section is found the primary group section is looked for, and if no group section is found, the DEFAULT section is used.
 
 jk_chrootsh can be configured not to read the final shell from the /etc/passwd file in the jail. An example configfile
 is shown below.
@@ -93,7 +94,7 @@ referring to a file outside the chroot
 
 .SH COPYRIGHT
 
-Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Olivier Sessink
+Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Olivier Sessink
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

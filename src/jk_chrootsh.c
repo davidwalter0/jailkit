@@ -8,7 +8,7 @@
  * group in this shell
  *
 
-Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013 Olivier Sessink
+Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013, 2014 Olivier Sessink
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -182,6 +182,7 @@ int main (int argc, char **argv) {
 	unsigned int relax_home_group_permissions=0;
 	unsigned int relax_home_other_permissions=0;
 	unsigned int relax_home_group=0;
+	unsigned int relax_home_owner=0;
 	char *injail_shell=NULL;
 	unsigned int skip_injail_passwd_check=0;
 
@@ -299,6 +300,7 @@ int main (int argc, char **argv) {
 			relax_home_group_permissions = iniparser_get_int_at_position(parser, section, "relax_home_group_permissions", pos);
 			relax_home_other_permissions = iniparser_get_int_at_position(parser, section, "relax_home_other_permissions", pos);
 			relax_home_group = iniparser_get_int_at_position(parser, section, "relax_home_group", pos);
+			relax_home_owner = iniparser_get_int_at_position(parser, section, "relax_home_owner", pos);
 			if (iniparser_get_string_at_position(parser, section, "injail_shell", pos, buffer, 1024) > 0) {
 				injail_shell = strdup(buffer);
 			}
@@ -392,7 +394,7 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, path %s is not a directory", pw->pw_dir);
 		exit(53);
 	}
-	if ((ret & TESTPATH_OWNER) ) {
+	if (!relax_home_owner && (ret & TESTPATH_OWNER) ) {
 		syslog(LOG_ERR, "abort, path %s is not owned by %d", pw->pw_dir,getuid());
 		exit(53);
 	}
