@@ -123,19 +123,19 @@ int testsafepath(const char *path, int owner, int group) {
 		retval |= TESTPATH_SETGID;
 	}
 	if (sbuf.st_mode & S_IWGRP) {
-		syslog(LOG_ERR, "path %s is group writable", path);
+		syslog(group==0 ? LOG_WARNING : LOG_NOTICE, "path %s is group writable", path);
 		retval |= TESTPATH_GROUPW;
 	}
 	if (sbuf.st_mode & S_IWOTH) {
-		syslog(LOG_ERR, "path %s is writable for others", path);
+		syslog(owner==0 ? LOG_ERR : LOG_NOTICE, "path %s is writable for others", path);
 		retval |= TESTPATH_OTHERW;
 	}
 	if (sbuf.st_uid != owner){
-		syslog(LOG_ERR, "path %s is not owned by user %d", path, owner);
+		syslog(owner==0 ? LOG_ERR : LOG_NOTICE, "path %s is not owned by user %d", path, owner);
 		retval |= TESTPATH_OWNER;
 	}
 	if (sbuf.st_gid != group){
-		syslog(LOG_ERR, "path %s is not owned by group %d", path, group);
+		syslog(group==0 ? LOG_ERR : LOG_NOTICE, "path %s is not owned by group %d", path, group);
 		retval |= TESTPATH_GROUP;
 	}
 	return retval;
