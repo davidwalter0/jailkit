@@ -30,7 +30,7 @@
 #POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ConfigParser
+import configparser
 import sys
 import os
 import os.path
@@ -61,7 +61,7 @@ class jk_init:
 		while (line):
 			if (line[:-1] == '['+chroot+'/dev/log]'):
 				if (config['verbose']):
-					print 'we already have '+chroot+'/dev/log in '+INIPREFIX+'/jk_socketd.ini'
+					print( 'we already have '+chroot+'/dev/log in '+INIPREFIX+'/jk_socketd.ini' )
 				return
 			line = fd.readline()
 		fd = open(INIPREFIX+'/jk_socketd.ini', 'a')
@@ -71,28 +71,28 @@ class jk_init:
 	def proc_mount(self,config, chroot):
 		if (sys.platform[:5] == 'linux'):
 			if (config['verbose']):
-				print 'appending proc mount '+chroot+'proc to /etc/fstab'
+				print( 'appending proc mount '+chroot+'proc to /etc/fstab' )
 			fd = open('/etc/fstab', 'a')
 			fd.write("proc 	"+chroot+"proc 	proc 	defaults 	0 	0\n")
 			fd.close()
 			if (config['verbose']):
-				print 'executing mount '+chroot+'proc'
+				print( 'executing mount '+chroot+'proc' )
 			os.spawnlp(os.P_WAIT, 'mount','mount', chroot+'proc')
 		else:
-			print 'Not processing proc mount; proc mounts are Linux specific'
+			print('Not processing proc mount; proc mounts are Linux specific')
 	
 	def add_jk_socketd_entry(self,config, chroot):
-		print 'not yet implemented'
+		print('not yet implemented')
 	
 	def handle_cfg_section(self,config,chroot,cfg,section):
 		if(chroot[-1] == '/'):
 			chroot = chroot[:-1]
 		# first create the chroot jail itself if it does not yet exist
 		if (not os.path.exists(chroot)):
-			print 'Creating jail '+chroot
-			os.makedirs(chroot, mode=0755)
+			print( 'Creating jail '+chroot )
+			os.makedirs(chroot, mode=0o755)
 			# if the parent is setuid or setgid that is not covered by the umask set above, so we remove that
-			os.chmod(chroot, 0755)
+			os.chmod(chroot, 0o755)
 		sections = jk_lib.config_get_option_as_list(cfg,section,'includesections')
 		for tmp in sections:
 			if (tmp not in self.didsections):
@@ -149,7 +149,7 @@ class jk_init:
 		
 
 def activateConfig(config, jail, args):
-	cfg = ConfigParser.ConfigParser()
+	cfg = configparser.ConfigParser()
 	cfg.read([config['file']])
 	start = 0
 	if (jail == None):
@@ -161,37 +161,37 @@ def activateConfig(config, jail, args):
 		if (cfg.has_section(section)):
 			ji.handle_cfg_section(config,jail,cfg,section)
 		else:
-			print 'WARNING: section '+section+' does not exist in '+config['file']
+			print( 'WARNING: section '+section+' does not exist in '+config['file'] )
 	jk_lib.gen_library_cache(jail)
 	
 def usage():
-	print ''
-	print "Usage: "+sys.argv[0]+" [OPTIONS]"
-	print "Usage: "+sys.argv[0]+" [OPTIONS] -j jaildir sections..."
-	print ''
-	print "-h --help              : this help screen"
-	print "-c, --configfile=FILE  : specify configfile location"
-	print '-l, --list             : list all available sections in the configfile'
-	print '-j, --jail=             : specify the jail to use.' 
-	print '     For backwards compatibility, if no jail is specified, the first'
-	print '     argument after the options will be used as jail'
-	print "-v, --verbose          : show what is being done"
-	print "-f, --force            : force overwriting of existing files"
-	print "-k, --hardlink         : use hardlinks if possible"
-	print ''
+	print('')
+	print( "Usage: "+sys.argv[0]+" [OPTIONS]" )
+	print( "Usage: "+sys.argv[0]+" [OPTIONS] -j jaildir sections..." )
+	print('')
+	print("-h --help              : this help screen")
+	print("-c, --configfile=FILE  : specify configfile location")
+	print('-l, --list             : list all available sections in the configfile')
+	print('-j, --jail=             : specify the jail to use.') 
+	print('     For backwards compatibility, if no jail is specified, the first')
+	print('     argument after the options will be used as jail')
+	print("-v, --verbose          : show what is being done")
+	print("-f, --force            : force overwriting of existing files")
+	print("-k, --hardlink         : use hardlinks if possible")
+	print('')
 
 def listsections(file):
-	cfg = ConfigParser.ConfigParser()
+	cfg = configparser.ConfigParser()
 	cfg.read(file)
 	sections = cfg.sections()
 	sections.sort()
-	print '\n** Available sections in '+file+' **\n'
+	print( '\n** Available sections in '+file+' **\n' )
 	for sec in sections:
 		if cfg.has_option(sec, 'comment'):
-			print sec+' - '+cfg.get(sec, 'comment')
+			print( sec+' - '+cfg.get(sec, 'comment') )
 		else:
-			print sec
-	print ''
+			print(sec)
+	print('')
 
 def testargs(config,jail,args):
 	if ((len(args)<2 and jail == None) or (jail != None and len(args)<1)):
@@ -207,7 +207,7 @@ def testargs(config,jail,args):
 
 def main():
 	if (os.getuid()!=0):
-		print 'Cannot create chroot jail without root privileges. Abort.'
+		print('Cannot create chroot jail without root privileges. Abort.')
 		sys.exit(5)
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "vhflc:kj:", ["help", "configfile=", "verbose", "force", 'list', 'hardlink', 'jail'])

@@ -42,20 +42,20 @@ sys.path.append(LIBDIR)
 import jk_lib
 
 def usage():
-	print
-	print '*** jk_addjailuser is deprecated ***'
-	print
-	print 'please add the user like any other user, and use jk_jailuser to jail the user'
-	print
-	print 'Usage: '+sys.argv[0]+' [OPTIONS] chrootdir username'
-	print
-	print '       [-c comment] [-d home dir] [-e expire_date]'
-	print '       [-f inactive time] [-g initial group]'
-	print '       [-G group[,...]] [-h] | [-?] | [--help]'
-	print '       [-m [-k skeleton dir] | -M] [-n] [-o] '
-	print '       [-p passwd] -r [-s shell] [-u uid]'
-	print '       [-v] | [--verbose]'
-	print
+	print()
+	print('*** jk_addjailuser is deprecated ***')
+	print()
+	print('please add the user like any other user, and use jk_jailuser to jail the user')
+	print()
+	print( 'Usage: '+sys.argv[0]+' [OPTIONS] chrootdir username' )
+	print()
+	print('       [-c comment] [-d home dir] [-e expire_date]')
+	print('       [-f inactive time] [-g initial group]')
+	print('       [-G group[,...]] [-h] | [-?] | [--help]')
+	print('       [-m [-k skeleton dir] | -M] [-n] [-o] ')
+	print('       [-p passwd] -r [-s shell] [-u uid]')
+	print('       [-v] | [--verbose]')
+	print()
 	
 
 def getjail_and_user(args):
@@ -85,12 +85,12 @@ def getjail_and_user(args):
 def askforjail():
 	jail = None
 	while (jail == None):
-		print 'please enter the jail directory:'
-		tmp = raw_input()
+		print('please enter the jail directory:')
+		tmp = eval(input())
 		if os.path.isdir(tmp):
 			jail = tmp
 		else:
-			print 'directory '+tmp+' does not exist..'
+			print( 'directory '+tmp+' does not exist..' )
 	return jail
 
 def checkuser(user, jail):
@@ -112,12 +112,12 @@ def groupexists(group):
 def askforuser(jail):
 	user = None
 	while (user == None):
-		print 'please enter the username:'
-		tmp = raw_input()
+		print('please enter the username:')
+		tmp = eval(input())
 		if (checkuser(tmp, jail)):
 			user = tmp
 		else:
-			print 'user '+tmp+' exists already'
+			print( 'user '+tmp+' exists already' )
 	return user		
 
 def addusertojail(jail, user, group, home, shell, creategroup):
@@ -184,11 +184,11 @@ def addtheuser(jail,user,config):
 	else: initialgroup = 'users'
 	g = initialgroup
 	if not groupexists(initialgroup):
-		print (
+		print((
 			'the group '+
 			initialgroup+
 			' does not yet exist, creating it'
-		)
+		))
 		os.system('groupadd '+initialgroup)
 		creategroup = 1
 	else: creategroup = 0

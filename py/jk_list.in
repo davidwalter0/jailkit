@@ -84,7 +84,7 @@ class ListResult:
 
 def printResults(results,wide):
 	if (len(results)==0):
-		print 'No jailed processes found'
+		print('No jailed processes found')
 		return
 	results.sort()
 	usernamelen=4 # User
@@ -99,13 +99,13 @@ def printResults(results,wide):
 		cmdlen = min(cmdlen,80-5-usernamelen-jaillen-4)
 	
 	titleformat =  '%%-06s %%-0%ds %%-0%ds %%-0%ds' % (usernamelen,jaillen,min(cmdlen,80-5-usernamelen-jaillen-4))
-	print titleformat % ('Pid', 'User','Jail','Command')
+	print( titleformat % ('Pid', 'User','Jail','Command') )
 	for result in results:
 		if (wide):
 			mycmdlen = len(result.cmdline+' '+result.exe)
 		else:
 			mycmdlen = cmdlen
-		print result.optistr(usernamelen,jaillen,mycmdlen)
+		print( result.optistr(usernamelen,jaillen,mycmdlen) )
 
 
 def runList(verbose,jail):
@@ -119,16 +119,16 @@ def runList(verbose,jail):
 					ret = os.readlink('/proc/'+entry+'/root')
 					if (ret != '/'):
 						results.append(ListResult(entry))
-	except OSError, e:
+	except OSError as e:
 		if (e.errno == 13):
-			print 'Permission denied'
+			print('Permission denied')
 	return results
 
 def printusage():
-	print "jk_list, lists pocesses running in a chroot jail"
-	print "-h --help		print this message"
-	print "-j --jail=/path  list only processes in this jail"
-	print "-w --wide   print wide listing"
+	print("jk_list, lists pocesses running in a chroot jail")
+	print("-h --help		print this message")
+	print("-j --jail=/path  list only processes in this jail")
+	print("-w --wide   print wide listing")
 
 def main():
 	try:

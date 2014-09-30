@@ -30,7 +30,7 @@
 #POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ConfigParser
+import configparser
 import sys
 import os
 import string
@@ -83,7 +83,10 @@ def need_update(original, injail, origstatbuf=None):
 			if (comparecontent(original, injail)==1):
 				return 0
 		return 1
-	except OSError, (errno,strerror):
+	except OSError as xxx_todo_changeme2:
+		# files that do not have an original file obviously cannot be updated
+		# but they need cleaning
+		(errno,strerror) = xxx_todo_changeme2.args
 		# files that do not have an original file obviously cannot be updated
 		# but they need cleaning
 		if (errno == 2):
@@ -92,11 +95,11 @@ def need_update(original, injail, origstatbuf=None):
 
 def find2update(jail, dir, skips, config, files2update=[],files2clean=[]):
 	if (config['verbose'] == 1):
-		print 'scanning '+jail+dir
+		print( 'scanning '+jail+dir )
 	for file in os.listdir(jail+dir):
 #		print 'test if '+dir+file+' or '+jail+dir+file+' exists in ',skips
 		if ((dir+file in skips) or (jail+dir+file in skips)):
-			print 'skip '+jail+dir+file
+			print( 'skip '+jail+dir+file )
 		else:
 			try:
 				sbuf = os.lstat(dir+file)
@@ -104,13 +107,14 @@ def find2update(jail, dir, skips, config, files2update=[],files2clean=[]):
 					files2update, files2clean = find2update(jail, dir+file+'/', skips, config, files2update, files2clean)
 				elif (stat.S_ISREG(sbuf[stat.ST_MODE])):
 					if (config['verbose'] == 1):
-						print 'checking '+jail+dir+file+''
+						print( 'checking '+jail+dir+file+'' )
 					ret = need_update(dir+file, jail+dir+file, origstatbuf=sbuf)
 					if (ret == 1):
 						files2update.append(dir+file)
 					elif (ret == 2):
 						files2clean.append(dir+file) 
-			except OSError, (errno,strerror):
+			except OSError as xxx_todo_changeme:
+				(errno,strerror) = xxx_todo_changeme.args
 				if (errno == 2):
 					files2clean.append(dir+file)
 				else:
@@ -129,19 +133,20 @@ def updatejail(jail, dirs, skips, config):
 		dirnoslash = dir[:-1]
 		#print 'test if '+dirnoslash+' or '+jail+dirnoslash+' exists in ',skips
 		if ((dirnoslash in skips) or (jail+dirnoslash in skips)):
-			print 'skip '+jail+dir
+			print( 'skip '+jail+dir )
 		else:
 			files = []
 			cleans = []
 			try:
 				files,cleans = find2update(jail, dir, skips, config, [],[])
-			except OSError, (errno,strerror):
+			except OSError as xxx_todo_changeme1:
+				(errno,strerror) = xxx_todo_changeme1.args
 				sys.stderr.write('ERROR:  while scannign dir '+jail+dir+': '+strerror+'\n')
 			for file in files:
 				if (config['dry-run'] == 1):
 					allfiles.append(file)
 				else:
-					print 'removing outdated file '+jail+file
+					print( 'removing outdated file '+jail+file )
 					try:
 						os.unlink(jail+file)
 						allfiles.append(file)
@@ -151,7 +156,7 @@ def updatejail(jail, dirs, skips, config):
 				if (config['dry-run'] == 1):
 					allcleans.append(file)
 				else:
-					print 'removing deprecated file '+jail+file
+					print( 'removing deprecated file '+jail+file )
 					try:
 						os.unlink(jail+file)
 						allcleans.append(file)
@@ -159,27 +164,27 @@ def updatejail(jail, dirs, skips, config):
 						sys.stderr.write('ERROR: failed to remove deprecated file '+jail+file+'\n')
 	if (config['dry-run'] == 1):
 		for file in allfiles:
-			print 'will update outdated file '+jail+file
+			print( 'will update outdated file '+jail+file )
 		for file in allcleans:
-			print 'will remove deprecated file '+jail+file
+			print( 'will remove deprecated file '+jail+file )
 	else:
 		handled = jk_lib.copy_binaries_and_libs(jail,allfiles, 0, config['verbose'], try_hardlink=config['hardlink'])
 		if (len(handled)>0):
 			jk_lib.gen_library_cache(jail)
 
 def usage():
-	print ''
-	print "Usage: "+sys.argv[0]+" [OPTIONS] [DIRECTORIES]"
-	print '-h|--help          : this message'
-	print '-v|--verbose       : give verbose output'
-	print '-c|--configsection=: use options specified in section of config file'
-	print '-j|--jail=         : the jail to update'
-	print '-d|--dry-run       : show what will be done'
-	print '-s|--skip=         : skip file, option can be used multiple times'
-	print '-k|--hardlink      : use hardlinks if possible'
-	print ''
-	print 'if no directories are specified, jk_update will scan /bin /usr /lib and /opt'
-	print ''
+	print('')
+	print( "Usage: "+sys.argv[0]+" [OPTIONS] [DIRECTORIES]" )
+	print('-h|--help          : this message')
+	print('-v|--verbose       : give verbose output')
+	print('-c|--configsection=: use options specified in section of config file')
+	print('-j|--jail=         : the jail to update')
+	print('-d|--dry-run       : show what will be done')
+	print('-s|--skip=         : skip file, option can be used multiple times')
+	print('-k|--hardlink      : use hardlinks if possible')
+	print('')
+	print('if no directories are specified, jk_update will scan /bin /usr /lib and /opt')
+	print('')
 
 def main():
 	try:
@@ -227,7 +232,7 @@ def main():
 	if (configsection != None):
 		cfile = INIPREFIX+'/jk_update.ini'
 		jail = configsection
-		cfg = ConfigParser.ConfigParser()
+		cfg = configparser.ConfigParser()
 		cfg.read(cfile)
 		if (not cfg.has_section(configsection)):
 			sys.stderr.write('ERROR: configfile '+cfile+' does not have a section called '+configsection+'\n')
@@ -235,7 +240,7 @@ def main():
 		tmp = jk_lib.config_get_option_as_list(cfg,configsection,'skips')
 		for entry in tmp:
 			skips.append(entry)
-		if (not config.has_key('hardlink') and cfg.has_option(configsection,'hardlink')):
+		if ('hardlink' not in config and cfg.has_option(configsection,'hardlink')):
 			try:
 				tmp = int(cfg.get(section,'hardlink'))
 				config['hardlink'] = tmp
@@ -244,7 +249,7 @@ def main():
 		tmp = jk_lib.config_get_option_as_list(cfg,configsection,'directories')
 		for entry in tmp:
 			dirs.append(entry)
-	if (not config.has_key('hardlink')):
+	if ('hardlink' not in config):
 		config['hardlink'] = 0
 	if (jail[-1:]=='/'):
 		jail = jail[:-1]

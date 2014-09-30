@@ -81,7 +81,7 @@ def path_is_safe(path, failquiet=0):
 		if (stat.S_ISLNK(statbuf[stat.ST_MODE])):
 			# Fedora has moved /sbin /lib and /bin into /usr
 			target = os.readlink(path)
-			print target, path
+			print( target, path )
 			if (target[:4] != 'usr/'):
 				sys.stderr.write('ERROR: '+path+' is a symlink, please point to the real directory\n')
 				return -2
@@ -146,17 +146,17 @@ def lddlist_libraries_linux(executable):
 				if (os.path.exists(subl[2])):
 					retval += [subl[2]]
 				else:
-					print 'ldd returns non existing library '+subl[2]+' for '+executable
+					print('ldd returns non existing library '+subl[2]+' for '+executable)
 			# on gentoo amd64 the last entry of ldd looks like '/lib64/ld-linux-x86-64.so.2 (0x0000002a95556000)'
 			elif (len(subl)>=1 and subl[0][0] == '/'):
 				if (os.path.exists(subl[0])):
 					retval += [subl[0]]
 				else:
-					print 'ldd returns non existing library '+subl[0]
+					print('ldd returns non existing library '+subl[0])
 			else:
-				print 'WARNING: failed to parse ldd output '+line[:-1]
+				print('WARNING: failed to parse ldd output '+line[:-1])
 		else:
-			print 'WARNING: failed to parse ldd output '+line[:-1]
+			print('WARNING: failed to parse ldd output '+line[:-1])
 		#line = pd[1].readline()
 		line = p.stdout.readline()
 	return retval
@@ -183,18 +183,18 @@ def lddlist_libraries_openbsd(executable):
 					if (os.path.exists(subl[4])):
 						retval += [subl[4]]
 					else:
-						print 'ldd returns non existing library '+subl[4]
+						print('ldd returns non existing library '+subl[4])
 				elif (mode == 4):
 					if (os.path.exists(subl[6])):
 						retval += [subl[6]]
 					else:
-						print 'ldd returns non existing library '+subl[6]
+						print('ldd returns non existing library '+subl[6])
 				else:
-					print 'unknown mode, please report this bug in jk_lib.py'
+					print('unknown mode, please report this bug in jk_lib.py')
 			else:
-				print 'WARNING: failed to parse ldd output '+line[:-1]
+				print('WARNING: failed to parse ldd output '+line[:-1])
 		else:
-			print 'WARNING: failed to parse ldd output '+line[:-1]
+			print('WARNING: failed to parse ldd output '+line[:-1])
 		line = p.stdout.readline()
 		#line = pd[1].readline()
 	return retval
@@ -217,13 +217,13 @@ def lddlist_libraries_freebsd(executable):
 				if (os.path.exists(subl[2])):
 					retval += [subl[2]]
 				else:
-					print 'ldd returns non existing library '+subl[2]
+					print('ldd returns non existing library '+subl[2])
 			else:
-				print 'WARNING: failed to parse ldd output "'+line[:-1]+'"'
+				print('WARNING: failed to parse ldd output "'+line[:-1]+'"')
 		elif (line[:len(executable)+1] == executable+':'):
 			pass
 		else:
-			print 'WARNING: failed to parse ldd output "'+line[:-1]+'"'
+			print('WARNING: failed to parse ldd output "'+line[:-1]+'"')
 		line = p.stdout.readline()
 		#line = pd[1].readline()
 	return retval
@@ -268,7 +268,7 @@ def resolve_realpath(path, chroot='', include_file=0):
 				tmp = os.path.normpath(os.path.join(os.path.dirname(ret),realpath))
 				if (len(chroot)>0 and tmp[:len(chroot)]!=chroot):
 					sys.stderr.write('ERROR: symlink '+tmp+' points outside jail, ABORT\n')
-					raise Exception, "Symlink points outside jail"
+					raise Exception("Symlink points outside jail")
 				ret = tmp
 	return os.path.join(ret,basename)
 
@@ -298,7 +298,7 @@ def OLDresolve_realpath(path, chroot='', include_file=0):
 				tmp = os.path.normpath(os.path.join(os.path.dirname(todopath),realpath))
 				if (chrootlen>0 and tmp[:chrootlen]!=chroot):
 					sys.stderr.write('ERROR: symlink '+tmp+' points outside jail, ABORT\n')
-					raise Exception, "Symlink points outside jail" 
+					raise Exception("Symlink points outside jail") 
 				todopath=tmp
 		else:
 			donepath = os.path.basename(todopath)+'/'+donepath
@@ -315,7 +315,7 @@ def copy_time_and_permissions(src, dst, be_verbose=0, allow_suid=0, copy_ownersh
 	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
 	if (not allow_suid):
 		if (mode & (stat.S_ISUID | stat.S_ISGID)):
-			print 'removing setuid and setgid permissions from '+dst
+			print('removing setuid and setgid permissions from '+dst)
 #			print 'setuid!!! mode='+str(mode)
 			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
 #			print 'setuid!!! after mode='+str(mode)
@@ -359,7 +359,8 @@ def OLD_create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow
 		else:
 			try:
 				sb = cachedlstat(directory[:indx])
-			except OSError, (errno,strerror):
+			except OSError as xxx_todo_changeme3:
+				(errno,strerror) = xxx_todo_changeme3.args
 				sys.stderr.write('ERROR: failed to lstat('+directory[:indx]+'):'+strerror+'\n')
 				break
 			if (stat.S_ISLNK(sb.st_mode)):
@@ -367,10 +368,11 @@ def OLD_create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow
 				realfile = os.readlink(directory[:indx])
 				chrootname = resolve_realpath(chroot+directory[:indx],chroot)
 				if (be_verbose):
-					print 'Creating symlink '+chrootname+' to '+realfile
+					print('Creating symlink '+chrootname+' to '+realfile)
 				try:
 					os.symlink(realfile, chrootname)
-				except OSError, (errno,strerror):
+				except OSError as xxx_todo_changeme1:
+					(errno,strerror) = xxx_todo_changeme1.args
 					if (errno == 17): # file exists
 						pass
 					else:
@@ -384,12 +386,13 @@ def OLD_create_parent_path(chroot, path, be_verbose=0, copy_permissions=1, allow
 			elif (stat.S_ISDIR(sb.st_mode)):
 				chrootname = resolve_realpath(chroot+directory[:indx],chroot)
 				if (be_verbose):
-					print 'Creating directory '+chrootname
-				os.mkdir(chrootname, 0755)
+					print('Creating directory '+chrootname)
+				os.mkdir(chrootname, 0o755)
 				if (copy_permissions):
 					try:
 						copy_time_and_permissions(directory[:indx], chrootname, be_verbose, allow_suid, copy_ownership)
-					except OSError, (errno,strerror):
+					except OSError as xxx_todo_changeme:
+						(errno,strerror) = xxx_todo_changeme.args
 						sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chrootname+': '+strerror+'\n')
 			oldindx = indx
 		if (indx==len(directory)):
@@ -455,22 +458,24 @@ def create_parent_path(chroot,path,be_verbose=0, copy_permissions=1, allow_suid=
 		#print 'origpath',origpath,'jailpath',jailpath
 		try:
 			sb = cachedlstat(origpath)
-		except OSError, (errno,strerror):
+		except OSError as xxx_todo_changeme5:
+			(errno,strerror) = xxx_todo_changeme5.args
 			sys.stderr.write('ERROR: failed to lstat('+origpath+'):'+strerror+'\n')
 			return None
 		if (stat.S_ISDIR(sb.st_mode)):
 			if (be_verbose):
-				print 'Create directory '+jailpath
-			os.mkdir(jailpath, 0755)
+				print('Create directory '+jailpath)
+			os.mkdir(jailpath, 0o755)
 			if (copy_permissions):
 				try:
 					copy_time_and_permissions(origpath, jailpath, be_verbose, allow_suid, copy_ownership)
-				except OSError, (errno,strerror):
+				except OSError as xxx_todo_changeme2:
+					(errno,strerror) = xxx_todo_changeme2.args
 					sys.stderr.write('ERROR: failed to copy time/permissions/owner from '+directory[:indx]+' to '+chrootname+': '+strerror+'\n')
 		elif (stat.S_ISLNK(sb.st_mode)):
 			realfile = os.readlink(origpath)
 			if (be_verbose):
-				print 'Creating symlink '+jailpath+' to '+realfile
+				print('Creating symlink '+jailpath+' to '+realfile)
 			os.symlink(realfile,jailpath)
 			if (realfile[0]=='/'):
 				jailpath = create_parent_path(chroot, realfile,be_verbose, copy_permissions, allow_suid, copy_ownership)
@@ -479,7 +484,7 @@ def create_parent_path(chroot,path,be_verbose=0, copy_permissions=1, allow_suid=
 				#print 'symlink resolves to ',tmp
 				if (len(chroot)>0 and tmp[:len(chroot)]!=chroot):
 					sys.stderr.write('ERROR: symlink '+tmp+' points outside jail, ABORT\n')
-					raise Exception, "Symlink points outside jail"
+					raise Exception("Symlink points outside jail")
 				realfile = tmp[len(chroot):]
 				jailpath = create_parent_path(chroot, realfile,be_verbose, copy_permissions, allow_suid, copy_ownership)
 		existpath = jailpath
@@ -492,20 +497,22 @@ def copy_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	#create directory dstdir
 	try:
 		if (be_verbose):
-			print 'Creating directory'+dstdir
+			print('Creating directory'+dstdir)
 		os.mkdir(dstdir)
 		copy_time_and_permissions(srcdir, dstdir, be_verbose, allow_suid=0, copy_ownership=1)
-	except (IOError, OSError), (errno,strerror):
+	except (IOError, OSError) as xxx_todo_changeme8:
+		(errno,strerror) = xxx_todo_changeme8.args
 		sys.stderr.write('ERROR: copying directory and permissions '+srcdir+' to '+dstdir+': '+strerror+'\n')
 		return 0
 	for root, dirs, files in os.walk(srcdir):
 		for name in files:
 			if (be_verbose):
-				print 'Copying '+root+'/'+name+' to '+dstdir+'/'+name
+				print('Copying '+root+'/'+name+' to '+dstdir+'/'+name)
 			try:
 				shutil.copyfile(root+'/'+name,dstdir+'/'+name)
 				copy_time_and_permissions(root+'/'+name, dstdir+'/'+name, be_verbose, allow_suid=0, copy_ownership=1)
-			except (IOError,OSError), (errno,strerror):
+			except (IOError,OSError) as xxx_todo_changeme4:
+				(errno,strerror) = xxx_todo_changeme4.args
 				sys.stderr.write('ERROR: copying file and permissions '+root+'/'+name+' to '+dstdir+'/'+name+': '+strerror+'\n')
 				return 0
 		for name in dirs:
@@ -517,13 +524,14 @@ def move_dir_with_permissions_and_owner(srcdir,dstdir,be_verbose=0):
 	if (retval == 1):
 		# remove the source directory
 		if (be_verbose==1):
-			print 'Removing original home directory '+srcdir
+			print('Removing original home directory '+srcdir)
 		try:
 			shutil.rmtree(srcdir)
-		except (OSError,IOError), (errno,strerror):
+		except (OSError,IOError) as xxx_todo_changeme6:
+			(errno,strerror) = xxx_todo_changeme6.args
 			sys.stderr.write('ERROR: failed to remove '+srcdir+': '+strerror+'\n')
 	else:
-		print 'Not everything was copied to '+dstdir+', keeping the old directory '+srcdir
+		print('Not everything was copied to '+dstdir+', keeping the old directory '+srcdir)
 
 def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, allow_suid=0, retain_owner=0):
 	"""copies/links the file and the permissions (and possibly ownership and setuid/setgid bits"""
@@ -533,13 +541,14 @@ def copy_with_permissions(src, dst, be_verbose=0, try_hardlink=1, allow_suid=0, 
 			os.link(src,dst)
 			do_normal_copy = 0
 		except:
-			print 'Linking '+src+' to '+dst+' failed, will revert to copying'
+			print('Linking '+src+' to '+dst+' failed, will revert to copying')
 			pass
 	if (do_normal_copy == 1):
 		try:
 			shutil.copyfile(src,dst)
 			copy_time_and_permissions(src, dst, be_verbose, allow_suid=allow_suid, copy_ownership=retain_owner)
-		except (IOError, OSError), (errno,strerror):
+		except (IOError, OSError) as xxx_todo_changeme7:
+			(errno,strerror) = xxx_todo_changeme7.args
 			sys.stderr.write('ERROR: copying file and permissions '+src+' to '+dst+': '+strerror+'\n')
 
 def copy_device(chroot, path, be_verbose=1, retain_owner=0):
@@ -547,7 +556,7 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 	create_parent_path(chroot,os.path.dirname(path), be_verbose, copy_permissions=1, allow_suid=0, copy_ownership=0)	
 	chrootpath = resolve_realpath(chroot+path,chroot)
 	if (os.path.exists(chrootpath)):
-		print 'Device '+chrootpath+' does exist already'
+		print('Device '+chrootpath+' does exist already')
 		return
 	sb = os.stat(path)
 	try:
@@ -555,7 +564,7 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 			major = sb.st_rdev / 256 #major = st_rdev divided by 256 (8bit reserved for the minor number)
 			minor = sb.st_rdev % 256 #minor = remainder of st_rdev divided by 256
 		elif (sys.platform == 'sunos5'):
-			if (sys.maxint == 2147483647):
+			if (sys.maxsize == 2147483647):
 				major = sb.st_rdev / 262144 #major = st_rdev divided by 256 (18 bits reserved for the minor number)
 				minor = sb.st_rdev % 262144 #minor = remainder of st_rdev divided by 256
 			else:
@@ -570,17 +579,17 @@ def copy_device(chroot, path, be_verbose=1, retain_owner=0):
 		elif (stat.S_ISBLK(sb.st_mode)): 
 			mode = 'b'
 		else:
-			print 'WARNING, '+path+' is not a character or block device'
+			print('WARNING, '+path+' is not a character or block device')
 			return 1
 		if (be_verbose==1):
-			print 'Creating device '+chroot+path
+			print('Creating device '+chroot+path)
 		ret = os.spawnlp(os.P_WAIT, 'mknod','mknod', chrootpath, str(mode), str(major), str(minor))
 		copy_time_and_permissions(path, chrootpath, allow_suid=0, copy_ownership=retain_owner)
 	except:
-		print 'Failed to create device '+chrootpath+', this is a know problem with python 2.1'
-		print 'use "ls -l '+path+'" to find out the mode, major and minor for the device'
-		print 'use "mknod '+chrootpath+' mode major minor" to create the device'
-		print 'use chmod and chown to set the permissions as found by ls -l'
+		print('Failed to create device '+chrootpath+', this is a know problem with python 2.1')
+		print('use "ls -l '+path+'" to find out the mode, major and minor for the device')
+		print('use "mknod '+chrootpath+' mode major minor" to create the device')
+		print('use chmod and chown to set the permissions as found by ls -l')
 
 def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1, try_hardlink=1, allow_suid=0, retain_owner=0, handledfiles=[]):
 	"""copies a directory and the permissions recursively, possibly with ownership and setuid/setgid bits"""
@@ -594,7 +603,7 @@ def copy_dir_recursive(chroot,dir,force_overwrite=0, be_verbose=0, check_libs=1,
 				handledfiles = copy_dir_recursive(chroot,tmp,force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 			else:
 				files2 += os.path.join(dir, entry),
-		except OSError, e:
+		except OSError as e:
 			sys.stderr.write('ERROR: failed to investigate source file '+tmp+': '+e.strerror+'\n')
 	handledfiles = copy_binaries_and_libs(chroot,files2,force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 	return handledfiles 
@@ -625,16 +634,16 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 
 		try:
 			sb = cachedlstat(file)
-		except OSError, e:
+		except OSError as e:
 			if (e.errno == 2):
 				if (try_glob_matching == 1):
 					ret = glob.glob(file)
 					if (len(ret)>0):
 						handledfiles = copy_binaries_and_libs(chroot, ret, force_overwrite, be_verbose, check_libs, try_hardlink=try_hardlink, retain_owner=retain_owner, try_glob_matching=0, handledfiles=handledfiles)
 					elif (be_verbose):
-						print 'Source file(s) '+file+' do not exist'
+						print('Source file(s) '+file+' do not exist')
 				elif (be_verbose):
-					print 'Source file '+file+' does not exist'
+					print('Source file '+file+' does not exist')
 			else:
 				sys.stderr.write('ERROR: failed to investigate source file '+file+': '+e.strerror+'\n')
 			continue
@@ -648,7 +657,7 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		try:
 			chrootsb = cachedlstat(chrootrfile)
 			chrootfile_exists = 1
-		except OSError, e:
+		except OSError as e:
 			if (e.errno == 2):
 				chrootfile_exists = 0
 			else:
@@ -656,21 +665,21 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 		
 		if ((force_overwrite == 0) and chrootfile_exists and not stat.S_ISDIR(chrootsb.st_mode)):
 			if (be_verbose):
-				print ''+chrootrfile+' already exists, will not touch it'
+				print(''+chrootrfile+' already exists, will not touch it')
 		else:
 			if (chrootfile_exists):
 				if (force_overwrite):
 					if (stat.S_ISREG(chrootsb.st_mode)):
 						if (be_verbose):
-							print 'Destination file '+chrootrfile+' exists, will delete to force update'
+							print('Destination file '+chrootrfile+' exists, will delete to force update')
 						try:
 							os.unlink(chrootrfile)
-						except OSError, e:
+						except OSError as e:
 							sys.stderr.write('ERROR: failed to delete '+chroot+rfile+': '+e.strerror+'\ncannot force update '+chroot+rfile+'\n')
 							# BUG: perhaps we can fix the permissions so we can really delete the file?
 							# but what permissions cause this error?
 					elif (stat.S_ISDIR(chrootsb.st_mode)):
-						print 'Destination dir '+chrootrfile+' exists'
+						print('Destination dir '+chrootrfile+' exists')
 				else:
 					if (stat.S_ISDIR(chrootsb.st_mode)):
 						pass
@@ -678,13 +687,13 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 						# skip to the next item of the loop
 					else:
 						if (be_verbose):
-							print 'Destination file '+chrootrfile+' exists'
+							print('Destination file '+chrootrfile+' exists')
 						continue
 			create_parent_path(chroot,os.path.dirname(file), be_verbose, copy_permissions=1, allow_suid=allow_suid, copy_ownership=retain_owner)
 			if (stat.S_ISLNK(sb.st_mode)):
 				realfile = os.readlink(file)
 				try:
-					print 'Creating symlink '+chrootrfile+' to '+realfile
+					print('Creating symlink '+chrootrfile+' to '+realfile)
 					os.symlink(realfile, chrootrfile)
 				except OSError:
 					# if the file exists already
@@ -697,9 +706,9 @@ def copy_binaries_and_libs(chroot, binarieslist, force_overwrite=0, be_verbose=0
 				handledfiles = copy_dir_recursive(chroot,file,force_overwrite, be_verbose, check_libs, try_hardlink, allow_suid, retain_owner, handledfiles)
 			elif (stat.S_ISREG(sb.st_mode)):
 				if (try_hardlink):
-					print 'Trying to link '+file+' to '+chrootrfile
+					print('Trying to link '+file+' to '+chrootrfile)
 				else:
-					print 'Copying '+file+' to '+chrootrfile
+					print('Copying '+file+' to '+chrootrfile)
 				copy_with_permissions(file,chrootrfile,be_verbose, try_hardlink, allow_suid, retain_owner)
 				handledfiles.append(file)
 			elif (stat.S_ISCHR(sb.st_mode) or stat.S_ISBLK(sb.st_mode)):
@@ -724,8 +733,8 @@ def config_get_option_as_list(cfgparser, sectionname, optionname):
 	return retval
 
 def clean_exit(exitno,message,usagefunc,type='ERROR'):
-	print ''
-	print type+': '+message
+	print('')
+	print(type+': '+message)
 	usagefunc()
 	sys.exit(exitno)
 
@@ -772,7 +781,7 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 				if (len(pwstruct) >=3):
 					if ((pwstruct[0] in users) or (pwstruct[2] in users)):
 						if (be_verbose):
-							print 'user '+pwstruct[0]+' exists in '+chroot+'/etc/passwd'
+							print('user '+pwstruct[0]+' exists in '+chroot+'/etc/passwd')
 						try:
 							users.remove(pwstruct[0])
 						except ValueError:
@@ -792,7 +801,7 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 					if ((pwstruct[0] in users) or (pwstruct[2] in users)):
 						fd2.write(line)
 						if (be_verbose):
-							print 'writing user '+pwstruct[0]+' to '+chroot+'/etc/passwd'
+							print('writing user '+pwstruct[0]+' to '+chroot+'/etc/passwd')
 						if (not pwstruct[3] in groups):
 							groups += [pwstruct[3]]
 				line = fd.readline()
@@ -809,7 +818,7 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 			if (len(groupstruct) >=2):
 				if ((groupstruct[0] in groups) or (groupstruct[2] in groups)):
 					if (be_verbose):
-						print 'group '+groupstruct[0]+' exists in '+chroot+'/etc/group'
+						print('group '+groupstruct[0]+' exists in '+chroot+'/etc/group')
 					try:
 						groups.remove(groupstruct[0])
 					except ValueError:
@@ -829,7 +838,7 @@ def init_passwd_and_group(chroot,users,groups,be_verbose=0):
 				if ((groupstruct[0] in groups) or (groupstruct[2] in groups)):
 					fd2.write(line)
 					if (be_verbose):
-						print 'writing group '+groupstruct[0]+' to '+chroot+'/etc/group'
+						print('writing group '+groupstruct[0]+' to '+chroot+'/etc/group')
 			line = fd.readline()
 		fd.close()
 	fd2.close()
